@@ -47,6 +47,7 @@ func (n *Navigation) Refresh() {
 
 	for _, resource := range application.cluster.Resources {
 		row := gtk.NewListBoxRow()
+		row.SetHExpand(true)
 		row.SetName(resource.Kind)
 		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
 		img := gtk.NewImageFromIconName("applications-system-symbolic")

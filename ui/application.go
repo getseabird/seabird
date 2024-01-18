@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/jgillich/kubegio/state"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var application Application
@@ -17,7 +18,8 @@ type Application struct {
 	*adw.Application
 	window       *gtk.ApplicationWindow
 	navigation   *Navigation
-	resourceView *ResourceView
+	resourceView *ListView
+	detailView   *DetailView
 	cluster      *state.Cluster
 }
 
@@ -37,12 +39,12 @@ func NewApplication() (*Application, error) {
 	application.ConnectActivate(func() {
 		application.window = Window(&application.Application.Application)
 		application.navigation = NewNavigation()
-		application.resourceView = NewResourceView()
+		application.resourceView = NewListView()
 
-		paned := gtk.NewPaned(gtk.OrientationHorizontal)
-		paned.SetStartChild(application.navigation)
-		paned.SetEndChild(application.resourceView)
-		application.window.SetChild(paned)
+		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
+		box.Append(application.navigation)
+		box.Append(application.resourceView)
+		application.window.SetChild(box)
 		application.window.Show()
 	})
 
@@ -57,4 +59,13 @@ func (a *Application) Run() {
 	if code := a.Application.Run(os.Args); code > 0 {
 		os.Exit(code)
 	}
+}
+
+func (a *Application) DetailView(object client.Object) {
+	box := application.window.Child().(*gtk.Box)
+	if application.detailView != nil {
+		box.Remove(application.detailView)
+	}
+	application.detailView = NewDetailView(object)
+	box.Append(application.detailView)
 }

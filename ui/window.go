@@ -8,7 +8,7 @@ import (
 func Window(app *gtk.Application) *gtk.ApplicationWindow {
 	window := gtk.NewApplicationWindow(app)
 	window.SetTitle("gotk4 Example")
-	window.SetDefaultSize(800, 600)
+	window.SetDefaultSize(1000, 800)
 
 	header := adw.NewHeaderBar()
 	leftBox := gtk.NewBox(gtk.OrientationHorizontal, 4)

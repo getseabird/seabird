@@ -8,25 +8,22 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ResourceView struct {
+type ListView struct {
 	*gtk.ColumnView
 	list     *gtk.StringList
 	resource *metav1.APIResource
+	items    []client.Object
 }
 
-func NewResourceView() *ResourceView {
-	// store := gtk.NewListStore([]glib.Type{glib.TypeString, glib.TypeString})
-	// listStore := gtk.NewSliceListModel([]glib.Type{glib.TypeString, glib.TypeString}, 0, 1)
-
+func NewListView() *ListView {
 	list := gtk.NewStringList([]string{})
-
-	// sl := gtk.NewStringList
-
-	cv := gtk.NewColumnView(gtk.NewSingleSelection(list))
-	cv.SetHExpand(true)
-	cv.SetVExpand(true)
+	selection := gtk.NewSingleSelection(list)
+	columnView := gtk.NewColumnView(selection)
+	columnView.SetHExpand(true)
+	columnView.SetVExpand(true)
 
 	columns := []string{"Name", "Namespace"}
 
@@ -42,32 +39,41 @@ func NewResourceView() *ResourceView {
 		column := gtk.NewColumnViewColumn(name, &factory.ListItemFactory)
 		column.SetExpand(true)
 		column.SetResizable(true)
-		cv.AppendColumn(column)
+		columnView.AppendColumn(column)
 	}
 
 	// cv.SetModel(store)
 
-	self := ResourceView{
-		ColumnView: cv,
+	self := ListView{
+		ColumnView: columnView,
 		list:       list,
 		resource:   nil,
 	}
+
+	selection.ConnectSelectionChanged(func(position, _ uint) {
+		application.DetailView(self.items[position])
+	})
 
 	self.SetResource(metav1.APIResource{})
 
 	return &self
 }
 
-func (r *ResourceView) SetResource(resource metav1.APIResource) {
+func (r *ListView) SetResource(resource metav1.APIResource) error {
 	r.resource = &resource
 
 	var pods corev1.PodList
 	if err := application.cluster.List(context.TODO(), &pods); err != nil {
-		panic(err)
+		return err
 	}
 
-	for _, pod := range pods.Items {
+	r.items = []client.Object{}
+	for _, p := range pods.Items {
+		pod := p
+		r.items = append(r.items, &pod)
 		r.list.Append(fmt.Sprintf("%s|%s", pod.Name, pod.Namespace))
 	}
+
+	return nil
 
 }
