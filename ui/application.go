@@ -17,6 +17,7 @@ var application Application
 type Application struct {
 	*adw.Application
 	window       *gtk.ApplicationWindow
+	grid         *gtk.Grid
 	navigation   *Navigation
 	resourceView *ListView
 	detailView   *DetailView
@@ -40,11 +41,11 @@ func NewApplication() (*Application, error) {
 		application.window = Window(&application.Application.Application)
 		application.navigation = NewNavigation()
 		application.resourceView = NewListView()
+		application.grid = gtk.NewGrid()
 
-		box := gtk.NewBox(gtk.OrientationHorizontal, 0)
-		box.Append(application.navigation)
-		box.Append(application.resourceView)
-		application.window.SetChild(box)
+		application.grid.Attach(application.navigation, 0, 0, 1, 1)
+		application.grid.Attach(application.resourceView, 1, 0, 1, 1)
+		application.window.SetChild(application.grid)
 		application.window.Show()
 	})
 
@@ -62,10 +63,9 @@ func (a *Application) Run() {
 }
 
 func (a *Application) DetailView(object client.Object) {
-	box := application.window.Child().(*gtk.Box)
 	if application.detailView != nil {
-		box.Remove(application.detailView)
+		a.grid.Remove(application.detailView)
 	}
 	application.detailView = NewDetailView(object)
-	box.Append(application.detailView)
+	a.grid.Attach(application.detailView, 2, 0, 1, 1)
 }

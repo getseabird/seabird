@@ -8,9 +8,7 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
@@ -28,20 +26,6 @@ func NewCluster(ctx context.Context) (*Cluster, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	config.GroupVersion = &schema.GroupVersion{}
-
-	// config.NegotiatedSerializer = runtime.NewSimpleNegotiatedSerializer(config.NegotiatedSerializer.SupportedMediaTypes()[])
-
-	_, err = dynamic.NewForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
-	// restClient, err := rest.RESTClientFor(config)
-	// if err != nil {
-	// 	return nil, err
-	// }
 
 	discovery, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
@@ -61,12 +45,6 @@ func NewCluster(ctx context.Context) (*Cluster, error) {
 	cluster := Cluster{
 		Client: rclient,
 	}
-
-	// g, r, err := discovery.ServerGroupsAndResources()
-	// if err != nil {
-	// 	return nil, err
-	// }
-	// fmt.Printf("%+v %+v", g, r)
 
 	resources, err := discovery.ServerPreferredResources()
 	if err != nil {

@@ -23,7 +23,6 @@ func NewListView() *ListView {
 	selection := gtk.NewSingleSelection(list)
 	columnView := gtk.NewColumnView(selection)
 	columnView.SetHExpand(true)
-	columnView.SetVExpand(true)
 
 	columns := []string{"Name", "Namespace"}
 
@@ -37,7 +36,7 @@ func NewListView() *ListView {
 			listitem.SetChild(label)
 		})
 		column := gtk.NewColumnViewColumn(name, &factory.ListItemFactory)
-		column.SetExpand(true)
+		// column.SetExpand(true)
 		column.SetResizable(true)
 		columnView.AppendColumn(column)
 	}

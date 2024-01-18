@@ -20,6 +20,8 @@ func NewNavigation() *Navigation {
 	lb.SetVExpand(true)
 
 	sw := gtk.NewScrolledWindow()
+	sw.SetSizeRequest(250, 100)
+
 	sw.SetVExpand(true)
 	vp := gtk.NewViewport(nil, nil)
 	vp.SetVExpand(true)
@@ -47,7 +49,6 @@ func (n *Navigation) Refresh() {
 
 	for _, resource := range application.cluster.Resources {
 		row := gtk.NewListBoxRow()
-		row.SetHExpand(true)
 		row.SetName(resource.Kind)
 		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
 		img := gtk.NewImageFromIconName("applications-system-symbolic")
