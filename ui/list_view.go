@@ -49,8 +49,9 @@ func NewListView() *ListView {
 		resource:   nil,
 	}
 
-	selection.ConnectSelectionChanged(func(position, _ uint) {
-		application.DetailView(self.items[position])
+	selection.ConnectSelectionChanged(func(_, _ uint) {
+		application.DetailView(self.items[selection.Selected()])
+
 	})
 
 	self.SetResource(metav1.APIResource{})
