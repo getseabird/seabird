@@ -22,6 +22,7 @@ type Application struct {
 	resourceView *ListView
 	detailView   *DetailView
 	cluster      *state.Cluster
+	config       *state.Config
 }
 
 func NewApplication() (*Application, error) {
@@ -32,9 +33,15 @@ func NewApplication() (*Application, error) {
 		return nil, err
 	}
 
+	config, err := state.LoadConfig()
+	if err != nil {
+		return nil, err
+	}
+
 	application = Application{
 		Application: adw.NewApplication("com.github.diamondburned.gotk4-examples.gtk4.simple", gio.ApplicationFlagsNone),
 		cluster:     cluster,
+		config:      config,
 	}
 
 	application.ConnectActivate(func() {
