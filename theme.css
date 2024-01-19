@@ -1,3 +1,12 @@
 .container-status-ok {
   color: green;
 }
+
+columnview>listview>row {
+  margin: 1px;
+}
+
+columnview>listview>row:hover,
+columnview>listview>row:focus {
+  border-radius: 6px;
+}

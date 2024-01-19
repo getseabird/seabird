@@ -8,8 +8,8 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/client-go/discovery"
-	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,6 +17,7 @@ import (
 
 type Cluster struct {
 	client.Client
+	Scheme    *runtime.Scheme
 	Resources []metav1.APIResource
 }
 
@@ -32,11 +33,12 @@ func NewCluster(ctx context.Context) (*Cluster, error) {
 		return nil, err
 	}
 
-	corev1.AddToScheme(scheme.Scheme)
-	apiextensionsv1.AddToScheme(scheme.Scheme)
+	scheme := runtime.NewScheme()
+	corev1.AddToScheme(scheme)
+	apiextensionsv1.AddToScheme(scheme)
 
 	rclient, err := client.New(config, client.Options{
-		Scheme: scheme.Scheme,
+		Scheme: scheme,
 	})
 	if err != nil {
 		return nil, err
@@ -44,6 +46,7 @@ func NewCluster(ctx context.Context) (*Cluster, error) {
 
 	cluster := Cluster{
 		Client: rclient,
+		Scheme: scheme,
 	}
 
 	resources, err := discovery.ServerPreferredResources()

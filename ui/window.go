@@ -7,7 +7,7 @@ import (
 
 func Window(app *gtk.Application) *gtk.ApplicationWindow {
 	window := gtk.NewApplicationWindow(app)
-	window.SetTitle("gotk4 Example")
+	window.SetTitle("kubegtk")
 	window.SetDefaultSize(1000, 800)
 
 	header := adw.NewHeaderBar()

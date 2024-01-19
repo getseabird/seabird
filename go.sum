@@ -4,6 +4,8 @@ github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20231223032209-213b1ae8bac3 h1:7GxyskA+T9E5QF3tnwPvRZWIts/en3J9WxqBobRm0fE=
 github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20231223032209-213b1ae8bac3/go.mod h1:bUVlQiML8tKR3YedHmzCDLd/ZIQ/2W4GTAhgB/NqKn0=
+github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240109205950-92962b56dd0f h1:VnrqBt624eRslp4qhW1X1dr7hwLwWw05Kwu6vZKT8e0=
+github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240109205950-92962b56dd0f/go.mod h1:vKV3IOI1vvV9aI7PKCgxYzUUarQByRfgDmXMRrDJy7Q=
 github.com/diamondburned/gotk4/pkg v0.1.0 h1:/KOEcSgH2XNtwl/oZ8rFUpyl0p82apN7PK5O6yZUIYk=
 github.com/diamondburned/gotk4/pkg v0.1.0/go.mod h1:rffNmHJknEj3Izr7P6x0F536G4fMsD5mgLjnNzyI9To=
 github.com/emicklei/go-restful/v3 v3.11.0 h1:rAQeMHw1c7zTmncogyy8VvRZwtkmkZ4FxERmMY4rD+g=

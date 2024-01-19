@@ -12,20 +12,26 @@ import (
 )
 
 type ListView struct {
-	*gtk.ColumnView
+	*gtk.Box
 	list     *gtk.StringList
 	resource *metav1.APIResource
 	items    []client.Object
 }
 
 func NewListView() *ListView {
+	box := gtk.NewBox(gtk.OrientationVertical, 0)
+	box.AddCSSClass("view")
+
 	list := gtk.NewStringList([]string{})
 	selection := gtk.NewSingleSelection(list)
 	columnView := gtk.NewColumnView(selection)
 	columnView.SetHExpand(true)
+	columnView.SetVExpand(true)
+	columnView.SetMarginStart(8)
+	columnView.SetMarginEnd(8)
+	box.Append(columnView)
 
 	columns := []string{"Name", "Namespace"}
-
 	for i, name := range columns {
 		ii := i
 		factory := gtk.NewSignalListItemFactory()
@@ -36,7 +42,6 @@ func NewListView() *ListView {
 			listitem.SetChild(label)
 		})
 		column := gtk.NewColumnViewColumn(name, &factory.ListItemFactory)
-		// column.SetExpand(true)
 		column.SetResizable(true)
 		columnView.AppendColumn(column)
 	}
@@ -44,9 +49,9 @@ func NewListView() *ListView {
 	// cv.SetModel(store)
 
 	self := ListView{
-		ColumnView: columnView,
-		list:       list,
-		resource:   nil,
+		Box:      box,
+		list:     list,
+		resource: nil,
 	}
 
 	selection.ConnectSelectionChanged(func(_, _ uint) {
