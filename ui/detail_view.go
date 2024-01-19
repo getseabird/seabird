@@ -186,7 +186,12 @@ func (d *DetailView) source() gtk.Widgetter {
 	// d.object.SetManagedFields([]metav1.ManagedFieldsEntry{})
 
 	d.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
+	d.sourceBuffer.SetStyleScheme(gtksource.StyleSchemeManagerGetDefault().Scheme("Adwaita-dark"))
 	sourceView := gtksource.NewViewWithBuffer(d.sourceBuffer)
+	sourceView.SetMarginBottom(5)
+	sourceView.SetMarginTop(5)
+	sourceView.SetMarginStart(5)
+	sourceView.SetMarginEnd(5)
 	sourceView.SetEditable(false)
 	scrolledWindow.SetChild(sourceView)
 
