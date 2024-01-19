@@ -1,6 +1,6 @@
 module github.com/jgillich/kubegio
 
-go 1.21.6
+go 1.21
 
 require (
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc
