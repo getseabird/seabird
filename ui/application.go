@@ -16,24 +16,27 @@ var application Application
 
 type Application struct {
 	*adw.Application
-	window       *gtk.ApplicationWindow
-	grid         *gtk.Grid
-	navigation   *Navigation
-	resourceView *ListView
-	detailView   *DetailView
-	cluster      *state.Cluster
-	config       *state.Config
+	window     *adw.ApplicationWindow
+	mainGrid   *gtk.Grid
+	navigation *Navigation
+	listView   *ListView
+	detailView *DetailView
+	cluster    *state.Cluster
+	prefs      *state.Preferences
 }
 
 func NewApplication() (*Application, error) {
 	gtk.Init()
 
-	cluster, err := state.NewCluster(context.TODO())
+	prefs, err := state.LoadPreferences()
 	if err != nil {
 		return nil, err
 	}
 
-	config, err := state.LoadConfig()
+	prefs.Clusters = append(prefs.Clusters, state.ClusterPreferences{Name: "minikube"})
+	prefs.Defaults()
+
+	cluster, err := state.NewCluster(context.TODO(), prefs.Clusters[0])
 	if err != nil {
 		return nil, err
 	}
@@ -41,19 +44,11 @@ func NewApplication() (*Application, error) {
 	application = Application{
 		Application: adw.NewApplication("com.github.diamondburned.gotk4-examples.gtk4.simple", gio.ApplicationFlagsNone),
 		cluster:     cluster,
-		config:      config,
+		prefs:       prefs,
 	}
 
 	application.ConnectActivate(func() {
-		application.window = Window(&application.Application.Application)
-		application.navigation = NewNavigation()
-		application.resourceView = NewListView()
-		application.grid = gtk.NewGrid()
-
-		application.grid.Attach(application.navigation, 0, 0, 1, 1)
-		application.grid.Attach(application.resourceView, 1, 0, 1, 1)
-		application.window.SetChild(application.grid)
-		application.window.Show()
+		application.window = application.newWindow()
 	})
 
 	provider := gtk.NewCSSProvider()
@@ -71,8 +66,26 @@ func (a *Application) Run() {
 
 func (a *Application) DetailView(object client.Object) {
 	if application.detailView != nil {
-		a.grid.Remove(application.detailView)
+		a.mainGrid.Remove(application.detailView)
 	}
 	application.detailView = NewDetailView(object)
-	a.grid.Attach(application.detailView, 2, 0, 1, 1)
+	a.mainGrid.Attach(application.detailView, 2, 0, 1, 1)
+}
+
+func (a *Application) newWindow() *adw.ApplicationWindow {
+	window := adw.NewApplicationWindow(&a.Application.Application)
+	window.SetTitle("kubegtk")
+	window.SetDefaultSize(1000, 800)
+	a.mainGrid = gtk.NewGrid()
+	window.SetContent(a.mainGrid)
+
+	application.navigation = NewNavigation()
+	a.mainGrid.Attach(application.navigation, 0, 0, 1, 1)
+
+	application.listView = NewListView()
+	a.mainGrid.Attach(application.listView, 1, 0, 1, 1)
+
+	window.Show()
+
+	return window
 }

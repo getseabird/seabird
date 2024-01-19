@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+
+Name=flatpak_demo
+Comment=A demo of a Fyne application packaged as a Flatpak. 
+Categories=Development;Documentation;
+Keywords=fyne;
+
+Icon=io.fyne.flatpak_demo
+Exec=flatpak_demo
+Terminal=false

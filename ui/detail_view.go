@@ -24,16 +24,19 @@ func NewDetailView(object client.Object) *DetailView {
 	detailView := DetailView{Box: gtk.NewBox(gtk.OrientationVertical, 0), object: object}
 	detailView.SetHExpand(true)
 
-	viewStack := adw.NewViewStack()
-	_ = viewStack.AddTitledWithIcon(detailView.properties(), "properties", "Properties", "document-properties-symbolic")
-	_ = viewStack.AddTitledWithIcon(detailView.source(), "source", "Source", "accessories-text-editor-symbolic")
-	viewSwitcherBar := adw.NewViewSwitcherBar()
+	stack := adw.NewViewStack()
+	stack.AddTitledWithIcon(detailView.properties(), "properties", "Properties", "document-properties-symbolic")
+	stack.AddTitledWithIcon(detailView.source(), "source", "Source", "accessories-text-editor-symbolic")
 
-	viewSwitcherBar.SetStack(viewStack)
-	viewSwitcherBar.SetReveal(true)
-	viewSwitcherBar.AddCSSClass("bg-red")
-	detailView.Append(viewSwitcherBar)
-	detailView.Append(viewStack)
+	header := adw.NewHeaderBar()
+	header.AddCSSClass("flat")
+	switcher := adw.NewViewSwitcher()
+	switcher.SetPolicy(adw.ViewSwitcherPolicyWide)
+	switcher.SetStack(stack)
+	header.SetTitleWidget(switcher)
+
+	detailView.Append(header)
+	detailView.Append(stack)
 
 	return &detailView
 }
@@ -65,7 +68,7 @@ func (d *DetailView) properties() *adw.PreferencesPage {
 			row.SetTitle(container.Name)
 			status := gtk.NewImageFromIconName("emblem-default-symbolic")
 			status.AddCSSClass("container-status-ok")
-			row.AddAction(status)
+			row.AddSuffix(status)
 			group.Add(row)
 
 			ar := adw.NewActionRow()

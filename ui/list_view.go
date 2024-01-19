@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -21,6 +22,21 @@ type ListView struct {
 func NewListView() *ListView {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	box.AddCSSClass("view")
+
+	header := adw.NewHeaderBar()
+	header.AddCSSClass("flat")
+	header.SetShowEndTitleButtons(false)
+	header.SetShowStartTitleButtons(false)
+	search := gtk.NewSearchBar()
+	entry := gtk.NewSearchEntry()
+	search.ConnectEntry(entry)
+	entry.Show()
+	search.Show()
+	b := gtk.NewBox(gtk.OrientationVertical, 0)
+	b.Append(search)
+	b.Append(entry)
+	header.SetTitleWidget(b)
+	box.Append(header)
 
 	list := gtk.NewStringList([]string{})
 	selection := gtk.NewSingleSelection(list)
@@ -46,8 +62,6 @@ func NewListView() *ListView {
 		columnView.AppendColumn(column)
 	}
 
-	// cv.SetModel(store)
-
 	self := ListView{
 		Box:      box,
 		list:     list,
@@ -56,7 +70,6 @@ func NewListView() *ListView {
 
 	selection.ConnectSelectionChanged(func(_, _ uint) {
 		application.DetailView(self.items[selection.Selected()])
-
 	})
 
 	self.SetResource(metav1.APIResource{})
