@@ -13,10 +13,12 @@
 		"source=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},target=${localEnv:XDG_RUNTIME_DIR}/${localEnv:WAYLAND_DISPLAY},type=bind",
 		"source=${localEnv:XDG_RUNTIME_DIR}/bus,target=${localEnv:XDG_RUNTIME_DIR}/bus,type=bind"
 	],
+	"postCreateCommand": "sudo chown vscode:vscode $XDG_RUNTIME_DIR",
 	"customizations": {
 		"vscode": {
 			"extensions": [
-				"golang.Go"
+				"golang.Go",
+				"bbenoist.Nix"
 			]
 		}
 	},

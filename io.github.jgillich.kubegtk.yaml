@@ -1,0 +1,36 @@
+app-id: io.github.jgillich.kubegtk
+runtime: org.gnome.Sdk
+runtime-version: "45"
+sdk: org.gnome.Sdk
+sdk-extensions:
+  - "org.freedesktop.Sdk.Extension.golang"
+command: kubegtk
+
+build-options:
+  build-args:
+    - --share=network
+  env:
+    - GOBIN=/app/bin
+    - GOROOT=/usr/lib/sdk/golang
+
+finish-args:
+    # - --share=ipc # Share IPC namespace with the host (necessary for X11).
+    # - --socket=x11
+    - --socket=wayland
+    - --socket=fallback-x11
+    - --device=dri
+    - --talk-name=org.freedesktop.Notifications
+    - --filesystem=home
+modules:
+  - name: kubegtk
+    buildsystem: simple
+    build-commands:
+      - $GOROOT/bin/go build -trimpath -o kubegtk
+      - install -Dm00755 kubegtk $FLATPAK_DEST/bin/kubegtk
+      # - install -Dm00644 Icon.png $FLATPAK_DEST/share/icons/hicolor/256x256/apps/$FLATPAK_ID.png
+      - install -Dm00644 $FLATPAK_ID.desktop $FLATPAK_DEST/share/applications/$FLATPAK_ID.desktop
+      - install -Dm00644 $FLATPAK_ID.appdata.xml $FLATPAK_DEST/share/appdata/$FLATPAK_ID.appdata.xml
+    sources:
+      - type: git
+        url: .
+        branch: main

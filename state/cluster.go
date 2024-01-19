@@ -17,11 +17,12 @@ import (
 
 type Cluster struct {
 	client.Client
-	Scheme    *runtime.Scheme
-	Resources []metav1.APIResource
+	Preferences ClusterPreferences
+	Scheme      *runtime.Scheme
+	Resources   []metav1.APIResource
 }
 
-func NewCluster(ctx context.Context) (*Cluster, error) {
+func NewCluster(ctx context.Context, prefs ClusterPreferences) (*Cluster, error) {
 	kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
 	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
 	if err != nil {
@@ -45,8 +46,9 @@ func NewCluster(ctx context.Context) (*Cluster, error) {
 	}
 
 	cluster := Cluster{
-		Client: rclient,
-		Scheme: scheme,
+		Client:      rclient,
+		Preferences: prefs,
+		Scheme:      scheme,
 	}
 
 	resources, err := discovery.ServerPreferredResources()

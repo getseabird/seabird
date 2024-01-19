@@ -3,52 +3,57 @@ package ui
 import (
 	"log"
 
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type Navigation struct {
-	*gtk.ScrolledWindow
-	listBox *gtk.ListBox
+	*adw.ToolbarView
 }
 
 func NewNavigation() *Navigation {
-	lb := gtk.NewListBox()
-	lb.ConnectRowSelected(func(row *gtk.ListBoxRow) {
-		log.Printf("%+v", row.Name())
-	})
-	lb.AddCSSClass("navigation-sidebar")
-	lb.SetVExpand(true)
-
-	sw := gtk.NewScrolledWindow()
-	sw.SetSizeRequest(250, 100)
-
-	sw.SetVExpand(true)
-	vp := gtk.NewViewport(nil, nil)
-	vp.SetVExpand(true)
-	vp.SetChild(lb)
-	sw.SetChild(vp)
-
-	navigation := &Navigation{
-		ScrolledWindow: sw,
-		listBox:        lb,
+	n := &Navigation{
+		ToolbarView: adw.NewToolbarView(),
 	}
-	navigation.Refresh()
 
-	return navigation
+	header := adw.NewHeaderBar()
+	header.SetShowTitle(false)
+	header.SetShowEndTitleButtons(false)
+	header.SetShowStartTitleButtons(false)
+	prefBtn := gtk.NewButton()
+	prefBtn.SetIconName("open-menu-symbolic")
+	prefBtn.ConnectClicked(func() {
+		w := NewPreferencesWindow()
+		w.SetTransientFor(&application.window.Window)
+		w.Show()
+	})
+	header.PackEnd(prefBtn)
+	n.AddTopBar(header)
 
+	cb := gtk.NewComboBoxText()
+	for _, cluster := range application.prefs.Clusters {
+		cb.AppendText(cluster.Name)
+	}
+	cb.SetActive(0)
+	header.PackStart(cb)
+
+	n.SetSizeRequest(250, 100)
+	n.SetVExpand(true)
+	n.SetContent(n.favourites())
+
+	return n
 }
 
-func (n *Navigation) Refresh() {
-	// for {
-	// 	child := n.listBox.FirstChild()
-	// 	if child == nil {
-	// 		break
-	// 	}
-	// 	n.listBox.Remove(child)
-	// }
+func (n *Navigation) favourites() *gtk.ListBox {
+	listBox := gtk.NewListBox()
+	listBox.ConnectRowSelected(func(row *gtk.ListBoxRow) {
+		log.Printf("%+v", row.Name())
+	})
+	listBox.AddCSSClass("navigation-sidebar")
+	listBox.SetVExpand(true)
 
-	for _, resource := range application.config.Navigation.Favourites {
+	for _, resource := range application.cluster.Preferences.Navigation.Favourites {
 		row := gtk.NewListBoxRow()
 		row.SetName(resource.Kind)
 		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
@@ -56,8 +61,10 @@ func (n *Navigation) Refresh() {
 		label := gtk.NewLabel(resource.Kind)
 		box.Append(label)
 		row.SetChild(box)
-		n.listBox.Append(row)
+		listBox.Append(row)
 	}
+
+	return listBox
 }
 
 func (n *Navigation) kindIcon(gvk schema.GroupVersionKind) *gtk.Image {
