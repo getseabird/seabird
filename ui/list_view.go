@@ -43,8 +43,8 @@ func NewListView() *ListView {
 	columnView := gtk.NewColumnView(selection)
 	columnView.SetHExpand(true)
 	columnView.SetVExpand(true)
-	columnView.SetMarginStart(8)
-	columnView.SetMarginEnd(8)
+	columnView.SetMarginStart(16)
+	columnView.SetMarginEnd(16)
 	box.Append(columnView)
 
 	columns := []string{"Name", "Namespace"}
@@ -69,10 +69,15 @@ func NewListView() *ListView {
 	}
 
 	selection.ConnectSelectionChanged(func(_, _ uint) {
-		application.DetailView(self.items[selection.Selected()])
+		application.detailView.SetObject(self.items[selection.Selected()])
 	})
 
 	self.SetResource(metav1.APIResource{})
+
+	if len(self.items) > 0 {
+		selection.SetSelected(0)
+		application.detailView.SetObject(self.items[0])
+	}
 
 	return &self
 }

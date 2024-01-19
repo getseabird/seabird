@@ -3,6 +3,7 @@ package ui
 import (
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -17,16 +18,28 @@ import (
 
 type DetailView struct {
 	*gtk.Box
-	object client.Object
+	object             client.Object
+	prefPage           *adw.PreferencesPage
+	dynamicGroups      []*adw.PreferencesGroup
+	nameLabel          *gtk.Label
+	namespaceLabel     *gtk.Label
+	labelsRow          *adw.ExpanderRow
+	labelsSuffix       *adw.Bin
+	dynamicLabels      []*adw.ActionRow
+	annotationsRow     *adw.ExpanderRow
+	annotationsSuffix  *adw.Bin
+	dynamicAnnotations []*adw.ActionRow
+	sourceBuffer       *gtksource.Buffer
 }
 
-func NewDetailView(object client.Object) *DetailView {
-	detailView := DetailView{Box: gtk.NewBox(gtk.OrientationVertical, 0), object: object}
-	detailView.SetHExpand(true)
+func NewDetailView() *DetailView {
+	d := DetailView{Box: gtk.NewBox(gtk.OrientationVertical, 0)}
+	d.SetHExpand(true)
 
 	stack := adw.NewViewStack()
-	stack.AddTitledWithIcon(detailView.properties(), "properties", "Properties", "document-properties-symbolic")
-	stack.AddTitledWithIcon(detailView.source(), "source", "Source", "accessories-text-editor-symbolic")
+	d.prefPage = d.properties()
+	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "document-properties-symbolic")
+	stack.AddTitledWithIcon(d.source(), "source", "Source", "accessories-text-editor-symbolic")
 
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
@@ -35,34 +48,64 @@ func NewDetailView(object client.Object) *DetailView {
 	switcher.SetStack(stack)
 	header.SetTitleWidget(switcher)
 
-	detailView.Append(header)
-	detailView.Append(stack)
+	d.Append(header)
+	d.Append(stack)
 
-	return &detailView
+	return &d
 }
 
-func actionRow(title string, suffix gtk.Widgetter) *adw.ActionRow {
-	row := adw.NewActionRow()
-	row.SetTitle(title)
-	row.AddSuffix(suffix)
-	return row
-}
+func (d *DetailView) SetObject(object client.Object) {
+	d.object = object
 
-func (d *DetailView) properties() *adw.PreferencesPage {
-	page := adw.NewPreferencesPage()
-	page.SetSizeRequest(400, 100)
-	page.SetHExpand(false)
-	group := adw.NewPreferencesGroup()
-	group.SetTitle("Metadata")
-	group.Add(actionRow("Name", gtk.NewLabel(d.object.GetName())))
-	group.Add(actionRow("Namespace", gtk.NewLabel(d.object.GetNamespace())))
-	page.Add(group)
+	defer d.sourceBuffer.SetText(string(encodeToYaml(d.object)))
+
+	d.nameLabel.SetText(object.GetName())
+	d.namespaceLabel.SetText(object.GetNamespace())
+
+	for _, r := range d.dynamicLabels {
+		d.labelsRow.Remove(r)
+	}
+	d.dynamicLabels = []*adw.ActionRow{}
+
+	for key, value := range object.GetLabels() {
+		row := adw.NewActionRow()
+		row.SetTitle(key)
+		row.SetSubtitle(value)
+		row.AddCSSClass("property")
+		d.labelsRow.AddRow(row)
+		d.dynamicLabels = append(d.dynamicLabels, row)
+	}
+
+	d.labelsSuffix.SetChild(gtk.NewLabel(strconv.Itoa(len(d.dynamicLabels))))
+
+	for _, r := range d.dynamicAnnotations {
+		d.annotationsRow.Remove(r)
+	}
+	d.dynamicAnnotations = []*adw.ActionRow{}
+
+	for key, value := range object.GetAnnotations() {
+		row := adw.NewActionRow()
+		row.SetTitle(key)
+		row.SetSubtitle(value)
+		row.AddCSSClass("property")
+		d.annotationsRow.AddRow(row)
+		d.dynamicAnnotations = append(d.dynamicAnnotations, row)
+	}
+
+	d.annotationsSuffix.SetChild(gtk.NewLabel(strconv.Itoa(len(d.dynamicAnnotations))))
+
+	for _, g := range d.dynamicGroups {
+		d.prefPage.Remove(g)
+	}
+	d.dynamicGroups = []*adw.PreferencesGroup{}
 
 	switch object := d.object.(type) {
 	case *corev1.Pod:
 		group := adw.NewPreferencesGroup()
 		group.SetTitle("Containers")
-		page.Add(group)
+		d.prefPage.Add(group)
+		d.dynamicGroups = append(d.dynamicGroups, group)
+
 		for _, container := range object.Spec.Containers {
 			row := adw.NewExpanderRow()
 			row.SetTitle(container.Name)
@@ -72,7 +115,7 @@ func (d *DetailView) properties() *adw.PreferencesPage {
 			group.Add(row)
 
 			ar := adw.NewActionRow()
-			ar.AddCSSClass("property") // 1.4+
+			ar.AddCSSClass("property")
 			ar.SetTitle("Image")
 			ar.SetSubtitle(container.Image)
 			row.AddRow(ar)
@@ -100,23 +143,52 @@ func (d *DetailView) properties() *adw.PreferencesPage {
 			}
 		}
 	}
+}
+
+func actionRow(title string, suffix gtk.Widgetter) *adw.ActionRow {
+	row := adw.NewActionRow()
+	row.SetTitle(title)
+	row.AddSuffix(suffix)
+	return row
+}
+
+func (d *DetailView) properties() *adw.PreferencesPage {
+	page := adw.NewPreferencesPage()
+	page.SetSizeRequest(400, 400)
+	group := adw.NewPreferencesGroup()
+	group.SetTitle("Metadata")
+	d.nameLabel = gtk.NewLabel("")
+	group.Add(actionRow("Name", d.nameLabel))
+	d.namespaceLabel = gtk.NewLabel("")
+	group.Add(actionRow("Namespace", d.namespaceLabel))
+
+	d.labelsRow = adw.NewExpanderRow()
+	d.labelsRow.SetTitle("Labels")
+	d.labelsSuffix = adw.NewBin()
+	d.labelsRow.AddSuffix(d.labelsSuffix)
+	group.Add(d.labelsRow)
+
+	d.annotationsRow = adw.NewExpanderRow()
+	d.annotationsRow.SetTitle("Annotations")
+	d.annotationsSuffix = adw.NewBin()
+	d.annotationsRow.AddSuffix(d.annotationsSuffix)
+	group.Add(d.annotationsRow)
+
+	page.Add(group)
+
 	return page
 }
 
 func (d *DetailView) source() gtk.Widgetter {
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetVExpand(true)
-	viewport := gtk.NewViewport(nil, nil)
-	scrolledWindow.SetChild(viewport)
-
 	// TODO collapse instead of remove
 	// d.object.SetManagedFields([]metav1.ManagedFieldsEntry{})
 
-	buffer := gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
-	buffer.SetText(string(encodeToYaml(d.object)))
-	sourceView := gtksource.NewViewWithBuffer(buffer)
+	d.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
+	sourceView := gtksource.NewViewWithBuffer(d.sourceBuffer)
 	sourceView.SetEditable(false)
-	viewport.SetChild(sourceView)
+	scrolledWindow.SetChild(sourceView)
 
 	return scrolledWindow
 }

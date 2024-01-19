@@ -9,7 +9,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/jgillich/kubegio/state"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 var application Application
@@ -64,14 +63,6 @@ func (a *Application) Run() {
 	}
 }
 
-func (a *Application) DetailView(object client.Object) {
-	if application.detailView != nil {
-		a.mainGrid.Remove(application.detailView)
-	}
-	application.detailView = NewDetailView(object)
-	a.mainGrid.Attach(application.detailView, 2, 0, 1, 1)
-}
-
 func (a *Application) newWindow() *adw.ApplicationWindow {
 	window := adw.NewApplicationWindow(&a.Application.Application)
 	window.SetTitle("kubegtk")
@@ -81,6 +72,9 @@ func (a *Application) newWindow() *adw.ApplicationWindow {
 
 	application.navigation = NewNavigation()
 	a.mainGrid.Attach(application.navigation, 0, 0, 1, 1)
+
+	application.detailView = NewDetailView()
+	a.mainGrid.Attach(application.detailView, 2, 0, 1, 1)
 
 	application.listView = NewListView()
 	a.mainGrid.Attach(application.listView, 1, 0, 1, 1)
