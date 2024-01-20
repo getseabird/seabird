@@ -1,9 +1,7 @@
 package ui
 
 import (
-	"encoding/base64"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -60,17 +58,10 @@ func secretProperties(object *corev1.Secret) *adw.PreferencesGroup {
 	group.SetTitle("Data")
 
 	for key, value := range object.Data {
-		var dst []byte
-		_, err := base64.RawStdEncoding.Decode(dst, value)
-		if err != nil {
-			log.Printf("error decoding secret: %v", err)
-			continue
-		}
-
 		row := adw.NewActionRow()
 		row.AddCSSClass("property")
 		row.SetTitle(key)
-		row.SetSubtitle(string(dst))
+		row.SetSubtitle(string(value))
 		group.Add(row)
 	}
 
