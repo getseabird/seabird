@@ -2,11 +2,12 @@
   color: green;
 }
 
-columnview>listview>row {
-  margin: 1px;
-}
-
 columnview>listview>row:hover,
-columnview>listview>row:focus {
+columnview>listview>row:focus,
+columnview>listview>row:active,
+columnview>listview>row:selected {
   border-radius: 6px;
 }
+
+
+
