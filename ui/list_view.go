@@ -7,6 +7,8 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -97,14 +99,12 @@ func (r *ListView) SetResource(gvr schema.GroupVersionResource) error {
 		}
 	}
 
-	list, err := application.cluster.Dynamic.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
+	list, err := r.listResource(context.TODO(), gvr)
 	if err != nil {
 		return err
 	}
-
-	r.items = []client.Object{}
-	for _, item := range list.Items {
-		r.items = append(r.items, &item)
+	r.items = list
+	for _, item := range list {
 		r.list.Append(fmt.Sprintf("%s|%s", item.GetName(), item.GetNamespace()))
 	}
 
@@ -115,4 +115,66 @@ func (r *ListView) SetResource(gvr schema.GroupVersionResource) error {
 
 	return nil
 
+}
+
+// We want typed objects for known resources so we can type switch them
+func (r *ListView) listResource(ctx context.Context, gvr schema.GroupVersionResource) ([]client.Object, error) {
+	var res []client.Object
+	var list client.ObjectList
+	switch gvr.String() {
+	case corev1.SchemeGroupVersion.WithResource("pods").String():
+		list = &corev1.PodList{}
+	case corev1.SchemeGroupVersion.WithResource("configmaps").String():
+		list = &corev1.ConfigMapList{}
+	case corev1.SchemeGroupVersion.WithResource("secrets").String():
+		list = &corev1.SecretList{}
+	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
+		list = &appsv1.DeploymentList{}
+	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
+		list = &appsv1.StatefulSetList{}
+	}
+	if list != nil {
+		if err := application.cluster.List(ctx, list); err != nil {
+			return nil, err
+		}
+		switch list := list.(type) {
+		case *corev1.PodList:
+			for _, i := range list.Items {
+				ii := i
+				res = append(res, &ii)
+			}
+		case *corev1.ConfigMapList:
+			for _, i := range list.Items {
+				ii := i
+				res = append(res, &ii)
+			}
+		case *corev1.SecretList:
+			for _, i := range list.Items {
+				ii := i
+				res = append(res, &ii)
+			}
+		case *appsv1.DeploymentList:
+			for _, i := range list.Items {
+				ii := i
+				res = append(res, &ii)
+			}
+		case *appsv1.StatefulSetList:
+			for _, i := range list.Items {
+				ii := i
+				res = append(res, &ii)
+			}
+		}
+
+		return res, nil
+	} else {
+		list, err := application.cluster.Dynamic.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
+		if err != nil {
+			return nil, err
+		}
+		for _, i := range list.Items {
+			ii := i
+			res = append(res, &ii)
+		}
+		return res, nil
+	}
 }
