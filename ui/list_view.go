@@ -7,16 +7,17 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ListView struct {
 	*gtk.Box
-	list     *gtk.StringList
-	resource *metav1.APIResource
-	items    []client.Object
+	list      *gtk.StringList
+	resource  *metav1.APIResource
+	items     []client.Object
+	selection *gtk.SingleSelection
 }
 
 func NewListView() *ListView {
@@ -63,38 +64,53 @@ func NewListView() *ListView {
 	}
 
 	self := ListView{
-		Box:      box,
-		list:     list,
-		resource: nil,
+		Box:       box,
+		list:      list,
+		selection: selection,
+		resource:  nil,
 	}
 
 	selection.ConnectSelectionChanged(func(_, _ uint) {
 		application.detailView.SetObject(self.items[selection.Selected()])
 	})
 
-	self.SetResource(metav1.APIResource{})
-
-	if len(self.items) > 0 {
-		selection.SetSelected(0)
-		application.detailView.SetObject(self.items[0])
-	}
+	// self.SetResource(schema.GroupVersionResource{Version: "v1", Resource: "pods"})
 
 	return &self
 }
 
-func (r *ListView) SetResource(resource metav1.APIResource) error {
-	r.resource = &resource
+func (r *ListView) SetResource(gvr schema.GroupVersionResource) error {
+	for {
+		length := uint(len(r.items))
+		if length > 0 {
+			r.list.Remove(length - 1)
+			r.items = r.items[:length-1]
+		} else {
+			break
+		}
+	}
 
-	var pods corev1.PodList
-	if err := application.cluster.List(context.TODO(), &pods); err != nil {
+	for _, res := range application.cluster.Resources {
+		if res.Group == gvr.Group && res.Version == gvr.Version && res.Name == gvr.Resource {
+			r.resource = &res
+			break
+		}
+	}
+
+	list, err := application.cluster.Dynamic.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
+	if err != nil {
 		return err
 	}
 
 	r.items = []client.Object{}
-	for _, p := range pods.Items {
-		pod := p
-		r.items = append(r.items, &pod)
-		r.list.Append(fmt.Sprintf("%s|%s", pod.Name, pod.Namespace))
+	for _, item := range list.Items {
+		r.items = append(r.items, &item)
+		r.list.Append(fmt.Sprintf("%s|%s", item.GetName(), item.GetNamespace()))
+	}
+
+	if len(r.items) > 0 {
+		r.selection.SetSelected(0)
+		application.detailView.SetObject(r.items[0])
 	}
 
 	return nil

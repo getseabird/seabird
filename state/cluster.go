@@ -5,11 +5,14 @@ import (
 	"path/filepath"
 	"sort"
 
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
+	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -17,6 +20,7 @@ import (
 
 type Cluster struct {
 	client.Client
+	Dynamic     *dynamic.DynamicClient
 	Preferences ClusterPreferences
 	Scheme      *runtime.Scheme
 	Resources   []metav1.APIResource
@@ -37,6 +41,7 @@ func NewCluster(ctx context.Context, prefs ClusterPreferences) (*Cluster, error)
 	scheme := runtime.NewScheme()
 	corev1.AddToScheme(scheme)
 	apiextensionsv1.AddToScheme(scheme)
+	appsv1.AddToScheme(scheme)
 
 	rclient, err := client.New(config, client.Options{
 		Scheme: scheme,
@@ -45,10 +50,16 @@ func NewCluster(ctx context.Context, prefs ClusterPreferences) (*Cluster, error)
 		return nil, err
 	}
 
+	dynamicClient, err := dynamic.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	cluster := Cluster{
 		Client:      rclient,
 		Preferences: prefs,
 		Scheme:      scheme,
+		Dynamic:     dynamicClient,
 	}
 
 	resources, err := discovery.ServerPreferredResources()
@@ -56,7 +67,19 @@ func NewCluster(ctx context.Context, prefs ClusterPreferences) (*Cluster, error)
 		return nil, err
 	}
 	for _, list := range resources {
-		cluster.Resources = append(cluster.Resources, list.APIResources...)
+		gv, err := schema.ParseGroupVersion(list.GroupVersion)
+		if err != nil {
+			panic(err)
+		}
+		for _, res := range list.APIResources {
+			if res.Group == "" {
+				res.Group = gv.Group
+			}
+			if res.Version == "" {
+				res.Version = gv.Version
+			}
+			cluster.Resources = append(cluster.Resources, res)
+		}
 	}
 	sort.Slice(cluster.Resources, func(i, j int) bool {
 		return cluster.Resources[i].Kind[0] < cluster.Resources[j].Kind[0]

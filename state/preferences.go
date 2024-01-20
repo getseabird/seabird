@@ -20,7 +20,7 @@ type ClusterPreferences struct {
 	AuthInfo api.AuthInfo
 
 	Navigation struct {
-		Favourites []schema.GroupVersionKind `json:"favourites,omitempty"`
+		Favourites []schema.GroupVersionResource `json:"favourites,omitempty"`
 	} `json:"navigation,omitempty"`
 }
 
@@ -52,32 +52,32 @@ func LoadPreferences() (*Preferences, error) {
 func (c *Preferences) Defaults() {
 	for i, cluster := range c.Clusters {
 		if len(cluster.Navigation.Favourites) == 0 {
-			c.Clusters[i].Navigation.Favourites = []schema.GroupVersionKind{
+			c.Clusters[i].Navigation.Favourites = []schema.GroupVersionResource{
 				{
-					Group:   "apps",
-					Version: "v1",
-					Kind:    "Deployment",
+					Group:    "apps",
+					Version:  "v1",
+					Resource: "deployments",
 				},
 				{
-					Group:   "apps",
-					Version: "v1",
-					Kind:    "StatefulSet",
+					Group:    "apps",
+					Version:  "v1",
+					Resource: "statefulsets",
 				},
 				{
-					Version: "v1",
-					Kind:    "Pod",
+					Version:  "v1",
+					Resource: "pods",
 				},
 				{
-					Version: "v1",
-					Kind:    "ConfigMap",
+					Version:  "v1",
+					Resource: "configmaps",
 				},
 				{
-					Version: "v1",
-					Kind:    "Secret",
+					Version:  "v1",
+					Resource: "secrets",
 				},
 				{
-					Version: "v1",
-					Kind:    "Namespace",
+					Version:  "v1",
+					Resource: "namespaces",
 				},
 			}
 		}

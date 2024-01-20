@@ -3,6 +3,7 @@ package ui
 import (
 	"encoding/json"
 	"fmt"
+	"log"
 	"strconv"
 	"strings"
 
@@ -188,10 +189,10 @@ func (d *DetailView) source() gtk.Widgetter {
 	d.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
 	d.sourceBuffer.SetStyleScheme(gtksource.StyleSchemeManagerGetDefault().Scheme("Adwaita-dark"))
 	sourceView := gtksource.NewViewWithBuffer(d.sourceBuffer)
-	sourceView.SetMarginBottom(5)
-	sourceView.SetMarginTop(5)
-	sourceView.SetMarginStart(5)
-	sourceView.SetMarginEnd(5)
+	sourceView.SetMarginBottom(8)
+	sourceView.SetMarginTop(8)
+	sourceView.SetMarginStart(8)
+	sourceView.SetMarginEnd(8)
 	sourceView.SetEditable(false)
 	scrolledWindow.SetChild(sourceView)
 
@@ -199,10 +200,11 @@ func (d *DetailView) source() gtk.Widgetter {
 }
 
 func encodeToYaml(object client.Object) []byte {
-	codec := serializer.NewCodecFactory(application.cluster.Scheme).LegacyCodec(corev1.SchemeGroupVersion)
+	codec := serializer.NewCodecFactory(application.cluster.Scheme).LegacyCodec(application.cluster.Scheme.PreferredVersionAllGroups()...)
 	encoded, err := runtime.Encode(codec, object)
 	if err != nil {
-		panic(err)
+		log.Printf("failed to encode object: %v", err)
+		return []byte{}
 	}
 
 	return jsonToYaml(encoded)

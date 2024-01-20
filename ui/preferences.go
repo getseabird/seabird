@@ -106,7 +106,7 @@ func (p *PreferencesWindow) newClusterPrefPage(pref state.ClusterPreferences) *a
 			fav.Group = "core"
 		}
 		ar.SetTitle(fmt.Sprintf("%s/%s", fav.Group, fav.Version))
-		ar.SetSubtitle(fav.Kind)
+		ar.SetSubtitle(fav.Resource)
 		resources.Add(ar)
 	}
 
