@@ -44,8 +44,6 @@ func NewListView() *ListView {
 	list := gtk.NewStringList([]string{})
 	selection := gtk.NewSingleSelection(list)
 	columnView := gtk.NewColumnView(selection)
-	columnView.SetHExpand(true)
-	columnView.SetVExpand(true)
 	columnView.SetMarginStart(16)
 	columnView.SetMarginEnd(16)
 	box.Append(columnView)
@@ -75,8 +73,6 @@ func NewListView() *ListView {
 	selection.ConnectSelectionChanged(func(_, _ uint) {
 		application.detailView.SetObject(self.items[selection.Selected()])
 	})
-
-	// self.SetResource(schema.GroupVersionResource{Version: "v1", Resource: "pods"})
 
 	return &self
 }

@@ -33,7 +33,6 @@ type DetailView struct {
 
 func NewDetailView() *DetailView {
 	d := DetailView{Box: gtk.NewBox(gtk.OrientationVertical, 0)}
-	d.SetHExpand(true)
 
 	stack := adw.NewViewStack()
 	d.prefPage = d.properties()

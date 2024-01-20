@@ -11,6 +11,9 @@ import (
 	"github.com/jgillich/kubegio/state"
 )
 
+const ApplicationName = "kubegtk"
+
+// TODO remove this
 var application Application
 
 type Application struct {
@@ -31,23 +34,18 @@ func NewApplication() (*Application, error) {
 	if err != nil {
 		return nil, err
 	}
-
-	prefs.Clusters = append(prefs.Clusters, state.ClusterPreferences{Name: "minikube"})
 	prefs.Defaults()
-
-	cluster, err := state.NewCluster(context.TODO(), prefs.Clusters[0])
-	if err != nil {
-		return nil, err
-	}
 
 	application = Application{
 		Application: adw.NewApplication("com.github.diamondburned.gotk4-examples.gtk4.simple", gio.ApplicationFlagsNone),
-		cluster:     cluster,
 		prefs:       prefs,
 	}
-
 	application.ConnectActivate(func() {
-		application.window = application.newWindow()
+		application.window = adw.NewApplicationWindow(&application.Application.Application)
+		application.window.SetTitle(ApplicationName)
+
+		application.window.SetContent(application.welcomeContent())
+		application.window.Show()
 	})
 
 	provider := gtk.NewCSSProvider()
@@ -63,15 +61,11 @@ func (a *Application) Run() {
 	}
 }
 
-func (a *Application) newWindow() *adw.ApplicationWindow {
-	window := adw.NewApplicationWindow(&a.Application.Application)
-	window.SetTitle("kubegtk")
-	window.SetDefaultSize(1000, 800)
-	a.mainGrid = gtk.NewGrid()
-	window.SetContent(a.mainGrid)
+func (a *Application) mainContent(cluster *state.Cluster) *gtk.Grid {
+	a.cluster = cluster
 
-	application.navigation = NewNavigation()
-	a.mainGrid.Attach(application.navigation, 0, 0, 1, 1)
+	a.window.SetDefaultSize(1000, 800)
+	a.mainGrid = gtk.NewGrid()
 
 	application.detailView = NewDetailView()
 	a.mainGrid.Attach(application.detailView, 2, 0, 1, 1)
@@ -79,7 +73,56 @@ func (a *Application) newWindow() *adw.ApplicationWindow {
 	application.listView = NewListView()
 	a.mainGrid.Attach(application.listView, 1, 0, 1, 1)
 
-	window.Show()
+	application.navigation = NewNavigation()
+	a.mainGrid.Attach(application.navigation, 0, 0, 1, 1)
 
-	return window
+	return a.mainGrid
+}
+
+func (a *Application) welcomeContent() *adw.NavigationView {
+	a.window.SetDefaultSize(600, 600)
+
+	view := adw.NewNavigationView()
+
+	box := gtk.NewBox(gtk.OrientationVertical, 0)
+	view.Add(adw.NewNavigationPage(box, ApplicationName))
+
+	header := adw.NewHeaderBar()
+	box.Append(header)
+
+	page := adw.NewPreferencesPage()
+	box.Append(page)
+
+	group := adw.NewPreferencesGroup()
+	group.SetTitle("Connect to Cluster")
+	page.Add(group)
+
+	add := gtk.NewButton()
+	add.AddCSSClass("flat")
+	add.SetIconName("list-add")
+	add.ConnectClicked(func() {
+		view.Push(NewClusterPrefPage(nil, &a.window.Window).NavigationPage)
+	})
+	group.SetHeaderSuffix(add)
+
+	for _, c := range application.prefs.Clusters {
+		cluster := c
+		row := adw.NewActionRow()
+		row.SetTitle(cluster.Name)
+		row.SetActivatable(true)
+		row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+		row.ConnectActivated(func() {
+			cluster, err := state.NewCluster(context.TODO(), cluster)
+			if err != nil {
+				dlg := adw.NewMessageDialog(&a.window.Window, "Could not connect to cluster", err.Error())
+				dlg.AddResponse("Ok", "Ok")
+				dlg.Show()
+				return
+			}
+			a.window.SetContent(a.mainContent(cluster))
+		})
+		group.Add(row)
+	}
+
+	return view
 }
