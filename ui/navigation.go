@@ -7,6 +7,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	appsv1 "k8s.io/api/apps/v1"
+	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
@@ -76,10 +78,11 @@ func (n *Navigation) favourites() *gtk.ListBox {
 		}
 		application.listView.SetResource(gvr)
 	})
+
 	listBox.AddCSSClass("navigation-sidebar")
 	listBox.SetVExpand(true)
 
-	for _, gvr := range application.cluster.Preferences.Navigation.Favourites {
+	for i, gvr := range application.cluster.Preferences.Navigation.Favourites {
 		var resource *v1.APIResource
 		for _, r := range application.cluster.Resources {
 			if r.Group == gvr.Group && r.Version == gvr.Version && r.Name == gvr.Resource {
@@ -100,6 +103,10 @@ func (n *Navigation) favourites() *gtk.ListBox {
 		box.Append(label)
 		row.SetChild(box)
 		listBox.Append(row)
+
+		if i == 0 {
+			listBox.SelectRow(row)
+		}
 	}
 
 	return listBox
@@ -107,7 +114,7 @@ func (n *Navigation) favourites() *gtk.ListBox {
 
 func (n *Navigation) resIcon(gvk schema.GroupVersionResource) *gtk.Image {
 	switch gvk.Group {
-	case "":
+	case corev1.GroupName:
 		{
 			switch gvk.Resource {
 			case "pods":
@@ -120,7 +127,7 @@ func (n *Navigation) resIcon(gvk schema.GroupVersionResource) *gtk.Image {
 				return gtk.NewImageFromIconName("application-rss+xml-symbolic")
 			}
 		}
-	case "apps":
+	case appsv1.GroupName:
 		switch gvk.Resource {
 		case "deployments":
 			return gtk.NewImageFromIconName("preferences-system-network-symbolic")
@@ -129,6 +136,5 @@ func (n *Navigation) resIcon(gvk schema.GroupVersionResource) *gtk.Image {
 		}
 	}
 
-	return gtk.NewImageFromIconName("image-missing-symbolic")
-
+	return gtk.NewImageFromIconName("application-x-addon-symbolic")
 }

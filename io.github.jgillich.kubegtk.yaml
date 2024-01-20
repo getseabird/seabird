@@ -14,13 +14,10 @@ build-options:
     - GOROOT=/usr/lib/sdk/golang
 
 finish-args:
-    # - --share=ipc # Share IPC namespace with the host (necessary for X11).
-    # - --socket=x11
-    - --socket=wayland
-    - --socket=fallback-x11
-    - --device=dri
-    - --talk-name=org.freedesktop.Notifications
-    - --filesystem=home
+  - --socket=wayland
+  - --socket=fallback-x11
+  - --device=dri
+  - --talk-name=org.freedesktop.Notifications
 modules:
   - name: kubegtk
     buildsystem: simple

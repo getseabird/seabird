@@ -2,9 +2,9 @@ package state
 
 import (
 	"context"
-	"path/filepath"
 	"sort"
 
+	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -13,24 +13,25 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
-	"k8s.io/client-go/tools/clientcmd"
-	"k8s.io/client-go/util/homedir"
+	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
 type Cluster struct {
 	client.Client
 	Dynamic     *dynamic.DynamicClient
-	Preferences ClusterPreferences
+	Preferences *ClusterPreferences
 	Scheme      *runtime.Scheme
 	Resources   []metav1.APIResource
 }
 
-func NewCluster(ctx context.Context, prefs ClusterPreferences) (*Cluster, error) {
-	kubeconfig := filepath.Join(homedir.HomeDir(), ".kube", "config")
-	config, err := clientcmd.BuildConfigFromFlags("", kubeconfig)
-	if err != nil {
-		return nil, err
+func NewCluster(ctx context.Context, prefs *ClusterPreferences) (*Cluster, error) {
+	logf.SetLogger(logr.Discard())
+
+	config := &rest.Config{
+		Host:            prefs.Host,
+		TLSClientConfig: prefs.TLS,
 	}
 
 	discovery, err := discovery.NewDiscoveryClientForConfig(config)
