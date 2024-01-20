@@ -2,10 +2,8 @@ package ui
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 	"strconv"
-	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
@@ -100,49 +98,18 @@ func (d *DetailView) SetObject(object client.Object) {
 	}
 	d.dynamicGroups = []*adw.PreferencesGroup{}
 
+	var group *adw.PreferencesGroup
 	switch object := d.object.(type) {
 	case *corev1.Pod:
-		group := adw.NewPreferencesGroup()
-		group.SetTitle("Containers")
+		group = podProperties(object)
+	case *corev1.ConfigMap:
+		group = configMapProperties(object)
+	case *corev1.Secret:
+		group = secretProperties(object)
+	}
+	if group != nil {
 		d.prefPage.Add(group)
 		d.dynamicGroups = append(d.dynamicGroups, group)
-
-		for _, container := range object.Spec.Containers {
-			row := adw.NewExpanderRow()
-			row.SetTitle(container.Name)
-			status := gtk.NewImageFromIconName("emblem-default-symbolic")
-			status.AddCSSClass("container-status-ok")
-			row.AddSuffix(status)
-			group.Add(row)
-
-			ar := adw.NewActionRow()
-			ar.AddCSSClass("property")
-			ar.SetTitle("Image")
-			ar.SetSubtitle(container.Image)
-			row.AddRow(ar)
-			if len(container.Command) > 0 {
-				ar = adw.NewActionRow()
-				ar.AddCSSClass("property")
-				ar.SetTitle("Command")
-				ar.SetSubtitle(strings.Join(container.Command, " "))
-				row.AddRow(ar)
-			}
-			if len(container.Env) > 0 {
-				var env []string
-				for _, e := range container.Env {
-					if e.ValueFrom != nil {
-						// TODO
-					} else {
-						env = append(env, fmt.Sprintf("%s=%v", e.Name, e.Value))
-					}
-				}
-				ar = adw.NewActionRow()
-				ar.AddCSSClass("property")
-				ar.SetTitle("Env")
-				ar.SetSubtitle(strings.Join(env, " "))
-				row.AddRow(ar)
-			}
-		}
 	}
 }
 
