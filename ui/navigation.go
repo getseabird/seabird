@@ -1,10 +1,13 @@
 package ui
 
 import (
-	"log"
+	"encoding/json"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
@@ -17,17 +20,36 @@ func NewNavigation() *Navigation {
 		ToolbarView: adw.NewToolbarView(),
 	}
 
-	header := adw.NewHeaderBar()
-	header.SetShowTitle(false)
-	header.SetShowEndTitleButtons(false)
-	header.SetShowStartTitleButtons(false)
-	prefBtn := gtk.NewButton()
-	prefBtn.SetIconName("open-menu-symbolic")
-	prefBtn.ConnectClicked(func() {
+	action := gio.NewSimpleAction("preferences", nil)
+	action.ConnectActivate(func(parameter *glib.Variant) {
 		w := NewPreferencesWindow()
 		w.SetTransientFor(&application.window.Window)
 		w.Show()
 	})
+	application.AddAction(action)
+
+	action = gio.NewSimpleAction("about", nil)
+	action.ConnectActivate(func(parameter *glib.Variant) {
+		w := adw.NewAboutWindow()
+		w.SetApplicationName("kubegtk")
+		w.SetTransientFor(&application.window.Window)
+		w.Show()
+	})
+	application.AddAction(action)
+
+	header := adw.NewHeaderBar()
+	header.SetShowTitle(false)
+	header.SetShowEndTitleButtons(false)
+	header.SetShowStartTitleButtons(false)
+	prefBtn := gtk.NewMenuButton()
+	prefBtn.SetIconName("open-menu-symbolic")
+	menu := gio.NewMenu()
+	menu.Append("Preferences", "app.preferences")
+	menu.Append("Keyboard Shortcuts", "app.shortcuts")
+	menu.Append("About", "app.about")
+	popover := gtk.NewPopoverMenuFromModel(menu)
+	prefBtn.SetPopover(popover)
+
 	header.PackEnd(prefBtn)
 	n.AddTopBar(header)
 
@@ -48,16 +70,32 @@ func NewNavigation() *Navigation {
 func (n *Navigation) favourites() *gtk.ListBox {
 	listBox := gtk.NewListBox()
 	listBox.ConnectRowSelected(func(row *gtk.ListBoxRow) {
-		log.Printf("%+v", row.Name())
+		var gvr schema.GroupVersionResource
+		if err := json.Unmarshal([]byte(row.Name()), &gvr); err != nil {
+			panic(err)
+		}
+		application.listView.SetResource(gvr)
 	})
 	listBox.AddCSSClass("navigation-sidebar")
 	listBox.SetVExpand(true)
 
-	for _, resource := range application.cluster.Preferences.Navigation.Favourites {
+	for _, gvr := range application.cluster.Preferences.Navigation.Favourites {
+		var resource *v1.APIResource
+		for _, r := range application.cluster.Resources {
+			if r.Group == gvr.Group && r.Version == gvr.Version && r.Name == gvr.Resource {
+				resource = &r
+				break
+			}
+		}
+
 		row := gtk.NewListBoxRow()
-		row.SetName(resource.Kind)
+		json, err := json.Marshal(gvr)
+		if err != nil {
+			panic(err)
+		}
+		row.SetName(string(json))
 		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
-		box.Append(n.kindIcon(resource))
+		box.Append(n.resIcon(gvr))
 		label := gtk.NewLabel(resource.Kind)
 		box.Append(label)
 		row.SetChild(box)
@@ -67,26 +105,26 @@ func (n *Navigation) favourites() *gtk.ListBox {
 	return listBox
 }
 
-func (n *Navigation) kindIcon(gvk schema.GroupVersionKind) *gtk.Image {
+func (n *Navigation) resIcon(gvk schema.GroupVersionResource) *gtk.Image {
 	switch gvk.Group {
 	case "":
 		{
-			switch gvk.Kind {
-			case "Pod":
+			switch gvk.Resource {
+			case "pods":
 				return gtk.NewImageFromIconName("application-x-executable-symbolic")
-			case "ConfigMap":
+			case "configmaps":
 				return gtk.NewImageFromIconName("preferences-system-symbolic")
-			case "Secret":
+			case "secrets":
 				return gtk.NewImageFromIconName("channel-secure-symbolic")
-			case "Namespace":
+			case "namespaces":
 				return gtk.NewImageFromIconName("application-rss+xml-symbolic")
 			}
 		}
 	case "apps":
-		switch gvk.Kind {
-		case "Deployment":
+		switch gvk.Resource {
+		case "deployments":
 			return gtk.NewImageFromIconName("preferences-system-network-symbolic")
-		case "StatefulSet":
+		case "statefulsets":
 			return gtk.NewImageFromIconName("drive-harddisk-symbolic")
 		}
 	}
