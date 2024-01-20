@@ -50,7 +50,7 @@ func NewApplication() (*Application, error) {
 
 	provider := gtk.NewCSSProvider()
 	provider.LoadFromPath("theme.css")
-	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), provider, 0)
+	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), provider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
 	return &application, nil
 }
