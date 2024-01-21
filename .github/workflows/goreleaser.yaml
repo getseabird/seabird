@@ -14,7 +14,7 @@ jobs:
       - name: Install dependencies
         # libadwaita-1-dev
         run: |
-          sudo apt install -y libgtk-4-dev libgtksourceview-5-dev
+          sudo apt install -y libgtk-4-dev libgtksourceview-5-dev meson
 
           git clone --depth 1 --branch 2.76.6 https://gitlab.gnome.org/GNOME/glib.git ${{ runner.temp }}/glib
           cd ${{ runner.temp }}/glib && meson setup _build && meson compile -C _build && sudo ninja -C _build install
