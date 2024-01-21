@@ -64,7 +64,7 @@ func (a *Application) Run() {
 func (a *Application) createMainContent(cluster *state.Cluster) *gtk.Grid {
 	a.cluster = cluster
 
-	a.window.SetDefaultSize(1000, 800)
+	a.window.SetDefaultSize(1400, 1000)
 	a.mainGrid = gtk.NewGrid()
 
 	application.detailView = NewDetailView()
@@ -114,9 +114,7 @@ func (a *Application) createWelcomeContent() *adw.NavigationView {
 		row.ConnectActivated(func() {
 			cluster, err := state.NewCluster(context.TODO(), cluster)
 			if err != nil {
-				dlg := adw.NewMessageDialog(&a.window.Window, "Could not connect to cluster", err.Error())
-				dlg.AddResponse("Ok", "Ok")
-				dlg.Show()
+				ShowErrorDialog(&a.window.Window, "Cluster connection failed", err)
 				return
 			}
 			a.window.SetContent(a.createMainContent(cluster))

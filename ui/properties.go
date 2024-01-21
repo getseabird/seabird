@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"log"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -9,29 +10,44 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-func podProperties(object *corev1.Pod) *adw.PreferencesGroup {
+func podProperties(pod *corev1.Pod) *adw.PreferencesGroup {
 	group := adw.NewPreferencesGroup()
 	group.SetTitle("Containers")
 
-	for _, container := range object.Spec.Containers {
-		row := adw.NewExpanderRow()
-		row.SetTitle(container.Name)
-		status := gtk.NewImageFromIconName("emblem-ok-symbolic")
-		status.AddCSSClass("success")
-		row.AddSuffix(status)
-		group.Add(row)
+	for _, container := range pod.Spec.Containers {
+		var status corev1.ContainerStatus
+		for _, s := range pod.Status.ContainerStatuses {
+			if s.Name == container.Name {
+				status = s
+				break
+			}
+		}
 
-		ar := adw.NewActionRow()
-		ar.AddCSSClass("property")
-		ar.SetTitle("Image")
-		ar.SetSubtitle(container.Image)
-		row.AddRow(ar)
+		expander := adw.NewExpanderRow()
+		expander.SetTitle(container.Name)
+		group.Add(expander)
+
+		if status.Ready {
+			icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
+			icon.AddCSSClass("success")
+			expander.AddSuffix(icon)
+		} else {
+			icon := gtk.NewImageFromIconName("dialog-warning")
+			icon.AddCSSClass("warning")
+			expander.AddSuffix(icon)
+		}
+
+		row := adw.NewActionRow()
+		row.AddCSSClass("property")
+		row.SetTitle("Image")
+		row.SetSubtitle(container.Image)
+		expander.AddRow(row)
 		if len(container.Command) > 0 {
-			ar = adw.NewActionRow()
-			ar.AddCSSClass("property")
-			ar.SetTitle("Command")
-			ar.SetSubtitle(strings.Join(container.Command, " "))
-			row.AddRow(ar)
+			row = adw.NewActionRow()
+			row.AddCSSClass("property")
+			row.SetTitle("Command")
+			row.SetSubtitle(strings.Join(container.Command, " "))
+			expander.AddRow(row)
 		}
 		if len(container.Env) > 0 {
 			var env []string
@@ -42,12 +58,34 @@ func podProperties(object *corev1.Pod) *adw.PreferencesGroup {
 					env = append(env, fmt.Sprintf("%s=%v", e.Name, e.Value))
 				}
 			}
-			ar = adw.NewActionRow()
-			ar.AddCSSClass("property")
-			ar.SetTitle("Env")
-			ar.SetSubtitle(strings.Join(env, " "))
-			row.AddRow(ar)
+			row = adw.NewActionRow()
+			row.AddCSSClass("property")
+			row.SetTitle("Env")
+			row.SetSubtitle(strings.Join(env, " "))
+			expander.AddRow(row)
 		}
+
+		row = adw.NewActionRow()
+		row.AddCSSClass("property")
+		row.SetTitle("State")
+		log.Printf("%v", status.State)
+		if status.State.Running != nil {
+			row.SetSubtitle("Running")
+		} else if status.State.Terminated != nil {
+			row.SetSubtitle(fmt.Sprintf("Terminated: %s", status.State.Terminated.Reason))
+		} else if status.State.Waiting != nil {
+			row.SetSubtitle(fmt.Sprintf("Waiting: %s", status.State.Waiting.Reason))
+		}
+		expander.AddRow(row)
+
+		row = adw.NewActionRow()
+		row.SetActivatable(true)
+		row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+		row.SetTitle("Logs")
+		row.ConnectActivated(func() {
+			NewLogWindow(&application.window.Window, pod, &container).Show()
+		})
+		expander.AddRow(row)
 	}
 
 	return group

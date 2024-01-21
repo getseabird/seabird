@@ -13,6 +13,7 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -20,6 +21,7 @@ import (
 
 type Cluster struct {
 	client.Client
+	Clientset   *kubernetes.Clientset
 	Dynamic     *dynamic.DynamicClient
 	Preferences *ClusterPreferences
 	Scheme      *runtime.Scheme
@@ -56,8 +58,14 @@ func NewCluster(ctx context.Context, prefs *ClusterPreferences) (*Cluster, error
 		return nil, err
 	}
 
+	clientset, err := kubernetes.NewForConfig(config)
+	if err != nil {
+		return nil, err
+	}
+
 	cluster := Cluster{
 		Client:      rclient,
+		Clientset:   clientset,
 		Preferences: prefs,
 		Scheme:      scheme,
 		Dynamic:     dynamicClient,
