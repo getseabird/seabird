@@ -30,6 +30,6 @@ archives:
 changelog:
   sort: asc
   filters:
-    exclude:
-      - "^docs:"
-      - "^test:"
+    include:
+      - "^feat:"
+      - "^fix:"
