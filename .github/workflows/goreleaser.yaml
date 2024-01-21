@@ -29,6 +29,5 @@ jobs:
           distribution: goreleaser
           version: latest
           args: release --clean
-          workdir: $GITHUB_WORKSPACE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
