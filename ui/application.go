@@ -37,14 +37,14 @@ func NewApplication() (*Application, error) {
 	prefs.Defaults()
 
 	application = Application{
-		Application: adw.NewApplication("com.github.diamondburned.gotk4-examples.gtk4.simple", gio.ApplicationFlagsNone),
+		Application: adw.NewApplication("io.github.jgillich.kubegtk", gio.ApplicationFlagsNone),
 		prefs:       prefs,
 	}
 	application.ConnectActivate(func() {
 		application.window = adw.NewApplicationWindow(&application.Application.Application)
 		application.window.SetTitle(ApplicationName)
 
-		application.window.SetContent(application.welcomeContent())
+		application.window.SetContent(application.createWelcomeContent())
 		application.window.Show()
 	})
 
@@ -61,7 +61,7 @@ func (a *Application) Run() {
 	}
 }
 
-func (a *Application) mainContent(cluster *state.Cluster) *gtk.Grid {
+func (a *Application) createMainContent(cluster *state.Cluster) *gtk.Grid {
 	a.cluster = cluster
 
 	a.window.SetDefaultSize(1000, 800)
@@ -79,7 +79,7 @@ func (a *Application) mainContent(cluster *state.Cluster) *gtk.Grid {
 	return a.mainGrid
 }
 
-func (a *Application) welcomeContent() *adw.NavigationView {
+func (a *Application) createWelcomeContent() *adw.NavigationView {
 	a.window.SetDefaultSize(600, 600)
 
 	view := adw.NewNavigationView()
@@ -119,7 +119,7 @@ func (a *Application) welcomeContent() *adw.NavigationView {
 				dlg.Show()
 				return
 			}
-			a.window.SetContent(a.mainContent(cluster))
+			a.window.SetContent(a.createMainContent(cluster))
 		})
 		group.Add(row)
 	}

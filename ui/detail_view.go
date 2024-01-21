@@ -55,7 +55,7 @@ func NewDetailView() *DetailView {
 func (d *DetailView) SetObject(object client.Object) {
 	d.object = object
 
-	defer d.sourceBuffer.SetText(string(encodeToYaml(d.object)))
+	defer d.sourceBuffer.SetText(string(jsonToYaml(encode(d.object))))
 
 	d.nameLabel.SetText(object.GetName())
 	d.namespaceLabel.SetText(object.GetNamespace())
@@ -169,15 +169,14 @@ func (d *DetailView) source() gtk.Widgetter {
 	return scrolledWindow
 }
 
-func encodeToYaml(object client.Object) []byte {
+func encode(object client.Object) []byte {
 	codec := serializer.NewCodecFactory(application.cluster.Scheme).LegacyCodec(application.cluster.Scheme.PreferredVersionAllGroups()...)
 	encoded, err := runtime.Encode(codec, object)
 	if err != nil {
 		log.Printf("failed to encode object: %v", err)
 		return []byte{}
 	}
-
-	return jsonToYaml(encoded)
+	return encoded
 }
 
 func jsonToYaml(data []byte) []byte {

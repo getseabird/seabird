@@ -62,14 +62,14 @@ func NewNavigation() *Navigation {
 	cb.SetActive(0)
 	header.PackStart(cb)
 
-	n.SetSizeRequest(250, 100)
+	n.SetSizeRequest(250, 250)
 	n.SetVExpand(true)
-	n.SetContent(n.favourites())
+	n.SetContent(n.createFavourites())
 
 	return n
 }
 
-func (n *Navigation) favourites() *gtk.ListBox {
+func (n *Navigation) createFavourites() *gtk.ListBox {
 	listBox := gtk.NewListBox()
 	listBox.ConnectRowSelected(func(row *gtk.ListBoxRow) {
 		var gvr schema.GroupVersionResource
