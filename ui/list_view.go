@@ -130,11 +130,23 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 
 	switch (schema.GroupVersionResource{Group: l.resource.Group, Version: l.resource.Version, Resource: l.resource.Name}.String()) {
 	case corev1.SchemeGroupVersion.WithResource("pods").String():
-		columns = append(columns, l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
-			icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
-			icon.AddCSSClass("success")
-			listitem.SetChild(icon)
-		}),
+		columns = append(columns,
+			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
+				pod := object.(*corev1.Pod)
+				for _, cond := range pod.Status.Conditions {
+					if cond.Type == corev1.ContainersReady {
+						if cond.Status == corev1.ConditionTrue {
+							icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
+							icon.AddCSSClass("success")
+							listitem.SetChild(icon)
+						} else {
+							icon := gtk.NewImageFromIconName("dialog-warning")
+							icon.AddCSSClass("warning")
+							listitem.SetChild(icon)
+						}
+					}
+				}
+			}),
 			l.createColumn("Restarts", func(listitem *gtk.ListItem, object client.Object) {
 				pod := object.(*corev1.Pod)
 				var restartCount int
@@ -144,6 +156,40 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				label := gtk.NewLabel(strconv.Itoa(restartCount))
 				label.SetHAlign(gtk.AlignStart)
 				listitem.SetChild(label)
+			}),
+		)
+	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
+		columns = append(columns,
+			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
+				deployment := object.(*appsv1.Deployment)
+				for _, cond := range deployment.Status.Conditions {
+					if cond.Type == appsv1.DeploymentAvailable {
+						if cond.Status == corev1.ConditionTrue {
+							icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
+							icon.AddCSSClass("success")
+							listitem.SetChild(icon)
+						} else {
+							icon := gtk.NewImageFromIconName("dialog-warning")
+							icon.AddCSSClass("warning")
+							listitem.SetChild(icon)
+						}
+					}
+				}
+			}),
+		)
+	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
+		columns = append(columns,
+			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
+				statefulset := object.(*appsv1.StatefulSet)
+				if statefulset.Status.ReadyReplicas == statefulset.Status.Replicas {
+					icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
+					icon.AddCSSClass("success")
+					listitem.SetChild(icon)
+				} else {
+					icon := gtk.NewImageFromIconName("dialog-warning")
+					icon.AddCSSClass("warning")
+					listitem.SetChild(icon)
+				}
 			}),
 		)
 	}

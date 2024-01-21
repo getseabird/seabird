@@ -32,7 +32,7 @@ func NewPreferencesWindow() *PreferencesWindow {
 	mainPage.Append(headerBar)
 
 	viewStack := adw.NewViewStack()
-	viewStack.AddTitledWithIcon(p.general(), "general", "Clusters", "document-properties-symbolic")
+	viewStack.AddTitledWithIcon(p.createGeneralPage(), "general", "General", "document-properties-symbolic")
 	viewStack.AddTitledWithIcon(p.other(), "other", "other", "accessories-text-editor-symbolic")
 	mainPage.Append(viewStack)
 	viewSwitcher.SetStack(viewStack)
@@ -40,11 +40,10 @@ func NewPreferencesWindow() *PreferencesWindow {
 	return &p
 }
 
-func (p *PreferencesWindow) general() gtk.Widgetter {
+func (p *PreferencesWindow) createGeneralPage() gtk.Widgetter {
 	page := adw.NewPreferencesPage()
 
 	general := adw.NewPreferencesGroup()
-	general.SetTitle("General")
 	theme := adw.NewComboRow()
 	theme.SetTitle("Theme")
 	themes := gtk.NewStringList([]string{"Dark", "Light"})
@@ -107,7 +106,6 @@ func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *Cl
 		loadBtn.SetActivatable(true)
 		loadBtn.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 		loadBtn.SetTitle("Load kubeconfig")
-		loadBtn.AddCSSClass("suggested-action")
 		group := adw.NewPreferencesGroup()
 		group.Add(loadBtn)
 		page.Add(group)
@@ -125,9 +123,7 @@ func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *Cl
 					path := fileChooser.File().Path()
 					config, err := clientcmd.BuildConfigFromFlags("", path)
 					if err != nil {
-						dlg := adw.NewMessageDialog(window, "Error loading kubeconfig", err.Error())
-						dlg.AddResponse("Ok", "Ok")
-						dlg.Show()
+						ShowErrorDialog(window, "Error loading kubeconfig", err)
 						return
 					}
 					p.name.SetText(config.ServerName)
@@ -206,9 +202,7 @@ func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *Cl
 	saveBtn.AddCSSClass("suggested-action")
 	saveBtn.ConnectClicked(func() {
 		if err := p.validate(); err != nil {
-			dlg := adw.NewMessageDialog(window, "Error", err.Error())
-			dlg.AddResponse("Ok", "Ok")
-			dlg.Show()
+			ShowErrorDialog(window, "Validation failed", err)
 			return
 		}
 
@@ -220,9 +214,7 @@ func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *Cl
 		newPrefs.TLS.CAData = []byte(p.ca.Text())
 
 		if _, err := state.NewCluster(context.TODO(), &newPrefs); err != nil {
-			dlg := adw.NewMessageDialog(window, "Could not connect to cluster", err.Error())
-			dlg.AddResponse("Ok", "Ok")
-			dlg.Show()
+			ShowErrorDialog(window, "Cluster connection failed", err)
 			return
 		}
 
@@ -232,9 +224,7 @@ func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *Cl
 			prefs = &newPrefs
 		}
 		if err := application.prefs.Save(); err != nil {
-			dlg := adw.NewMessageDialog(window, "Could not save config", err.Error())
-			dlg.AddResponse("Ok", "Ok")
-			dlg.Show()
+			ShowErrorDialog(window, "Could not save config", err)
 			return
 		}
 		p.Parent().(*adw.NavigationView).Pop()
