@@ -256,9 +256,9 @@ func (p *ClusterPrefPage) setPrefs(prefs *state.ClusterPreferences) {
 
 	if p.favourites != nil {
 		p.page.Remove(p.favourites)
-		p.favourites = p.createFavourites()
-		p.page.Add(p.favourites)
 	}
+	p.favourites = p.createFavourites()
+	p.page.Add(p.favourites)
 }
 
 func (p *ClusterPrefPage) validate() error {
