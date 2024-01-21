@@ -1,6 +1,5 @@
 release:
 	semver up release
 	git add .semver.yaml
-	VERSION=$(shell semver get release)
-	git commit --allow-empty -m "$(VERSION)"
-	git tag -a -m "$(VERSION)" "$(VERSION)"
+	git commit --allow-empty -m "$$(semver get release)"
+	git tag -a -m "$$(semver get release)" "$$(semver get release)"
