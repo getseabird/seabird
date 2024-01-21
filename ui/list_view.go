@@ -128,7 +128,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 		listitem.SetChild(label)
 	}))
 
-	switch (schema.GroupVersionResource{Group: l.resource.Group, Version: l.resource.Version, Resource: l.resource.Name}.String()) {
+	switch util.ResourceGVR(l.resource).String() {
 	case corev1.SchemeGroupVersion.WithResource("pods").String():
 		columns = append(columns,
 			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {

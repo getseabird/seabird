@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/jgillich/kubegio/state"
+	"github.com/jgillich/kubegio/util"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -93,9 +94,9 @@ type ClusterPrefPage struct {
 
 func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *ClusterPrefPage {
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
-	headerBar := adw.NewHeaderBar()
-	headerBar.SetShowEndTitleButtons(false)
-	content.Append(headerBar)
+	header := adw.NewHeaderBar()
+	header.SetShowEndTitleButtons(false)
+	content.Append(header)
 	page := adw.NewPreferencesPage()
 	content.Append(page)
 
@@ -154,7 +155,6 @@ func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *Cl
 
 	general := adw.NewPreferencesGroup()
 	page.Add(general)
-	general.SetTitle("General")
 	p.name = adw.NewEntryRow()
 	p.name.SetTitle("Name")
 	general.Add(p.name)
@@ -162,18 +162,18 @@ func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *Cl
 	p.host.SetTitle("Host")
 	general.Add(p.host)
 
-	auth := adw.NewPreferencesGroup()
-	page.Add(auth)
+	auth := adw.NewExpanderRow()
+	general.Add(auth)
 	auth.SetTitle("Authentication")
 	p.cert = adw.NewEntryRow()
 	p.cert.SetTitle("Client certificate")
-	auth.Add(p.cert)
+	auth.AddRow(p.cert)
 	p.key = adw.NewEntryRow()
 	p.key.SetTitle("Client key")
-	auth.Add(p.key)
+	auth.AddRow(p.key)
 	p.ca = adw.NewEntryRow()
 	p.ca.SetTitle("CA certificate")
-	auth.Add(p.ca)
+	auth.AddRow(p.ca)
 
 	if prefs != nil {
 		p.name.SetText(prefs.Name)
@@ -185,13 +185,68 @@ func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *Cl
 		resources := adw.NewPreferencesGroup()
 		page.Add(resources)
 		resources.SetTitle("Favourites")
+
+		add := gtk.NewButton()
+		add.AddCSSClass("flat")
+		add.SetIconName("list-add")
+		add.ConnectClicked(func() {
+			content := gtk.NewBox(gtk.OrientationVertical, 0)
+			page := adw.NewNavigationPage(content, "Add Resource")
+			p.Parent().(*adw.NavigationView).Push(page)
+
+			header := adw.NewHeaderBar()
+			header.SetShowEndTitleButtons(false)
+			content.Append(header)
+
+			group := adw.NewPreferencesGroup()
+			group.SetTitle("Select Resource")
+			pp := adw.NewPreferencesPage()
+			pp.SetVExpand(true)
+			pp.Add(group)
+			sw := gtk.NewScrolledWindow()
+			sw.SetChild(pp)
+			content.Append(sw)
+
+			cluster, _ := state.NewCluster(context.TODO(), prefs)
+			for _, r := range cluster.Resources {
+				res := r
+				exists := false
+				for _, fav := range prefs.Navigation.Favourites {
+					if res.Group == fav.Group && res.Version == fav.Version && res.Name == fav.Resource {
+						exists = true
+					}
+				}
+				if exists {
+					continue
+				}
+
+				row := adw.NewActionRow()
+				row.AddCSSClass("property")
+				if res.Group == "" {
+					row.SetTitle(res.Version)
+				} else {
+					row.SetTitle(fmt.Sprintf("%s/%s", res.Group, res.Version))
+				}
+				row.SetSubtitle(res.Name)
+				row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+				row.SetActivatable(true)
+				row.ConnectActivated(func() {
+					prefs.Navigation.Favourites = append(prefs.Navigation.Favourites, util.ResourceGVR(&res))
+					p.Parent().(*adw.NavigationView).Pop()
+				})
+				group.Add(row)
+			}
+		})
+		resources.SetHeaderSuffix(add)
+
 		for _, fav := range prefs.Navigation.Favourites {
 			ar := adw.NewActionRow()
 			ar.AddCSSClass("property")
 			if fav.Group == "" {
-				fav.Group = "core"
+				ar.SetTitle(fav.Version)
+			} else {
+				ar.SetTitle(fmt.Sprintf("%s/%s", fav.Group, fav.Version))
 			}
-			ar.SetTitle(fmt.Sprintf("%s/%s", fav.Group, fav.Version))
 			ar.SetSubtitle(fav.Resource)
 			resources.Add(ar)
 		}
@@ -229,7 +284,7 @@ func NewClusterPrefPage(prefs *state.ClusterPreferences, window *gtk.Window) *Cl
 		}
 		p.Parent().(*adw.NavigationView).Pop()
 	})
-	headerBar.PackEnd(saveBtn)
+	header.PackEnd(saveBtn)
 
 	return &p
 }
