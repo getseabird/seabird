@@ -3,9 +3,11 @@ package ui
 import (
 	"context"
 	"strconv"
+	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/jgillich/kubegio/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -118,6 +120,13 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 			listitem.SetChild(label)
 		}))
 	}
+
+	columns = append(columns, l.createColumn("Age", func(listitem *gtk.ListItem, object client.Object) {
+		duration := time.Since(object.GetCreationTimestamp().Time)
+		label := gtk.NewLabel(util.HumanizeApproximateDuration(duration))
+		label.SetHAlign(gtk.AlignStart)
+		listitem.SetChild(label)
+	}))
 
 	switch (schema.GroupVersionResource{Group: l.resource.Group, Version: l.resource.Version, Resource: l.resource.Name}.String()) {
 	case corev1.SchemeGroupVersion.WithResource("pods").String():
