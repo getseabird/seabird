@@ -6,11 +6,20 @@ import (
 	"os"
 	"path"
 
+	"github.com/kelindar/event"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
+
+const PreferencesUpdatedEvent = iota
+
+type PreferencesUpdated struct{}
+
+func (ev PreferencesUpdated) Type() uint32 {
+	return PreferencesUpdatedEvent
+}
 
 type Preferences struct {
 	Clusters []*ClusterPreferences
@@ -105,5 +114,11 @@ func (c *Preferences) Save() error {
 	if err != nil {
 		return err
 	}
-	return json.NewEncoder(f).Encode(c)
+
+	if err := json.NewEncoder(f).Encode(c); err != nil {
+		return err
+	}
+
+	event.Emit(PreferencesUpdated{})
+	return nil
 }

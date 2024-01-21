@@ -4,3 +4,7 @@ columnview>listview>row:active,
 columnview>listview>row:selected {
   border-radius: 6px;
 }
+
+.navigation-sidebar {
+  opacity: 0.9;
+}

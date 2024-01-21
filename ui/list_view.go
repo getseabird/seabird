@@ -51,7 +51,11 @@ func NewListView() *ListView {
 	l.columnView = gtk.NewColumnView(l.selection)
 	l.columnView.SetMarginStart(16)
 	l.columnView.SetMarginEnd(16)
-	l.Append(l.columnView)
+	sw := gtk.NewScrolledWindow()
+	sw.SetVExpand(true)
+	sw.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
+	sw.SetChild(l.columnView)
+	l.Append(sw)
 
 	l.selection.ConnectSelectionChanged(func(_, _ uint) {
 		application.detailView.SetObject(l.items[l.selection.Selected()])
