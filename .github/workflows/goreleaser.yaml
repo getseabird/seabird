@@ -10,17 +10,12 @@ permissions:
 jobs:
   goreleaser:
     runs-on: ubuntu-latest
+    container:
+      image: ubuntu:24.04
     steps:
       - name: Install dependencies
-        # libadwaita-1-dev
         run: |
-          sudo apt install -y libgtk-4-dev libgtksourceview-5-dev meson
-
-          git clone --depth 1 --branch 2.76.6 https://gitlab.gnome.org/GNOME/glib.git ${{ runner.temp }}/glib
-          cd ${{ runner.temp }}/glib && meson setup _build && meson compile -C _build && sudo ninja -C _build install
-
-          git clone --depth 1 --branch 1.4.2 https://gitlab.gnome.org/GNOME/libadwaita.git ${{ runner.temp }}/libadwaita
-          cd ${{ runner.temp }}/libadwaita && meson setup _build && meson compile -C _build && sudo ninja -C _build install
+          sudo apt install -y libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev
       - name: Checkout
         uses: actions/checkout@v4
         with:
