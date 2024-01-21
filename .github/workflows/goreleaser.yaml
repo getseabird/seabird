@@ -1,0 +1,37 @@
+name: goreleaser
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install dependencies
+        # libadwaita-1-dev
+        run: >
+          sudo apt install -y libgtk-4-dev libgtksourceview-5-dev
+
+          git clone --depth 1 --branch 2.76.6 https://gitlab.gnome.org/GNOME/glib.git /tmp/glib
+          cd /tmp/glib && meson setup _build && meson compile -C _build && sudo ninja -C _build install
+
+          git clone --depth 1 --branch 1.4.2 https://gitlab.gnome.org/GNOME/libadwaita.git /tmp/libadwaita
+          cd /tmp/libadwaita && meson setup _build && meson compile -C _build && sudo ninja -C _build install
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v4
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          distribution: goreleaser
+          version: latest
+          args: release --clean
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
