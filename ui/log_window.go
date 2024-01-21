@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"io"
-	"log"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
@@ -55,7 +54,6 @@ func NewLogWindow(parent *gtk.Window, pod *corev1.Pod, container *corev1.Contain
 			ShowErrorDialog(&w.Window.Window, "Could not load logs", err)
 			return
 		}
-		log.Printf(string(logs))
 		buffer.SetText(string(logs))
 	})
 

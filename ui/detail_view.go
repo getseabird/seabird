@@ -2,6 +2,7 @@ package ui
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"strconv"
 
@@ -66,6 +67,10 @@ func (d *DetailView) SetObject(object client.Object) {
 	d.dynamicLabels = []*adw.ActionRow{}
 
 	for key, value := range object.GetLabels() {
+		// workaround for annoying gtk warning (libadwaita bug?)
+		if len(value) < 5 {
+			value = fmt.Sprintf("%s     ", value)
+		}
 		row := adw.NewActionRow()
 		row.SetTitle(key)
 		row.SetSubtitle(value)
@@ -84,6 +89,10 @@ func (d *DetailView) SetObject(object client.Object) {
 	d.dynamicAnnotations = []*adw.ActionRow{}
 
 	for key, value := range object.GetAnnotations() {
+		// workaround for annoying gtk warning (libadwaita bug?)
+		if len(value) < 5 {
+			value = fmt.Sprintf("%s     ", value)
+		}
 		row := adw.NewActionRow()
 		row.SetTitle(key)
 		row.SetSubtitle(value)
