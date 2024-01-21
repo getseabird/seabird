@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -68,7 +67,6 @@ func podProperties(pod *corev1.Pod) *adw.PreferencesGroup {
 		row = adw.NewActionRow()
 		row.AddCSSClass("property")
 		row.SetTitle("State")
-		log.Printf("%v", status.State)
 		if status.State.Running != nil {
 			row.SetSubtitle("Running")
 		} else if status.State.Terminated != nil {
