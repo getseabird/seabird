@@ -26,8 +26,11 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          distribution: goreleaser
-          version: latest
-          args: release --clean
+          #args: release --clean
+          install-only: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Debug
+        run: |
+          git status || true
+          ls -la
