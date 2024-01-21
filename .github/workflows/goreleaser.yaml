@@ -12,6 +12,8 @@ jobs:
     runs-on: ubuntu-latest
     container:
       image: debian:trixie
+      env:
+        DEBIAN_FRONTEND: noninteractive
     steps:
       - if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         run: echo "flags=--snapshot" >> $GITHUB_ENV
