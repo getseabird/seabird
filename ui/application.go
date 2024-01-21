@@ -18,6 +18,7 @@ var application Application
 
 type Application struct {
 	*adw.Application
+	version    string
 	content    *adw.Bin
 	window     *adw.ApplicationWindow
 	mainGrid   *gtk.Grid
@@ -28,7 +29,7 @@ type Application struct {
 	prefs      *state.Preferences
 }
 
-func NewApplication() (*Application, error) {
+func NewApplication(version string) (*Application, error) {
 	gtk.Init()
 
 	prefs, err := state.LoadPreferences()
@@ -40,6 +41,7 @@ func NewApplication() (*Application, error) {
 	application = Application{
 		Application: adw.NewApplication("io.github.jgillich.kubegtk", gio.ApplicationFlagsNone),
 		prefs:       prefs,
+		version:     version,
 	}
 	application.ConnectActivate(func() {
 		application.window = adw.NewApplicationWindow(&application.Application.Application)

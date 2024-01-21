@@ -12,7 +12,7 @@ type AboutWindow struct {
 func NewAboutWindow(parent *gtk.Window) *AboutWindow {
 	w := AboutWindow{adw.NewAboutWindow()}
 	w.SetApplicationName(ApplicationName)
-	w.SetVersion("0.0.1")
+	w.SetVersion(application.version)
 	w.SetTransientFor(parent)
 	w.SetWebsite("https://github.com/jgillich/kubegtk")
 	w.SetIssueURL("https://github.com/jgillich/kubegtk/issues")
