@@ -17,6 +17,7 @@ jobs:
         run: |
           apt update
           apt install -y libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev git sudo golang-go
+          git config --global --add safe.directory '*'
       - name: Checkout
         uses: actions/checkout@v4
         with:
@@ -26,11 +27,6 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          #args: release --clean
-          install-only: true
+          args: release --clean
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      - name: Debug
-        run: |
-          git status || true
-          ls -la
