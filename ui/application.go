@@ -64,7 +64,7 @@ func (a *Application) Run() {
 func (a *Application) createMainContent(cluster *state.Cluster) *gtk.Grid {
 	a.cluster = cluster
 
-	a.window.SetDefaultSize(1400, 1000)
+	a.window.SetDefaultSize(1000, 1000)
 	a.mainGrid = gtk.NewGrid()
 
 	application.detailView = NewDetailView()

@@ -2,6 +2,7 @@ package ui
 
 import (
 	"encoding/json"
+	"log"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -89,6 +90,10 @@ func (n *Navigation) createFavourites() *gtk.ListBox {
 				resource = &r
 				break
 			}
+		}
+		if resource == nil {
+			log.Printf("ignoring unknown resource %s", gvr.String())
+			continue
 		}
 
 		row := gtk.NewListBoxRow()
