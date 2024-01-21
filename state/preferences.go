@@ -38,8 +38,8 @@ type ClusterPreferences struct {
 	Host       string
 	TLS        rest.TLSClientConfig
 	Navigation struct {
-		Favourites []schema.GroupVersionResource `json:"favourites,omitempty"`
-	} `json:"navigation,omitempty"`
+		Favourites []schema.GroupVersionResource
+	}
 }
 
 func LoadPreferences() (*Preferences, error) {
