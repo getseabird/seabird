@@ -25,10 +25,10 @@ jobs:
         uses: actions/setup-go@v4
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
-        working-directory: $GITHUB_WORKSPACE
         with:
           distribution: goreleaser
           version: latest
           args: release --clean
+          workdir: $GITHUB_WORKSPACE
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
