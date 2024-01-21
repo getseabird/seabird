@@ -163,6 +163,7 @@ func (d *DetailView) source() gtk.Widgetter {
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetVExpand(true)
 	// TODO collapse instead of remove
+	// https://gitlab.gnome.org/swilmet/tepl
 	// d.object.SetManagedFields([]metav1.ManagedFieldsEntry{})
 
 	d.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
