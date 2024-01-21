@@ -2,12 +2,15 @@ package ui
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/jgillich/kubegio/state"
+	"github.com/kelindar/event"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -19,12 +22,12 @@ type Navigation struct {
 }
 
 func NewNavigation() *Navigation {
-	n := &Navigation{
-		ToolbarView: adw.NewToolbarView(),
-	}
+	n := &Navigation{ToolbarView: adw.NewToolbarView()}
+	n.SetSizeRequest(250, 250)
+	n.SetVExpand(true)
 
 	action := gio.NewSimpleAction("preferences", nil)
-	action.ConnectActivate(func(parameter *glib.Variant) {
+	action.ConnectActivate(func(_ *glib.Variant) {
 		w := NewPreferencesWindow()
 		w.SetTransientFor(&application.window.Window)
 		w.Show()
@@ -32,21 +35,23 @@ func NewNavigation() *Navigation {
 	application.AddAction(action)
 
 	action = gio.NewSimpleAction("about", nil)
-	action.ConnectActivate(func(parameter *glib.Variant) {
-		w := adw.NewAboutWindow()
-		w.SetApplicationName("kubegtk")
-		w.SetTransientFor(&application.window.Window)
-		w.Show()
+	action.ConnectActivate(func(_ *glib.Variant) {
+		NewAboutWindow(&application.window.Window).Show()
 	})
 	application.AddAction(action)
 
 	header := adw.NewHeaderBar()
-	header.SetShowTitle(false)
+	application.window.SetTitle(fmt.Sprintf("%s - %s", application.cluster.Preferences.Name, ApplicationName))
+	title := gtk.NewLabel(application.cluster.Preferences.Name)
+	title.AddCSSClass("heading")
+	header.SetTitleWidget(title)
 	header.SetShowEndTitleButtons(false)
 	header.SetShowStartTitleButtons(false)
 	prefBtn := gtk.NewMenuButton()
 	prefBtn.SetIconName("open-menu-symbolic")
 	menu := gio.NewMenu()
+	menu.Append("New Window", "app.new")
+	menu.Append("Disconnect", "app.new")
 	menu.Append("Preferences", "app.preferences")
 	menu.Append("Keyboard Shortcuts", "app.shortcuts")
 	menu.Append("About", "app.about")
@@ -55,17 +60,13 @@ func NewNavigation() *Navigation {
 
 	header.PackEnd(prefBtn)
 	n.AddTopBar(header)
-
-	cb := gtk.NewComboBoxText()
-	for _, cluster := range application.prefs.Clusters {
-		cb.AppendText(cluster.Name)
-	}
-	cb.SetActive(0)
-	header.PackStart(cb)
-
-	n.SetSizeRequest(250, 250)
-	n.SetVExpand(true)
 	n.SetContent(n.createFavourites())
+
+	event.On(func(ev state.PreferencesUpdated) {
+		glib.IdleAdd(func() {
+			n.SetContent(n.createFavourites())
+		})
+	})
 
 	return n
 }
@@ -80,6 +81,7 @@ func (n *Navigation) createFavourites() *gtk.ListBox {
 		application.listView.SetResource(gvr)
 	})
 
+	listBox.AddCSSClass("dim-label")
 	listBox.AddCSSClass("navigation-sidebar")
 	listBox.SetVExpand(true)
 

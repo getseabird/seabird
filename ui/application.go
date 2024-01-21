@@ -18,6 +18,7 @@ var application Application
 
 type Application struct {
 	*adw.Application
+	content    *adw.Bin
 	window     *adw.ApplicationWindow
 	mainGrid   *gtk.Grid
 	navigation *Navigation
@@ -44,7 +45,9 @@ func NewApplication() (*Application, error) {
 		application.window = adw.NewApplicationWindow(&application.Application.Application)
 		application.window.SetTitle(ApplicationName)
 
-		application.window.SetContent(application.createWelcomeContent())
+		application.content = adw.NewBin()
+		application.content.SetChild(application.createWelcomeContent())
+		application.window.SetContent(application.content)
 		application.window.Show()
 	})
 
@@ -83,6 +86,13 @@ func (a *Application) createWelcomeContent() *adw.NavigationView {
 	a.window.SetDefaultSize(600, 600)
 
 	view := adw.NewNavigationView()
+	view.ConnectPopped(func(page *adw.NavigationPage) {
+		if err := application.prefs.Save(); err != nil {
+			ShowErrorDialog(&a.window.Window, "Could not save preferences", err)
+			return
+		}
+		application.content.SetChild(a.createWelcomeContent())
+	})
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	view.Add(adw.NewNavigationPage(box, ApplicationName))
@@ -101,8 +111,10 @@ func (a *Application) createWelcomeContent() *adw.NavigationView {
 	add.AddCSSClass("flat")
 	add.SetIconName("list-add")
 	add.ConnectClicked(func() {
-		view.Push(NewClusterPrefPage(nil, &a.window.Window).NavigationPage)
+		pref := NewClusterPrefPage(&a.window.Window, nil)
+		view.Push(pref.NavigationPage)
 	})
+
 	group.SetHeaderSuffix(add)
 
 	for _, c := range application.prefs.Clusters {
@@ -117,7 +129,7 @@ func (a *Application) createWelcomeContent() *adw.NavigationView {
 				ShowErrorDialog(&a.window.Window, "Cluster connection failed", err)
 				return
 			}
-			a.window.SetContent(a.createMainContent(cluster))
+			application.content.SetChild(a.createMainContent(cluster))
 		})
 		group.Add(row)
 	}
