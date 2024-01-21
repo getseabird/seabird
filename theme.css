@@ -1,13 +1,6 @@
-.container-status-ok {
-  color: green;
-}
-
 columnview>listview>row:hover,
 columnview>listview>row:focus,
 columnview>listview>row:active,
 columnview>listview>row:selected {
   border-radius: 6px;
 }
-
-
-

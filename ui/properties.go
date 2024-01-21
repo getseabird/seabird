@@ -16,8 +16,8 @@ func podProperties(object *corev1.Pod) *adw.PreferencesGroup {
 	for _, container := range object.Spec.Containers {
 		row := adw.NewExpanderRow()
 		row.SetTitle(container.Name)
-		status := gtk.NewImageFromIconName("emblem-default-symbolic")
-		status.AddCSSClass("container-status-ok")
+		status := gtk.NewImageFromIconName("emblem-ok-symbolic")
+		status.AddCSSClass("success")
 		row.AddSuffix(status)
 		group.Add(row)
 

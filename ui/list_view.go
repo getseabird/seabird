@@ -2,8 +2,7 @@ package ui
 
 import (
 	"context"
-	"fmt"
-	"strings"
+	"strconv"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -16,15 +15,19 @@ import (
 
 type ListView struct {
 	*gtk.Box
-	list      *gtk.StringList
-	resource  *metav1.APIResource
-	items     []client.Object
-	selection *gtk.SingleSelection
+	list       *gtk.StringList
+	resource   *metav1.APIResource
+	items      []client.Object
+	selection  *gtk.SingleSelection
+	columnView *gtk.ColumnView
+	columns    []*gtk.ColumnViewColumn
 }
 
 func NewListView() *ListView {
-	box := gtk.NewBox(gtk.OrientationVertical, 0)
-	box.AddCSSClass("view")
+	l := ListView{}
+
+	l.Box = gtk.NewBox(gtk.OrientationVertical, 0)
+	l.AddCSSClass("view")
 
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
@@ -39,78 +42,116 @@ func NewListView() *ListView {
 	b.Append(search)
 	b.Append(entry)
 	header.SetTitleWidget(b)
-	box.Append(header)
+	l.Append(header)
 
-	list := gtk.NewStringList([]string{})
-	selection := gtk.NewSingleSelection(list)
-	columnView := gtk.NewColumnView(selection)
-	columnView.SetMarginStart(16)
-	columnView.SetMarginEnd(16)
-	box.Append(columnView)
+	l.list = gtk.NewStringList([]string{})
+	l.selection = gtk.NewSingleSelection(l.list)
+	l.columnView = gtk.NewColumnView(l.selection)
+	l.columnView.SetMarginStart(16)
+	l.columnView.SetMarginEnd(16)
+	l.Append(l.columnView)
 
-	columns := []string{"Name", "Namespace"}
-	for i, name := range columns {
-		ii := i
-		factory := gtk.NewSignalListItemFactory()
-		factory.ConnectBind(func(listitem *gtk.ListItem) {
-			s := listitem.Item().Cast().(*gtk.StringObject).String()
-			label := gtk.NewLabel(strings.Split(s, "|")[ii])
-			label.SetHAlign(gtk.AlignStart)
-			listitem.SetChild(label)
-		})
-		column := gtk.NewColumnViewColumn(name, &factory.ListItemFactory)
-		column.SetResizable(true)
-		columnView.AppendColumn(column)
-	}
-
-	self := ListView{
-		Box:       box,
-		list:      list,
-		selection: selection,
-		resource:  nil,
-	}
-
-	selection.ConnectSelectionChanged(func(_, _ uint) {
-		application.detailView.SetObject(self.items[selection.Selected()])
+	l.selection.ConnectSelectionChanged(func(_, _ uint) {
+		application.detailView.SetObject(l.items[l.selection.Selected()])
 	})
 
-	return &self
+	return &l
 }
 
-func (r *ListView) SetResource(gvr schema.GroupVersionResource) error {
+func (l *ListView) SetResource(gvr schema.GroupVersionResource) error {
+	for _, res := range application.cluster.Resources {
+		if res.Group == gvr.Group && res.Version == gvr.Version && res.Name == gvr.Resource {
+			l.resource = &res
+			break
+		}
+	}
+
 	for {
-		length := uint(len(r.items))
+		length := uint(len(l.items))
 		if length > 0 {
-			r.list.Remove(length - 1)
-			r.items = r.items[:length-1]
+			l.list.Remove(length - 1)
+			l.items = l.items[:length-1]
 		} else {
 			break
 		}
 	}
 
-	for _, res := range application.cluster.Resources {
-		if res.Group == gvr.Group && res.Version == gvr.Version && res.Name == gvr.Resource {
-			r.resource = &res
-			break
-		}
+	for _, column := range l.columns {
+		l.columnView.RemoveColumn(column)
+	}
+	l.columns = l.createColumns()
+	for _, column := range l.columns {
+		l.columnView.AppendColumn(column)
 	}
 
-	list, err := r.listResource(context.TODO(), gvr)
+	list, err := l.listResource(context.TODO(), gvr)
 	if err != nil {
 		return err
 	}
-	r.items = list
-	for _, item := range list {
-		r.list.Append(fmt.Sprintf("%s|%s", item.GetName(), item.GetNamespace()))
+	l.items = list
+	for i, _ := range list {
+		l.list.Append(strconv.Itoa(i))
 	}
 
-	if len(r.items) > 0 {
-		r.selection.SetSelected(0)
-		application.detailView.SetObject(r.items[0])
+	if len(l.items) > 0 {
+		l.selection.SetSelected(0)
+		application.detailView.SetObject(l.items[0])
 	}
 
 	return nil
 
+}
+
+func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
+	var columns []*gtk.ColumnViewColumn
+
+	columns = append(columns, l.createColumn("Name", func(listitem *gtk.ListItem, object client.Object) {
+		label := gtk.NewLabel(object.GetName())
+		label.SetHAlign(gtk.AlignStart)
+		listitem.SetChild(label)
+	}))
+
+	if l.resource.Namespaced {
+		columns = append(columns, l.createColumn("Namespace", func(listitem *gtk.ListItem, object client.Object) {
+			label := gtk.NewLabel(object.GetNamespace())
+			label.SetHAlign(gtk.AlignStart)
+			listitem.SetChild(label)
+		}))
+	}
+
+	switch (schema.GroupVersionResource{Group: l.resource.Group, Version: l.resource.Version, Resource: l.resource.Name}.String()) {
+	case corev1.SchemeGroupVersion.WithResource("pods").String():
+		columns = append(columns, l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
+			icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
+			icon.AddCSSClass("success")
+			listitem.SetChild(icon)
+		}),
+			l.createColumn("Restarts", func(listitem *gtk.ListItem, object client.Object) {
+				pod := object.(*corev1.Pod)
+				var restartCount int
+				for _, container := range pod.Status.ContainerStatuses {
+					restartCount += int(container.RestartCount)
+				}
+				label := gtk.NewLabel(strconv.Itoa(restartCount))
+				label.SetHAlign(gtk.AlignStart)
+				listitem.SetChild(label)
+			}),
+		)
+	}
+
+	return columns
+}
+
+func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, object client.Object)) *gtk.ColumnViewColumn {
+	factory := gtk.NewSignalListItemFactory()
+	factory.ConnectBind(func(listitem *gtk.ListItem) {
+		idx, _ := strconv.Atoi(listitem.Item().Cast().(*gtk.StringObject).String())
+		object := l.items[idx]
+		bind(listitem, object)
+	})
+	column := gtk.NewColumnViewColumn(name, &factory.ListItemFactory)
+	column.SetResizable(true)
+	return column
 }
 
 // We want typed objects for known resources so we can type switch them
