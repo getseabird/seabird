@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/jgillich/kubegio/state"
+	"github.com/jgillich/kubegio/style"
 )
 
 const ApplicationName = "kubegtk"
@@ -54,7 +55,8 @@ func NewApplication(version string) (*Application, error) {
 	})
 
 	provider := gtk.NewCSSProvider()
-	provider.LoadFromPath("theme.css")
+	theme, _ := style.FS.ReadFile("theme.css")
+	provider.LoadFromData(string(theme))
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), provider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
 	return &application, nil
