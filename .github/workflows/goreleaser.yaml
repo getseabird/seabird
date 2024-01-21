@@ -15,7 +15,8 @@ jobs:
     steps:
       - name: Install dependencies
         run: |
-          sudo apt install -y libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev
+          apt update
+          apt install -y libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev git sudo
       - name: Checkout
         uses: actions/checkout@v4
         with:
