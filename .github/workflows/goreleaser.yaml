@@ -19,10 +19,10 @@ jobs:
         run: echo "flags=--snapshot" >> $GITHUB_ENV
       - name: Install dependencies
         run: |
-          dpkg --add-architecture arm64
-          apt update || true # not every repo is available for arm64
-          apt install -y libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev gcc-aarch64-linux-gnu libc6-dev-arm64-cross git golang-go
-          apt install -y libgtk-4-dev:arm64 libgtksourceview-5-dev:arm64 libadwaita-1-dev:arm64 libgirepository1.0-dev:arm64
+          # dpkg --add-architecture arm64
+          apt update
+          apt install -yq libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev git golang-go
+          # apt install -yq gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgtk-4-dev:arm64 libgtksourceview-5-dev:arm64 libadwaita-1-dev:arm64 libgirepository1.0-dev:arm64
           git config --global --add safe.directory '*'
       - name: Checkout
         uses: actions/checkout@v4
