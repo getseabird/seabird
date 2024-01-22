@@ -48,7 +48,8 @@ func (w *ClusterWindow) createActions() {
 	newWindow.ConnectActivate(func(_ *glib.Variant) {
 		prefs, err := state.LoadPreferences()
 		if err != nil {
-			// todo
+			ShowErrorDialog(&w.Window, "Could not load preferences", err)
+			return
 		}
 		prefs.Defaults()
 		NewWelcomeWindow(w.Application(), prefs).Show()
@@ -64,9 +65,9 @@ func (w *ClusterWindow) createActions() {
 
 	action := gio.NewSimpleAction("prefs", nil)
 	action.ConnectActivate(func(_ *glib.Variant) {
-		w := NewPreferencesWindow(w)
-		w.SetTransientFor(&w.Window.Window)
-		w.Show()
+		prefs := NewPreferencesWindow(w)
+		prefs.SetTransientFor(&w.Window)
+		prefs.Show()
 	})
 	w.AddAction(action)
 

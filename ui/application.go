@@ -32,8 +32,6 @@ func NewApplication(version string) (*Application, error) {
 		version:     version,
 	}
 
-	// a.AddAction(createAboutAction())
-
 	provider := gtk.NewCSSProvider()
 	theme, _ := style.FS.ReadFile("theme.css")
 	provider.LoadFromData(string(theme))
