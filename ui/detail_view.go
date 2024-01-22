@@ -19,19 +19,22 @@ import (
 
 type DetailView struct {
 	*gtk.Box
-	root               *ClusterWindow
-	object             client.Object
-	prefPage           *adw.PreferencesPage
-	dynamicGroups      []*adw.PreferencesGroup
-	nameLabel          *gtk.Label
-	namespaceLabel     *gtk.Label
-	labelsRow          *adw.ExpanderRow
-	labelsSuffix       *adw.Bin
-	dynamicLabels      []*adw.ActionRow
-	annotationsRow     *adw.ExpanderRow
-	annotationsSuffix  *adw.Bin
-	dynamicAnnotations []*adw.ActionRow
-	sourceBuffer       *gtksource.Buffer
+	root             *ClusterWindow
+	object           client.Object
+	prefPage         *adw.PreferencesPage
+	dynamicGroups    []*adw.PreferencesGroup
+	nameLabel        *gtk.Label
+	namespaceLabel   *gtk.Label
+	labelsRow        *adw.ExpanderRow
+	labelsLabel      *gtk.Label
+	labelsRows       []*adw.ActionRow
+	annotationsRow   *adw.ExpanderRow
+	annotationsLabel *gtk.Label
+	annotationsRows  []*adw.ActionRow
+	ownersRow        *adw.ExpanderRow
+	ownersLabel      *gtk.Label
+	ownersRows       []*adw.ActionRow
+	sourceBuffer     *gtksource.Buffer
 }
 
 func NewDetailView(root *ClusterWindow) *DetailView {
@@ -63,10 +66,10 @@ func (d *DetailView) SetObject(object client.Object) {
 	d.nameLabel.SetText(object.GetName())
 	d.namespaceLabel.SetText(object.GetNamespace())
 
-	for _, r := range d.dynamicLabels {
+	for _, r := range d.labelsRows {
 		d.labelsRow.Remove(r)
 	}
-	d.dynamicLabels = []*adw.ActionRow{}
+	d.labelsRows = []*adw.ActionRow{}
 
 	for key, value := range object.GetLabels() {
 		// workaround for annoying gtk warning (libadwaita bug?)
@@ -80,15 +83,14 @@ func (d *DetailView) SetObject(object client.Object) {
 		row.SetSubtitleLines(1)
 		row.AddCSSClass("property")
 		d.labelsRow.AddRow(row)
-		d.dynamicLabels = append(d.dynamicLabels, row)
+		d.labelsRows = append(d.labelsRows, row)
 	}
+	d.labelsLabel.SetText(strconv.Itoa(len(d.labelsRows)))
 
-	d.labelsSuffix.SetChild(gtk.NewLabel(strconv.Itoa(len(d.dynamicLabels))))
-
-	for _, r := range d.dynamicAnnotations {
+	for _, r := range d.annotationsRows {
 		d.annotationsRow.Remove(r)
 	}
-	d.dynamicAnnotations = []*adw.ActionRow{}
+	d.annotationsRows = []*adw.ActionRow{}
 
 	for key, value := range object.GetAnnotations() {
 		// workaround for annoying gtk warning (libadwaita bug?)
@@ -102,10 +104,25 @@ func (d *DetailView) SetObject(object client.Object) {
 		row.SetSubtitleLines(1)
 		row.AddCSSClass("property")
 		d.annotationsRow.AddRow(row)
-		d.dynamicAnnotations = append(d.dynamicAnnotations, row)
+		d.annotationsRows = append(d.annotationsRows, row)
 	}
+	d.annotationsLabel.SetText(strconv.Itoa(len(d.annotationsRows)))
 
-	d.annotationsSuffix.SetChild(gtk.NewLabel(strconv.Itoa(len(d.dynamicAnnotations))))
+	for _, r := range d.ownersRows {
+		d.ownersRow.Remove(r)
+	}
+	d.ownersRows = []*adw.ActionRow{}
+
+	for _, ref := range object.GetOwnerReferences() {
+		row := adw.NewActionRow()
+		row.SetTitle(fmt.Sprintf("%s %s", ref.APIVersion, ref.Kind))
+		row.SetSubtitle(ref.Name)
+		row.SetSubtitleLines(1)
+		row.AddCSSClass("property")
+		d.ownersRow.AddRow(row)
+		d.ownersRows = append(d.ownersRows, row)
+	}
+	d.ownersLabel.SetText(strconv.Itoa(len(d.ownersRows)))
 
 	for _, g := range d.dynamicGroups {
 		d.prefPage.Remove(g)
@@ -146,15 +163,21 @@ func (d *DetailView) createProperties() *adw.PreferencesPage {
 
 	d.labelsRow = adw.NewExpanderRow()
 	d.labelsRow.SetTitle("Labels")
-	d.labelsSuffix = adw.NewBin()
-	d.labelsRow.AddSuffix(d.labelsSuffix)
+	d.labelsLabel = gtk.NewLabel("")
+	d.labelsRow.AddSuffix(d.labelsLabel)
 	group.Add(d.labelsRow)
 
 	d.annotationsRow = adw.NewExpanderRow()
 	d.annotationsRow.SetTitle("Annotations")
-	d.annotationsSuffix = adw.NewBin()
-	d.annotationsRow.AddSuffix(d.annotationsSuffix)
+	d.annotationsLabel = gtk.NewLabel("")
+	d.annotationsRow.AddSuffix(d.annotationsLabel)
 	group.Add(d.annotationsRow)
+
+	d.ownersRow = adw.NewExpanderRow()
+	d.ownersRow.SetTitle("Owners")
+	d.ownersLabel = gtk.NewLabel("")
+	d.ownersRow.AddSuffix(d.ownersLabel)
+	group.Add(d.ownersRow)
 
 	page.Add(group)
 
