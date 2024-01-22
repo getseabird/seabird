@@ -3,6 +3,7 @@ module github.com/jgillich/kubegio
 go 1.21
 
 require (
+	github.com/adrg/strutil v0.3.1
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc
 	github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240109205950-92962b56dd0f
 	github.com/diamondburned/gotk4/pkg v0.1.0

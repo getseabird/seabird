@@ -55,6 +55,7 @@ func (w *ClusterWindow) createActions() {
 		NewWelcomeWindow(w.Application(), prefs).Show()
 	})
 	w.AddAction(newWindow)
+	w.Application().SetAccelsForAction("win.newWindow", []string{"<Ctrl>N"})
 
 	disconnect := gio.NewSimpleAction("disconnect", nil)
 	disconnect.ConnectActivate(func(_ *glib.Variant) {
@@ -62,6 +63,7 @@ func (w *ClusterWindow) createActions() {
 		w.Close()
 	})
 	w.AddAction(disconnect)
+	w.Application().SetAccelsForAction("win.disconnect", []string{"<Ctrl>Q"})
 
 	action := gio.NewSimpleAction("prefs", nil)
 	action.ConnectActivate(func(_ *glib.Variant) {

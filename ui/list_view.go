@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -96,7 +95,7 @@ func (l *ListView) SetFilter(filter SearchFilter) {
 	l.selection = l.createModel()
 	l.columnView.SetModel(l.selection)
 	for i, object := range l.items {
-		if strings.Contains(object.GetName(), filter.Name) || len(filter.Name) == 0 {
+		if filter.Test(object) {
 			l.selection.Model().Cast().(*gtk.StringList).Append(strconv.Itoa(i))
 		}
 	}
