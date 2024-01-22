@@ -13,6 +13,7 @@ var (
 )
 
 func main() {
+	ui.Version = version
 	app, err := ui.NewApplication(version)
 	if err != nil {
 		log.Fatal(err)

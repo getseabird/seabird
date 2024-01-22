@@ -5,6 +5,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 )
 
+var Version string = "dev"
+
 type AboutWindow struct {
 	*adw.AboutWindow
 }
@@ -12,7 +14,7 @@ type AboutWindow struct {
 func NewAboutWindow(parent *gtk.Window) *AboutWindow {
 	w := AboutWindow{adw.NewAboutWindow()}
 	w.SetApplicationName(ApplicationName)
-	w.SetVersion(application.version)
+	w.SetVersion(Version)
 	w.SetTransientFor(parent)
 	w.SetWebsite("https://github.com/jgillich/kubegtk")
 	w.SetIssueURL("https://github.com/jgillich/kubegtk/issues")

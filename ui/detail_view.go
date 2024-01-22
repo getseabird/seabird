@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"strconv"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
@@ -18,6 +19,7 @@ import (
 
 type DetailView struct {
 	*gtk.Box
+	root               *ClusterWindow
 	object             client.Object
 	prefPage           *adw.PreferencesPage
 	dynamicGroups      []*adw.PreferencesGroup
@@ -32,13 +34,13 @@ type DetailView struct {
 	sourceBuffer       *gtksource.Buffer
 }
 
-func NewDetailView() *DetailView {
-	d := DetailView{Box: gtk.NewBox(gtk.OrientationVertical, 0)}
+func NewDetailView(root *ClusterWindow) *DetailView {
+	d := DetailView{Box: gtk.NewBox(gtk.OrientationVertical, 0), root: root}
 
 	stack := adw.NewViewStack()
-	d.prefPage = d.properties()
+	d.prefPage = d.createProperties()
 	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "document-properties-symbolic")
-	stack.AddTitledWithIcon(d.source(), "source", "Source", "accessories-text-editor-symbolic")
+	stack.AddTitledWithIcon(d.createSource(), "source", "Source", "accessories-text-editor-symbolic")
 
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
@@ -56,7 +58,7 @@ func NewDetailView() *DetailView {
 func (d *DetailView) SetObject(object client.Object) {
 	d.object = object
 
-	defer d.sourceBuffer.SetText(string(jsonToYaml(encode(d.object))))
+	defer d.sourceBuffer.SetText(string(jsonToYaml(d.encode(d.object))))
 
 	d.nameLabel.SetText(object.GetName())
 	d.namespaceLabel.SetText(object.GetNamespace())
@@ -113,11 +115,11 @@ func (d *DetailView) SetObject(object client.Object) {
 	var group *adw.PreferencesGroup
 	switch object := d.object.(type) {
 	case *corev1.Pod:
-		group = podProperties(object)
+		group = d.podProperties(object)
 	case *corev1.ConfigMap:
-		group = configMapProperties(object)
+		group = d.configMapProperties(object)
 	case *corev1.Secret:
-		group = secretProperties(object)
+		group = d.secretProperties(object)
 	}
 	if group != nil {
 		d.prefPage.Add(group)
@@ -132,7 +134,7 @@ func actionRow(title string, suffix gtk.Widgetter) *adw.ActionRow {
 	return row
 }
 
-func (d *DetailView) properties() *adw.PreferencesPage {
+func (d *DetailView) createProperties() *adw.PreferencesPage {
 	page := adw.NewPreferencesPage()
 	page.SetSizeRequest(400, 400)
 	group := adw.NewPreferencesGroup()
@@ -159,7 +161,7 @@ func (d *DetailView) properties() *adw.PreferencesPage {
 	return page
 }
 
-func (d *DetailView) source() gtk.Widgetter {
+func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetVExpand(true)
 	// TODO collapse instead of remove
@@ -179,8 +181,118 @@ func (d *DetailView) source() gtk.Widgetter {
 	return scrolledWindow
 }
 
-func encode(object client.Object) []byte {
-	codec := serializer.NewCodecFactory(application.cluster.Scheme).LegacyCodec(application.cluster.Scheme.PreferredVersionAllGroups()...)
+func (d *DetailView) podProperties(pod *corev1.Pod) *adw.PreferencesGroup {
+	group := adw.NewPreferencesGroup()
+	group.SetTitle("Containers")
+
+	for _, container := range pod.Spec.Containers {
+		var status corev1.ContainerStatus
+		for _, s := range pod.Status.ContainerStatuses {
+			if s.Name == container.Name {
+				status = s
+				break
+			}
+		}
+
+		expander := adw.NewExpanderRow()
+		expander.SetTitle(container.Name)
+		group.Add(expander)
+
+		if status.Ready {
+			icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
+			icon.AddCSSClass("success")
+			expander.AddSuffix(icon)
+		} else {
+			icon := gtk.NewImageFromIconName("dialog-warning")
+			icon.AddCSSClass("warning")
+			expander.AddSuffix(icon)
+		}
+
+		row := adw.NewActionRow()
+		row.AddCSSClass("property")
+		row.SetTitle("Image")
+		row.SetSubtitle(container.Image)
+		expander.AddRow(row)
+		if len(container.Command) > 0 {
+			row = adw.NewActionRow()
+			row.AddCSSClass("property")
+			row.SetTitle("Command")
+			row.SetSubtitle(strings.Join(container.Command, " "))
+			expander.AddRow(row)
+		}
+		if len(container.Env) > 0 {
+			var env []string
+			for _, e := range container.Env {
+				if e.ValueFrom != nil {
+					// TODO
+				} else {
+					env = append(env, fmt.Sprintf("%s=%v", e.Name, e.Value))
+				}
+			}
+			row = adw.NewActionRow()
+			row.AddCSSClass("property")
+			row.SetTitle("Env")
+			row.SetSubtitle(strings.Join(env, " "))
+			expander.AddRow(row)
+		}
+
+		row = adw.NewActionRow()
+		row.AddCSSClass("property")
+		row.SetTitle("State")
+		if status.State.Running != nil {
+			row.SetSubtitle("Running")
+		} else if status.State.Terminated != nil {
+			row.SetSubtitle(fmt.Sprintf("Terminated: %s", status.State.Terminated.Reason))
+		} else if status.State.Waiting != nil {
+			row.SetSubtitle(fmt.Sprintf("Waiting: %s", status.State.Waiting.Reason))
+		}
+		expander.AddRow(row)
+
+		row = adw.NewActionRow()
+		row.SetActivatable(true)
+		row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+		row.SetTitle("Logs")
+		row.ConnectActivated(func() {
+			NewLogWindow(d.root, pod, &container).Show()
+		})
+		expander.AddRow(row)
+	}
+
+	return group
+}
+
+func (d *DetailView) secretProperties(object *corev1.Secret) *adw.PreferencesGroup {
+	group := adw.NewPreferencesGroup()
+	group.SetTitle("Data")
+
+	for key, value := range object.Data {
+		row := adw.NewActionRow()
+		row.AddCSSClass("property")
+		row.SetTitle(key)
+		row.SetSubtitle(string(value))
+		group.Add(row)
+	}
+
+	return group
+}
+
+func (d *DetailView) configMapProperties(object *corev1.ConfigMap) *adw.PreferencesGroup {
+	group := adw.NewPreferencesGroup()
+	group.SetTitle("Data")
+
+	for key, value := range object.Data {
+		row := adw.NewActionRow()
+		row.AddCSSClass("property")
+		row.SetTitle(key)
+		row.SetSubtitle(value)
+		group.Add(row)
+	}
+
+	return group
+}
+
+func (d *DetailView) encode(object client.Object) []byte {
+	codec := serializer.NewCodecFactory(d.root.cluster.Scheme).LegacyCodec(d.root.cluster.Scheme.PreferredVersionAllGroups()...)
 	encoded, err := runtime.Encode(codec, object)
 	if err != nil {
 		log.Printf("failed to encode object: %v", err)

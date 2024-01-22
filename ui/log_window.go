@@ -12,13 +12,14 @@ import (
 
 type LogWindow struct {
 	*adw.PreferencesWindow
+	root      *ClusterWindow
 	pod       *corev1.Pod
 	container *corev1.Container
 }
 
-func NewLogWindow(parent *gtk.Window, pod *corev1.Pod, container *corev1.Container) *LogWindow {
+func NewLogWindow(root *ClusterWindow, pod *corev1.Pod, container *corev1.Container) *LogWindow {
 	w := LogWindow{PreferencesWindow: adw.NewPreferencesWindow()}
-	w.SetTransientFor(parent)
+	w.SetTransientFor(&root.Window)
 	w.SetDefaultSize(800, 800)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
@@ -43,7 +44,7 @@ func NewLogWindow(parent *gtk.Window, pod *corev1.Pod, container *corev1.Contain
 	box.Append(scrolledWindow)
 
 	w.ConnectShow(func() {
-		req := application.cluster.Clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
+		req := root.cluster.Clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
 		r, err := req.Stream(context.TODO())
 		if err != nil {
 			ShowErrorDialog(&w.Window.Window, "Could not load logs", err)

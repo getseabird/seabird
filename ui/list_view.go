@@ -17,6 +17,7 @@ import (
 
 type ListView struct {
 	*gtk.Box
+	root       *ClusterWindow
 	list       *gtk.StringList
 	resource   *metav1.APIResource
 	items      []client.Object
@@ -25,10 +26,8 @@ type ListView struct {
 	columns    []*gtk.ColumnViewColumn
 }
 
-func NewListView() *ListView {
-	l := ListView{}
-
-	l.Box = gtk.NewBox(gtk.OrientationVertical, 0)
+func NewListView(root *ClusterWindow) *ListView {
+	l := ListView{Box: gtk.NewBox(gtk.OrientationVertical, 0), root: root}
 	l.AddCSSClass("view")
 
 	header := adw.NewHeaderBar()
@@ -58,14 +57,14 @@ func NewListView() *ListView {
 	l.Append(sw)
 
 	l.selection.ConnectSelectionChanged(func(_, _ uint) {
-		application.detailView.SetObject(l.items[l.selection.Selected()])
+		root.detailView.SetObject(l.items[l.selection.Selected()])
 	})
 
 	return &l
 }
 
 func (l *ListView) SetResource(gvr schema.GroupVersionResource) error {
-	for _, res := range application.cluster.Resources {
+	for _, res := range l.root.cluster.Resources {
 		if res.Group == gvr.Group && res.Version == gvr.Version && res.Name == gvr.Resource {
 			l.resource = &res
 			break
@@ -101,7 +100,7 @@ func (l *ListView) SetResource(gvr schema.GroupVersionResource) error {
 
 	if len(l.items) > 0 {
 		l.selection.SetSelected(0)
-		application.detailView.SetObject(l.items[0])
+		l.root.detailView.SetObject(l.items[0])
 	}
 
 	return nil
@@ -214,7 +213,7 @@ func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, o
 }
 
 // We want typed objects for known resources so we can type switch them
-func (r *ListView) listResource(ctx context.Context, gvr schema.GroupVersionResource) ([]client.Object, error) {
+func (l *ListView) listResource(ctx context.Context, gvr schema.GroupVersionResource) ([]client.Object, error) {
 	var res []client.Object
 	var list client.ObjectList
 	switch gvr.String() {
@@ -230,7 +229,7 @@ func (r *ListView) listResource(ctx context.Context, gvr schema.GroupVersionReso
 		list = &appsv1.StatefulSetList{}
 	}
 	if list != nil {
-		if err := application.cluster.List(ctx, list); err != nil {
+		if err := l.root.cluster.List(ctx, list); err != nil {
 			return nil, err
 		}
 		switch list := list.(type) {
@@ -263,7 +262,7 @@ func (r *ListView) listResource(ctx context.Context, gvr schema.GroupVersionReso
 
 		return res, nil
 	} else {
-		list, err := application.cluster.Dynamic.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
+		list, err := l.root.cluster.Dynamic.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
 		if err != nil {
 			return nil, err
 		}

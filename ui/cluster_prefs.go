@@ -16,7 +16,8 @@ import (
 type ClusterPrefPage struct {
 	*adw.NavigationPage
 	parent     *gtk.Window
-	prefs      *state.ClusterPreferences
+	prefs      *state.Preferences
+	active     *state.ClusterPreferences
 	page       *adw.PreferencesPage
 	name       *adw.EntryRow
 	host       *adw.EntryRow
@@ -26,12 +27,13 @@ type ClusterPrefPage struct {
 	favourites *adw.PreferencesGroup
 }
 
-func NewClusterPrefPage(parent *gtk.Window, prefs *state.ClusterPreferences) *ClusterPrefPage {
+func NewClusterPrefPage(parent *gtk.Window, prefs *state.Preferences, active *state.ClusterPreferences) *ClusterPrefPage {
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	p := ClusterPrefPage{NavigationPage: adw.NewNavigationPage(content, "Cluster")}
 
 	p.parent = parent
 	p.prefs = prefs
+	p.active = active
 
 	header := adw.NewHeaderBar()
 	header.SetShowEndTitleButtons(false)
@@ -40,7 +42,7 @@ func NewClusterPrefPage(parent *gtk.Window, prefs *state.ClusterPreferences) *Cl
 	p.page = adw.NewPreferencesPage()
 	content.Append(p.page)
 
-	if prefs == nil {
+	if active == nil {
 		group := adw.NewPreferencesGroup()
 		p.page.Add(group)
 		group.Add(p.createLoadActionRow())
@@ -68,8 +70,8 @@ func NewClusterPrefPage(parent *gtk.Window, prefs *state.ClusterPreferences) *Cl
 	p.ca.SetTitle("CA certificate")
 	auth.AddRow(p.ca)
 
-	if prefs != nil {
-		p.setPrefs(prefs)
+	if active != nil {
+		p.setPrefs(active)
 
 		delete := adw.NewActionRow()
 		delete.SetActivatable(true)
@@ -77,7 +79,7 @@ func NewClusterPrefPage(parent *gtk.Window, prefs *state.ClusterPreferences) *Cl
 		delete.SetTitle("Delete")
 		delete.AddCSSClass("error")
 		delete.ConnectActivated(func() {
-			dialog := adw.NewMessageDialog(parent, "Delete cluster?", fmt.Sprintf("Are you sure you want to delete cluster \"%s\"?", prefs.Name))
+			dialog := adw.NewMessageDialog(parent, "Delete cluster?", fmt.Sprintf("Are you sure you want to delete cluster \"%s\"?", active.Name))
 			dialog.AddResponse("cancel", "Cancel")
 			dialog.AddResponse("delete", "Delete")
 			dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
@@ -85,13 +87,13 @@ func NewClusterPrefPage(parent *gtk.Window, prefs *state.ClusterPreferences) *Cl
 			dialog.ConnectResponse(func(response string) {
 				if response == "delete" {
 					var idx int
-					for i, c := range application.prefs.Clusters {
-						if c == prefs {
+					for i, c := range prefs.Clusters {
+						if c == active {
 							idx = i
 							break
 						}
 					}
-					application.prefs.Clusters = append(application.prefs.Clusters[:idx], application.prefs.Clusters[idx+1:]...)
+					prefs.Clusters = append(prefs.Clusters[:idx], prefs.Clusters[idx+1:]...)
 					p.Parent().(*adw.NavigationView).Pop()
 				}
 			})
@@ -109,7 +111,7 @@ func (p *ClusterPrefPage) createFavourites() *adw.PreferencesGroup {
 	group.SetTitle("Favourites")
 	group.SetHeaderSuffix(p.createFavouritesAddButton())
 
-	for i, fav := range p.prefs.Navigation.Favourites {
+	for i, fav := range p.active.Navigation.Favourites {
 		idx := i
 		row := adw.NewActionRow()
 		row.AddCSSClass("property")
@@ -124,8 +126,8 @@ func (p *ClusterPrefPage) createFavourites() *adw.PreferencesGroup {
 		remove.AddCSSClass("flat")
 		remove.SetIconName("user-trash-symbolic")
 		remove.ConnectClicked(func() {
-			p.prefs.Navigation.Favourites = append(p.prefs.Navigation.Favourites[:idx], p.prefs.Navigation.Favourites[idx+1:]...)
-			p.setPrefs(p.prefs)
+			p.active.Navigation.Favourites = append(p.active.Navigation.Favourites[:idx], p.active.Navigation.Favourites[idx+1:]...)
+			p.setPrefs(p.active)
 		})
 		row.AddSuffix(remove)
 		group.Add(row)
@@ -156,11 +158,11 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 		sw.SetChild(pp)
 		content.Append(sw)
 
-		cluster, _ := state.NewCluster(context.TODO(), p.prefs)
+		cluster, _ := state.NewCluster(context.TODO(), p.active)
 		for _, r := range cluster.Resources {
 			res := r
 			exists := false
-			for _, fav := range p.prefs.Navigation.Favourites {
+			for _, fav := range p.active.Navigation.Favourites {
 				if util.ResourceGVR(&res).String() == fav.String() {
 					exists = true
 				}
@@ -180,9 +182,9 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 			row.SetActivatable(true)
 			row.ConnectActivated(func() {
-				p.prefs.Navigation.Favourites = append(p.prefs.Navigation.Favourites, util.ResourceGVR(&res))
+				p.active.Navigation.Favourites = append(p.active.Navigation.Favourites, util.ResourceGVR(&res))
 				p.Parent().(*adw.NavigationView).Pop()
-				p.setPrefs(p.prefs)
+				p.setPrefs(p.active)
 			})
 			group.Add(row)
 		}
@@ -252,23 +254,23 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 			return
 		}
 
-		newPrefs := state.ClusterPreferences{}
-		newPrefs.Name = p.name.Text()
-		newPrefs.Host = p.host.Text()
-		newPrefs.TLS.CertData = []byte(p.cert.Text())
-		newPrefs.TLS.KeyData = []byte(p.key.Text())
-		newPrefs.TLS.CAData = []byte(p.ca.Text())
-		newPrefs.Defaults()
+		cluster := state.ClusterPreferences{}
+		cluster.Name = p.name.Text()
+		cluster.Host = p.host.Text()
+		cluster.TLS.CertData = []byte(p.cert.Text())
+		cluster.TLS.KeyData = []byte(p.key.Text())
+		cluster.TLS.CAData = []byte(p.ca.Text())
+		cluster.Defaults()
 
-		if _, err := state.NewCluster(context.TODO(), &newPrefs); err != nil {
+		if _, err := state.NewCluster(context.TODO(), &cluster); err != nil {
 			ShowErrorDialog(p.parent, "Cluster connection failed", err)
 			return
 		}
 
-		if p.prefs == nil {
-			application.prefs.Clusters = append(application.prefs.Clusters, &newPrefs)
+		if p.active == nil {
+			p.prefs.Clusters = append(p.prefs.Clusters, &cluster)
 		} else {
-			p.prefs = &newPrefs
+			p.active = &cluster
 		}
 		p.Parent().(*adw.NavigationView).Pop()
 	})
@@ -276,13 +278,13 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 	return button
 }
 
-func (p *ClusterPrefPage) setPrefs(prefs *state.ClusterPreferences) {
-	p.prefs = prefs
-	p.name.SetText(prefs.Name)
-	p.host.SetText(prefs.Host)
-	p.cert.SetText(string(prefs.TLS.CertData))
-	p.key.SetText(string(prefs.TLS.KeyData))
-	p.ca.SetText(string(prefs.TLS.CAData))
+func (p *ClusterPrefPage) setPrefs(clusterPrefs *state.ClusterPreferences) {
+	p.active = clusterPrefs
+	p.name.SetText(clusterPrefs.Name)
+	p.host.SetText(clusterPrefs.Host)
+	p.cert.SetText(string(clusterPrefs.TLS.CertData))
+	p.key.SetText(string(clusterPrefs.TLS.KeyData))
+	p.ca.SetText(string(clusterPrefs.TLS.CAData))
 
 	if p.favourites != nil {
 		p.page.Remove(p.favourites)
