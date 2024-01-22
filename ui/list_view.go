@@ -3,6 +3,7 @@ package ui
 import (
 	"context"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -18,7 +19,6 @@ import (
 type ListView struct {
 	*gtk.Box
 	root       *ClusterWindow
-	list       *gtk.StringList
 	resource   *metav1.APIResource
 	items      []client.Object
 	selection  *gtk.SingleSelection
@@ -34,31 +34,20 @@ func NewListView(root *ClusterWindow) *ListView {
 	header.AddCSSClass("flat")
 	header.SetShowEndTitleButtons(false)
 	header.SetShowStartTitleButtons(false)
-	search := gtk.NewSearchBar()
-	entry := gtk.NewSearchEntry()
-	search.ConnectEntry(entry)
-	entry.Show()
-	search.Show()
-	b := gtk.NewBox(gtk.OrientationVertical, 0)
-	b.Append(search)
-	b.Append(entry)
-	header.SetTitleWidget(b)
+	header.SetTitleWidget(NewSearchBar(root))
 	l.Append(header)
 
-	l.list = gtk.NewStringList([]string{})
-	l.selection = gtk.NewSingleSelection(l.list)
+	l.selection = l.createModel()
 	l.columnView = gtk.NewColumnView(l.selection)
 	l.columnView.SetMarginStart(16)
 	l.columnView.SetMarginEnd(16)
 	sw := gtk.NewScrolledWindow()
 	sw.SetVExpand(true)
-	sw.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
+	sw.SetHExpand(true)
+	sw.SetSizeRequest(500, 0)
+	// sw.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
 	sw.SetChild(l.columnView)
 	l.Append(sw)
-
-	l.selection.ConnectSelectionChanged(func(_, _ uint) {
-		root.detailView.SetObject(l.items[l.selection.Selected()])
-	})
 
 	return &l
 }
@@ -71,15 +60,8 @@ func (l *ListView) SetResource(gvr schema.GroupVersionResource) error {
 		}
 	}
 
-	for {
-		length := uint(len(l.items))
-		if length > 0 {
-			l.list.Remove(length - 1)
-			l.items = l.items[:length-1]
-		} else {
-			break
-		}
-	}
+	l.selection = l.createModel()
+	l.columnView.SetModel(l.selection)
 
 	for _, column := range l.columns {
 		l.columnView.RemoveColumn(column)
@@ -95,7 +77,7 @@ func (l *ListView) SetResource(gvr schema.GroupVersionResource) error {
 	}
 	l.items = list
 	for i, _ := range list {
-		l.list.Append(strconv.Itoa(i))
+		l.selection.Model().Cast().(*gtk.StringList).Append(strconv.Itoa(i))
 	}
 
 	if len(l.items) > 0 {
@@ -105,6 +87,16 @@ func (l *ListView) SetResource(gvr schema.GroupVersionResource) error {
 
 	return nil
 
+}
+
+func (l *ListView) SetFilter(filter SearchFilter) {
+	l.selection = l.createModel()
+	l.columnView.SetModel(l.selection)
+	for i, object := range l.items {
+		if strings.Contains(object.GetName(), filter.Name) || len(filter.Name) == 0 {
+			l.selection.Model().Cast().(*gtk.StringList).Append(strconv.Itoa(i))
+		}
+	}
 }
 
 func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
@@ -272,4 +264,12 @@ func (l *ListView) listResource(ctx context.Context, gvr schema.GroupVersionReso
 		}
 		return res, nil
 	}
+}
+
+func (l *ListView) createModel() *gtk.SingleSelection {
+	selection := gtk.NewSingleSelection(gtk.NewStringList([]string{}))
+	selection.ConnectSelectionChanged(func(_, _ uint) {
+		l.root.detailView.SetObject(l.items[l.selection.Selected()])
+	})
+	return selection
 }
