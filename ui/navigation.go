@@ -2,7 +2,6 @@ package ui
 
 import (
 	"encoding/json"
-	"fmt"
 	"log"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -19,46 +18,41 @@ import (
 
 type Navigation struct {
 	*adw.ToolbarView
+	root *ClusterWindow
 }
 
-func NewNavigation() *Navigation {
-	n := &Navigation{ToolbarView: adw.NewToolbarView()}
+func NewNavigation(root *ClusterWindow) *Navigation {
+	n := &Navigation{ToolbarView: adw.NewToolbarView(), root: root}
 	n.SetSizeRequest(250, 250)
 	n.SetVExpand(true)
 
-	action := gio.NewSimpleAction("preferences", nil)
-	action.ConnectActivate(func(_ *glib.Variant) {
-		w := NewPreferencesWindow()
-		w.SetTransientFor(&application.window.Window)
-		w.Show()
-	})
-	application.AddAction(action)
-
-	action = gio.NewSimpleAction("about", nil)
-	action.ConnectActivate(func(_ *glib.Variant) {
-		NewAboutWindow(&application.window.Window).Show()
-	})
-	application.AddAction(action)
-
 	header := adw.NewHeaderBar()
-	application.window.SetTitle(fmt.Sprintf("%s - %s", application.cluster.Preferences.Name, ApplicationName))
-	title := gtk.NewLabel(application.cluster.Preferences.Name)
+	title := gtk.NewLabel(root.cluster.Preferences.Name)
 	title.AddCSSClass("heading")
 	header.SetTitleWidget(title)
 	header.SetShowEndTitleButtons(false)
 	header.SetShowStartTitleButtons(false)
-	prefBtn := gtk.NewMenuButton()
-	prefBtn.SetIconName("open-menu-symbolic")
-	menu := gio.NewMenu()
-	menu.Append("New Window", "app.new")
-	menu.Append("Disconnect", "app.new")
-	menu.Append("Preferences", "app.preferences")
-	menu.Append("Keyboard Shortcuts", "app.shortcuts")
-	menu.Append("About", "app.about")
-	popover := gtk.NewPopoverMenuFromModel(menu)
-	prefBtn.SetPopover(popover)
 
-	header.PackEnd(prefBtn)
+	button := gtk.NewMenuButton()
+	button.SetIconName("open-menu-symbolic")
+
+	windowSection := gio.NewMenu()
+	windowSection.Append("New Window", "win.newWindow")
+	windowSection.Append("Disconnect", "win.disconnect")
+
+	prefSection := gio.NewMenu()
+	prefSection.Append("Preferences", "win.prefs")
+	// prefSection.Append("Keyboard Shortcuts", "win.shortcuts")
+	prefSection.Append("About", "win.about")
+
+	m := gio.NewMenu()
+	m.AppendSection("", windowSection)
+	m.AppendSection("", prefSection)
+
+	popover := gtk.NewPopoverMenuFromModel(m)
+	button.SetPopover(popover)
+
+	header.PackEnd(button)
 	n.AddTopBar(header)
 	n.SetContent(n.createFavourites())
 
@@ -78,16 +72,16 @@ func (n *Navigation) createFavourites() *gtk.ListBox {
 		if err := json.Unmarshal([]byte(row.Name()), &gvr); err != nil {
 			panic(err)
 		}
-		application.listView.SetResource(gvr)
+		n.root.listView.SetResource(gvr)
 	})
 
 	listBox.AddCSSClass("dim-label")
 	listBox.AddCSSClass("navigation-sidebar")
 	listBox.SetVExpand(true)
 
-	for i, gvr := range application.cluster.Preferences.Navigation.Favourites {
+	for i, gvr := range n.root.cluster.Preferences.Navigation.Favourites {
 		var resource *v1.APIResource
-		for _, r := range application.cluster.Resources {
+		for _, r := range n.root.cluster.Resources {
 			if r.Group == gvr.Group && r.Version == gvr.Version && r.Name == gvr.Resource {
 				resource = &r
 				break

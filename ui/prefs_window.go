@@ -8,10 +8,11 @@ import (
 type PrefsWindow struct {
 	*adw.PreferencesWindow
 	navigationView *adw.NavigationView
+	root           *ClusterWindow
 }
 
-func NewPreferencesWindow() *PrefsWindow {
-	p := PrefsWindow{PreferencesWindow: adw.NewPreferencesWindow()}
+func NewPreferencesWindow(root *ClusterWindow) *PrefsWindow {
+	p := PrefsWindow{PreferencesWindow: adw.NewPreferencesWindow(), root: root}
 
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	p.navigationView = adw.NewNavigationView()
@@ -32,7 +33,7 @@ func NewPreferencesWindow() *PrefsWindow {
 	view.SetStack(stack)
 
 	p.ConnectUnrealize(func() {
-		if err := application.prefs.Save(); err != nil {
+		if err := root.prefs.Save(); err != nil {
 			ShowErrorDialog(&p.Window.Window, "Could not save preferences", err)
 			return
 		}
@@ -61,16 +62,16 @@ func (p *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	addCluster.AddCSSClass("flat")
 	addCluster.SetIconName("list-add")
 	addCluster.ConnectClicked(func() {
-		p.navigationView.Push(NewClusterPrefPage(&p.Window.Window, nil).NavigationPage)
+		p.navigationView.Push(NewClusterPrefPage(&p.Window.Window, p.root.prefs, nil).NavigationPage)
 	})
 
 	clusters.SetHeaderSuffix(addCluster)
-	for _, c := range application.prefs.Clusters {
+	for _, c := range p.root.prefs.Clusters {
 		cluster := c
 		row := adw.NewActionRow()
 		row.SetActivatable(true)
 		row.ConnectActivated(func() {
-			p.navigationView.Push(NewClusterPrefPage(&p.Window.Window, cluster).NavigationPage)
+			p.navigationView.Push(NewClusterPrefPage(&p.Window.Window, p.root.prefs, cluster).NavigationPage)
 		})
 		row.SetTitle(cluster.Name)
 		row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
