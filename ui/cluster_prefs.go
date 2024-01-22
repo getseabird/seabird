@@ -70,6 +70,35 @@ func NewClusterPrefPage(parent *gtk.Window, prefs *state.ClusterPreferences) *Cl
 
 	if prefs != nil {
 		p.setPrefs(prefs)
+
+		delete := adw.NewActionRow()
+		delete.SetActivatable(true)
+		delete.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+		delete.SetTitle("Delete")
+		delete.AddCSSClass("error")
+		delete.ConnectActivated(func() {
+			dialog := adw.NewMessageDialog(parent, "Delete cluster?", fmt.Sprintf("Are you sure you want to delete cluster \"%s\"?", prefs.Name))
+			dialog.AddResponse("cancel", "Cancel")
+			dialog.AddResponse("delete", "Delete")
+			dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
+			dialog.Show()
+			dialog.ConnectResponse(func(response string) {
+				if response == "delete" {
+					var idx int
+					for i, c := range application.prefs.Clusters {
+						if c == prefs {
+							idx = i
+							break
+						}
+					}
+					application.prefs.Clusters = append(application.prefs.Clusters[:idx], application.prefs.Clusters[idx+1:]...)
+					p.Parent().(*adw.NavigationView).Pop()
+				}
+			})
+		})
+		group := adw.NewPreferencesGroup()
+		group.Add(delete)
+		p.page.Add(group)
 	}
 
 	return &p
@@ -167,6 +196,7 @@ func (p *ClusterPrefPage) createLoadActionRow() *adw.ActionRow {
 	row.SetActivatable(true)
 	row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 	row.SetTitle("Load kubeconfig")
+	row.AddCSSClass("accent")
 
 	row.ConnectActivated(func() {
 		fileChooser := gtk.NewFileChooserNative("Select kubeconfig", p.parent, gtk.FileChooserActionOpen, "Open", "Cancel")

@@ -25,7 +25,9 @@ func NewPreferencesWindow() *PrefsWindow {
 	content.Append(header)
 
 	stack := adw.NewViewStack()
-	stack.AddTitledWithIcon(p.createGeneralPage(), "general", "General", "document-properties-symbolic")
+	generalPage := adw.NewBin()
+	generalPage.SetChild(p.createGeneralPage())
+	stack.AddTitledWithIcon(generalPage, "general", "General", "document-properties-symbolic")
 	content.Append(stack)
 	view.SetStack(stack)
 
@@ -34,6 +36,10 @@ func NewPreferencesWindow() *PrefsWindow {
 			ShowErrorDialog(&p.Window.Window, "Could not save preferences", err)
 			return
 		}
+	})
+
+	p.navigationView.ConnectPopped(func(page *adw.NavigationPage) {
+		generalPage.SetChild(p.createGeneralPage())
 	})
 
 	return &p
