@@ -36,6 +36,7 @@ jobs:
           args: release --clean ${{ env.flags }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOS: linux
   msys2:
     # needs: goreleaser
     runs-on: windows-latest
@@ -64,7 +65,7 @@ jobs:
           export PATH="/mingw64/bin:$PATH"
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
-          go run github.com/goreleaser/goreleaser@latest build --single-target --snapshot
+          GOOS=windows go run github.com/goreleaser/goreleaser@latest build --single-target --snapshot
       # - name: upload linux artifact
       #   uses: actions/upload-release-asset@v1
       #   env:

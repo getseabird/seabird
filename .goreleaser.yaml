@@ -6,11 +6,7 @@ before:
     - go generate ./...
 
 builds:
-  - goos:
-      - linux
-      # - windows
-      # - darwin
-    goarch:
+  - goarch:
       - amd64
       #- arm64
 
