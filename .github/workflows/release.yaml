@@ -66,12 +66,10 @@ jobs:
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
           go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.win.yaml --single-target --snapshot
-      # - name: upload linux artifact
-      #   uses: actions/upload-release-asset@v1
-      #   env:
-      #     GITHUB_TOKEN: ${{ github.token }}
-      #   with:
-      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
-      #     asset_path: ./bin/azblogfilter.linux-amd64.tar.gz
-      #     asset_name: azblogfilter.linux-amd64.tar.gz
-      #     asset_content_type: application/gzip
+          zip kubegtk_windows_amd64_v1.zip README.md LICENSE dist\kubegtk_windows_amd64_v1\kubegtk.exe
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: kubegtk_windows_amd64_v1.zip
+          tag: ${{ github.ref }}
