@@ -38,7 +38,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOS: linux
   msys2:
-    needs: goreleaser
+    #needs: goreleaser
     runs-on: windows-latest
     defaults:
       run:
