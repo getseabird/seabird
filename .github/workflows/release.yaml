@@ -62,6 +62,7 @@ jobs:
             mingw-w64-x86_64-go
       - name: Build
         run: |
+          set -x
           workspace="$(pwd)"
           export PATH="/mingw64/bin:$PATH"
           export GOROOT=/mingw64/lib/go
