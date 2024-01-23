@@ -37,6 +37,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   msys2:
+    # needs: goreleaser
     runs-on: windows-latest
     defaults:
       run:
@@ -62,4 +63,13 @@ jobs:
           export PATH="/mingw64/bin:$PATH"
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
-          go build main.go
+          go run github.com/goreleaser/goreleaser@latest build --single-target --snapshot
+      # - name: upload linux artifact
+      #   uses: actions/upload-release-asset@v1
+      #   env:
+      #     GITHUB_TOKEN: ${{ github.token }}
+      #   with:
+      #     upload_url: ${{ steps.create_release.outputs.upload_url }}
+      #     asset_path: ./bin/azblogfilter.linux-amd64.tar.gz
+      #     asset_name: azblogfilter.linux-amd64.tar.gz
+      #     asset_content_type: application/gzip
