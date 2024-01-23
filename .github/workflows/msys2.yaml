@@ -18,7 +18,7 @@ jobs:
         with:
           msystem: MSYS
           update: true
-          install: mingw-w64-gcc mingw-w64-pkg-config mingw-w64-gtk4 mingw-w64-libadwaita
+          install: mingw-w64-x86_64-gcc mingw-w64-x86_64-pkg-configmingw-w64-x86_64-gtk4 mingw-w64-x86_64-libadwaita mingw-w64-x86_64-gtksourceview5 mingw-w64-x86_64-gobject-introspection
       - name: Set up Go
         uses: actions/setup-go@v4
       - name: Build
