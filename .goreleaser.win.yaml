@@ -2,16 +2,13 @@ version: 1
 
 builds:
   - goos:
-      - linux
+      - windows
     goarch:
       - amd64
 
 archives:
-  - format: tar.gz
+  - format: zip
     name_template: "{{ .ProjectName }}_{{ .Os }}_{{ .Arch }}"
-    format_overrides:
-      - goos: windows
-        format: zip
 
 changelog:
   sort: asc

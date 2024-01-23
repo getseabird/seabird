@@ -1,0 +1,83 @@
+name: release
+
+on:
+  pull_request:
+  push:
+
+permissions:
+  contents: write
+
+jobs:
+  goreleaser:
+    runs-on: ubuntu-latest
+    container:
+      image: debian:trixie
+      env:
+        DEBIAN_FRONTEND: noninteractive
+    steps:
+      - if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
+        run: echo "flags=--snapshot" >> $GITHUB_ENV
+      - name: Install dependencies
+        run: |
+          # dpkg --add-architecture arm64
+          apt update
+          apt install -yq libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev git golang-go
+          # apt install -yq gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgtk-4-dev:arm64 libgtksourceview-5-dev:arm64 libadwaita-1-dev:arm64 libgirepository1.0-dev:arm64
+          git config --global --add safe.directory '*'
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Go
+        uses: actions/setup-go@v4
+      - name: Run GoReleaser
+        uses: goreleaser/goreleaser-action@v5
+        with:
+          args: release --clean ${{ env.flags }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GOOS: linux
+  msys2:
+    if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+    needs: goreleaser
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Set up msys
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MSYS
+          update: true
+          install: |
+            git zip
+            mingw-w64-x86_64-gcc 
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-gtk4
+            mingw-w64-x86_64-libadwaita
+            mingw-w64-x86_64-gtksourceview5
+            mingw-w64-x86_64-gobject-introspection
+            mingw-w64-x86_64-go
+      - name: Build
+        run: |
+          set -x
+          workspace="$(pwd)"
+          export PATH="/mingw64/bin:$PATH"
+          export GOROOT=/mingw64/lib/go
+          export GOPATH=/mingw64
+          go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.win.yaml --single-target --snapshot
+          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "=> /mingw64/bin/" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
+          for run in {1..5}; do
+            ldd *.dll | { grep "=> /mingw64/bin/" || true; } | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
+          done
+          zip -j kubegtk_windows_amd64.zip README.md LICENSE dist/kubegtk_windows_amd64_v1/kubegtk.exe *.dll /mingw64/bin/gdbus.exe
+          pushd /mingw64 && zip "$workspace/kubegtk_windows_amd64.zip" -r ./share/glib-2.0 ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons && popd
+      - name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: kubegtk_windows_amd64.zip
+          tag: ${{ github.ref }}
