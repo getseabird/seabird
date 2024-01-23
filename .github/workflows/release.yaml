@@ -52,7 +52,7 @@ jobs:
           msystem: MSYS
           update: true
           install: |
-            git
+            git zip
             mingw-w64-x86_64-gcc 
             mingw-w64-x86_64-pkg-config
             mingw-w64-x86_64-gtk4
