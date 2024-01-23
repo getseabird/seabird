@@ -12,24 +12,39 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/jgillich/kubegio/internal"
+	"github.com/jgillich/kubegio/util"
+	"github.com/kelindar/event"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type SearchBar struct {
+type ListHeader struct {
 	*gtk.Box
 }
 
-func NewSearchBar(root *ClusterWindow) *SearchBar {
+func NewListHeader(root *ClusterWindow) *ListHeader {
 	box := gtk.NewBox(gtk.OrientationHorizontal, 0)
-	box.SetMarginStart(32)
-	box.SetMarginEnd(32)
+	box.AddCSSClass("linked")
+	box.SetMarginStart(12)
+	box.SetMarginEnd(12)
+
+	kind := gtk.NewDropDown(gtk.NewStringList(nil), nil)
+	// TODO need expression? https://docs.gtk.org/gtk4/property.DropDown.expression.html
+	// dropdown.SetEnableSearch(true)
+	for _, r := range root.cluster.Resources {
+		kind.Model().Cast().(*gtk.StringList).Append(r.Kind)
+	}
+	kind.Connect("notify::selected-item", func() {
+		res := root.cluster.Resources[kind.Selected()]
+		root.listView.SetResource(util.ResourceGVR(&res))
+	})
+	box.Append(kind)
 
 	entry := gtk.NewSearchEntry()
 	entry.SetHExpand(true)
 	box.Append(entry)
 
 	button := gtk.NewMenuButton()
-	button.AddCSSClass("flat")
 	button.SetIconName("view-more-symbolic")
 	box.Append(button)
 
@@ -58,7 +73,20 @@ func NewSearchBar(root *ClusterWindow) *SearchBar {
 		root.listView.SetFilter(NewSearchFilter(entry.Text()))
 	})
 
-	return &SearchBar{box}
+	event.On(func(ev internal.ResourceChanged) {
+		var idx uint
+		for i, r := range root.cluster.Resources {
+			if r.String() == ev.APIResource.String() {
+				idx = uint(i)
+				break
+			}
+			glib.IdleAdd(func() {
+				kind.SetSelected(idx)
+			})
+		}
+	})
+
+	return &ListHeader{box}
 }
 
 type SearchFilter struct {
@@ -94,27 +122,24 @@ func (f *SearchFilter) Test(object client.Object) bool {
 		}
 	}
 
-	{
+	for _, term := range f.Name {
 		var ok bool
-		for _, term := range f.Name {
-			trimmed := strings.Trim(term, "\"")
-			if strings.Contains(object.GetName(), trimmed) {
-				ok = true
-				break
-			}
-			if term != trimmed {
-				continue
-			}
-
+		trimmed := strings.Trim(term, "\"")
+		if strings.Contains(object.GetName(), trimmed) {
+			ok = true
+			continue
+		}
+		if term != trimmed {
+			continue
+		}
+		for _, term := range strings.Split(term, "-") {
 			for _, name := range strings.Split(object.GetName(), "-") {
-				for _, term := range strings.Split(term, "-") {
-					if strutil.Similarity(name, term, metrics.NewHamming()) > 0.5 {
-						ok = true
-					}
+				if strutil.Similarity(name, term, metrics.NewHamming()) > 0.5 {
+					ok = true
 				}
 			}
 		}
-		if !ok && len(f.Name) > 0 {
+		if !ok {
 			return false
 		}
 	}
