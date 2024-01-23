@@ -6,6 +6,7 @@ import (
 	"os"
 	"path"
 
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/jgillich/kubegio/internal"
 	"github.com/kelindar/event"
 	appsv1 "k8s.io/api/apps/v1"
@@ -15,7 +16,8 @@ import (
 )
 
 type Preferences struct {
-	Clusters []*ClusterPreferences
+	ColorScheme adw.ColorScheme
+	Clusters    []*ClusterPreferences
 }
 
 func PrefPath() string {

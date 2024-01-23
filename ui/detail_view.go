@@ -202,7 +202,8 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	// d.object.SetManagedFields([]metav1.ManagedFieldsEntry{})
 
 	d.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
-	d.sourceBuffer.SetStyleScheme(gtksource.StyleSchemeManagerGetDefault().Scheme("Adwaita-dark"))
+	d.setSourceColorScheme()
+	gtk.SettingsGetDefault().NotifyProperty("gtk-application-prefer-dark-theme", d.setSourceColorScheme)
 	sourceView := gtksource.NewViewWithBuffer(d.sourceBuffer)
 	sourceView.SetMarginBottom(8)
 	sourceView.SetMarginTop(8)
@@ -212,6 +213,14 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	scrolledWindow.SetChild(sourceView)
 
 	return scrolledWindow
+}
+
+func (d *DetailView) setSourceColorScheme() {
+	if gtk.SettingsGetDefault().ObjectProperty("gtk-application-prefer-dark-theme").(bool) {
+		d.sourceBuffer.SetStyleScheme(gtksource.StyleSchemeManagerGetDefault().Scheme("Adwaita-dark"))
+	} else {
+		d.sourceBuffer.SetStyleScheme(gtksource.StyleSchemeManagerGetDefault().Scheme("Adwaita"))
+	}
 }
 
 func (d *DetailView) podProperties(pod *corev1.Pod) *adw.PreferencesGroup {
