@@ -59,7 +59,7 @@ jobs:
             mingw-w64-x86_64-go
       - name: Build
         run: |
-          uname -a
+          export PATH="/mingw64/bin:$PATH"
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
           go build main.go
