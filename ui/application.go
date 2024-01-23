@@ -27,6 +27,8 @@ func NewApplication(version string) (*Application, error) {
 	}
 	prefs.Defaults()
 
+	adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(prefs.ColorScheme))
+
 	a := Application{
 		Application: adw.NewApplication("io.github.jgillich.kubegtk", gio.ApplicationFlagsNone),
 		version:     version,

@@ -50,11 +50,19 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	page := adw.NewPreferencesPage()
 
 	general := adw.NewPreferencesGroup()
-	theme := adw.NewComboRow()
-	theme.SetTitle("Theme")
-	themes := gtk.NewStringList([]string{"Dark", "Light"})
-	theme.SetModel(themes)
-	general.Add(theme)
+	colorScheme := adw.NewComboRow()
+	colorScheme.SetTitle("Color Scheme")
+	themes := gtk.NewStringList([]string{"Default", "Light", "Dark"})
+	colorScheme.SetModel(themes)
+	colorScheme.SetSelected(uint(w.root.prefs.ColorScheme))
+	colorScheme.Connect("notify::selected-item", func() {
+		w.root.prefs.ColorScheme = adw.ColorScheme(colorScheme.Selected())
+		if w.root.prefs.ColorScheme == adw.ColorSchemePreferLight {
+			w.root.prefs.ColorScheme = adw.ColorSchemeForceDark
+		}
+		adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(w.root.prefs.ColorScheme))
+	})
+	general.Add(colorScheme)
 
 	clusters := adw.NewPreferencesGroup()
 	clusters.SetTitle("Clusters")
