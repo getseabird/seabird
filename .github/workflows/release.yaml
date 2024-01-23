@@ -67,7 +67,8 @@ jobs:
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
           go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.win.yaml --single-target --snapshot
-          zip -j kubegtk_windows_amd64_v1.zip README.md LICENSE dist/kubegtk_windows_amd64_v1/kubegtk.exe /mingw64/*.dll
+          zip -j kubegtk_windows_amd64_v1.zip README.md LICENSE dist/kubegtk_windows_amd64_v1/kubegtk.exe \ 
+            /mingw64/bin/*.dll /mingw64/bin/gdbus.exe
           pushd /mingw64 && zip "$workspace/kubegtk_windows_amd64_v1.zip" -r ./share/glib-2.0 && popd
       - name: Upload binaries to release
         #if: ${{ startsWith(github.ref, 'refs/tags/v') }}
