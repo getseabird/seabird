@@ -1,4 +1,4 @@
-name: goreleaser
+name: release
 
 on:
   pull_request:
@@ -61,6 +61,6 @@ jobs:
       #   uses: actions/setup-go@v4
       - name: Build
         run: |
-        export GOROOT=/mingw64/lib/go
-        export GOPATH=/mingw64
-        go build main.go
+          export GOROOT=/mingw64/lib/go
+          export GOPATH=/mingw64
+          go build main.go
