@@ -67,12 +67,16 @@ jobs:
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
           go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.win.yaml --single-target --snapshot
-          zip -j kubegtk_windows_amd64_v1.zip README.md LICENSE dist/kubegtk_windows_amd64_v1/kubegtk.exe /mingw64/bin/*.dll /mingw64/bin/gdbus.exe
-          pushd /mingw64 && zip "$workspace/kubegtk_windows_amd64_v1.zip" -r ./share/glib-2.0 ./share/gtksourceview-5 ./share/icons && popd
+          mkdir dlls && pushd dlls
+          ldd ../dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "not found" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
+          for run in {1..10}; ldd *.dll | grep "not found" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .; done
+          popd
+          zip -j kubegtk_windows_amd64.zip README.md LICENSE dist/kubegtk_windows_amd64_v1/kubegtk.exe dlls/*.dll /mingw64/bin/gdbus.exe
+          pushd /mingw64 && zip "$workspace/kubegtk_windows_amd64.zip" -r ./share/glib-2.0 ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons && popd
       - name: Upload binaries to release
         #if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: kubegtk_windows_amd64_v1.zip
+          file: kubegtk_windows_amd64.zip
           tag: ${{ github.ref }}
