@@ -12,6 +12,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -61,7 +62,16 @@ func NewDetailView(root *ClusterWindow) *DetailView {
 func (d *DetailView) SetObject(object client.Object) {
 	d.object = object
 
-	defer d.sourceBuffer.SetText(string(jsonToYaml(d.encode(d.object))))
+	if encoded, err := d.encode(d.object); err != nil {
+		log.Printf("failed to encode object: %v", err)
+	} else {
+		yaml, err := jsonToYaml(encoded)
+		if err != nil {
+			log.Printf("error: %v", err)
+		} else {
+			defer d.sourceBuffer.SetText(string(yaml))
+		}
+	}
 
 	d.nameLabel.SetText(object.GetName())
 	d.namespaceLabel.SetText(object.GetNamespace())
@@ -314,24 +324,23 @@ func (d *DetailView) configMapProperties(object *corev1.ConfigMap) *adw.Preferen
 	return group
 }
 
-func (d *DetailView) encode(object client.Object) []byte {
-	codec := serializer.NewCodecFactory(d.root.cluster.Scheme).LegacyCodec(d.root.cluster.Scheme.PreferredVersionAllGroups()...)
+func (d *DetailView) encode(object client.Object) ([]byte, error) {
+	codec := unstructured.NewJSONFallbackEncoder(serializer.NewCodecFactory(d.root.cluster.Scheme).LegacyCodec(d.root.cluster.Scheme.PreferredVersionAllGroups()...))
 	encoded, err := runtime.Encode(codec, object)
 	if err != nil {
-		log.Printf("failed to encode object: %v", err)
-		return []byte{}
+		return nil, err
 	}
-	return encoded
+	return encoded, nil
 }
 
-func jsonToYaml(data []byte) []byte {
+func jsonToYaml(data []byte) ([]byte, error) {
 	var o any
 	if err := json.Unmarshal(data, &o); err != nil {
-		panic(err)
+		return nil, err
 	}
 	ret, err := yaml.Marshal(o)
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
-	return ret
+	return ret, nil
 }

@@ -8,17 +8,21 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/jgillich/kubegio/state"
+	"github.com/jgillich/kubegio/internal"
+	"github.com/jgillich/kubegio/util"
 	"github.com/kelindar/event"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/utils/ptr"
 )
 
 type Navigation struct {
 	*adw.ToolbarView
 	root *ClusterWindow
+	list *gtk.ListBox
+	rows []*gtk.ListBoxRow
 }
 
 func NewNavigation(root *ClusterWindow) *Navigation {
@@ -56,9 +60,26 @@ func NewNavigation(root *ClusterWindow) *Navigation {
 	n.AddTopBar(header)
 	n.SetContent(n.createFavourites())
 
-	event.On(func(ev state.PreferencesUpdated) {
+	event.On(func(ev internal.PreferencesUpdated) {
 		glib.IdleAdd(func() {
 			n.SetContent(n.createFavourites())
+		})
+	})
+
+	event.On(func(ev internal.ResourceChanged) {
+		var idx *int
+		for i, r := range n.root.cluster.Preferences.Navigation.Favourites {
+			if util.ResourceGVR(ev.APIResource).String() == r.String() {
+				idx = ptr.To(i)
+				break
+			}
+		}
+		glib.IdleAdd(func() {
+			if idx != nil {
+				n.list.SelectRow(n.rows[*idx])
+			} else {
+				n.list.SelectRow(nil)
+			}
 		})
 	})
 
@@ -66,18 +87,23 @@ func NewNavigation(root *ClusterWindow) *Navigation {
 }
 
 func (n *Navigation) createFavourites() *gtk.ListBox {
-	listBox := gtk.NewListBox()
-	listBox.ConnectRowSelected(func(row *gtk.ListBoxRow) {
+	n.list = gtk.NewListBox()
+	n.list.AddCSSClass("dim-label")
+	n.list.AddCSSClass("navigation-sidebar")
+	n.list.SetVExpand(true)
+	n.list.ConnectRowSelected(func(row *gtk.ListBoxRow) {
+		if row == nil {
+			return
+		}
 		var gvr schema.GroupVersionResource
 		if err := json.Unmarshal([]byte(row.Name()), &gvr); err != nil {
-			panic(err)
+			log.Printf("failed to unmarshal gvr: %v", err)
+			return
 		}
 		n.root.listView.SetResource(gvr)
 	})
 
-	listBox.AddCSSClass("dim-label")
-	listBox.AddCSSClass("navigation-sidebar")
-	listBox.SetVExpand(true)
+	n.rows = nil
 
 	for i, gvr := range n.root.cluster.Preferences.Navigation.Favourites {
 		var resource *v1.APIResource
@@ -89,6 +115,7 @@ func (n *Navigation) createFavourites() *gtk.ListBox {
 		}
 		if resource == nil {
 			log.Printf("ignoring unknown resource %s", gvr.String())
+			n.rows = append(n.rows, nil)
 			continue
 		}
 
@@ -103,14 +130,15 @@ func (n *Navigation) createFavourites() *gtk.ListBox {
 		label := gtk.NewLabel(resource.Kind)
 		box.Append(label)
 		row.SetChild(box)
-		listBox.Append(row)
+		n.list.Append(row)
+		n.rows = append(n.rows, row)
 
 		if i == 0 {
-			listBox.SelectRow(row)
+			n.list.SelectRow(row)
 		}
 	}
 
-	return listBox
+	return n.list
 }
 
 func (n *Navigation) resIcon(gvk schema.GroupVersionResource) *gtk.Image {

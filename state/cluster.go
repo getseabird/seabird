@@ -7,6 +7,8 @@ import (
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	rbacv1 "k8s.io/api/rbac/v1"
+	storagev1 "k8s.io/api/storage/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -45,6 +47,8 @@ func NewCluster(ctx context.Context, prefs *ClusterPreferences) (*Cluster, error
 	corev1.AddToScheme(scheme)
 	apiextensionsv1.AddToScheme(scheme)
 	appsv1.AddToScheme(scheme)
+	rbacv1.AddToScheme(scheme)
+	storagev1.AddToScheme(scheme)
 
 	rclient, err := client.New(config, client.Options{
 		Scheme: scheme,
@@ -78,7 +82,7 @@ func NewCluster(ctx context.Context, prefs *ClusterPreferences) (*Cluster, error
 	for _, list := range resources {
 		gv, err := schema.ParseGroupVersion(list.GroupVersion)
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 		for _, res := range list.APIResources {
 			if res.Group == "" {

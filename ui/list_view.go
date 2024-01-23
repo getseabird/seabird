@@ -7,7 +7,9 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/jgillich/kubegio/internal"
 	"github.com/jgillich/kubegio/util"
+	"github.com/kelindar/event"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -33,7 +35,7 @@ func NewListView(root *ClusterWindow) *ListView {
 	header.AddCSSClass("flat")
 	header.SetShowEndTitleButtons(false)
 	header.SetShowStartTitleButtons(false)
-	header.SetTitleWidget(NewSearchBar(root))
+	header.SetTitleWidget(NewListHeader(root))
 	l.Append(header)
 
 	l.selection = l.createModel()
@@ -45,7 +47,7 @@ func NewListView(root *ClusterWindow) *ListView {
 	sw := gtk.NewScrolledWindow()
 	sw.SetVExpand(true)
 	sw.SetHExpand(true)
-	sw.SetSizeRequest(500, 0)
+	sw.SetSizeRequest(600, 0)
 	vp := gtk.NewViewport(nil, nil)
 	vp.SetChild(l.columnView)
 	sw.SetChild(vp)
@@ -190,6 +192,8 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 			}),
 		)
 	}
+
+	event.Emit(internal.ResourceChanged{APIResource: l.resource})
 
 	return columns
 }
