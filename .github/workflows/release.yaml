@@ -57,10 +57,9 @@ jobs:
             mingw-w64-x86_64-gtksourceview5
             mingw-w64-x86_64-gobject-introspection
             mingw-w64-x86_64-go
-      # - name: Set up Go
-      #   uses: actions/setup-go@v4
       - name: Build
         run: |
+          uname -a
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
           go build main.go
