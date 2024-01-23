@@ -71,11 +71,11 @@ jobs:
 
           ls -la /mingw64/bin
           ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe
-          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "not found"
-          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "not found" | cut -d ' ' -f1
+          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "=> /mingw64/bin/"
+          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "=> /mingw64/bin/" | cut -d ' ' -f1
 
-          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "not found" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
-          for run in {1..5}; do ldd *.dll | grep "not found" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .; done
+          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "=> /mingw64/bin/" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
+          for run in {1..5}; do ldd *.dll | grep "=> /mingw64/bin/" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .; done
           zip -j kubegtk_windows_amd64.zip README.md LICENSE dist/kubegtk_windows_amd64_v1/kubegtk.exe *.dll /mingw64/bin/gdbus.exe
           pushd /mingw64 && zip "$workspace/kubegtk_windows_amd64.zip" -r ./share/glib-2.0 ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons && popd
       - name: Upload binaries to release
