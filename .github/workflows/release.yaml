@@ -71,7 +71,7 @@ jobs:
 
           ls -la /mingw64/bin
           ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe
-          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "not found
+          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "not found"
           ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "not found" | cut -d ' ' -f1
 
           ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "not found" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
