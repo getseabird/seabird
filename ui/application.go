@@ -7,11 +7,11 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/jgillich/kubegio/state"
-	"github.com/jgillich/kubegio/style"
+	"github.com/getseabird/seabird/state"
+	"github.com/getseabird/seabird/style"
 )
 
-const ApplicationName = "kubegtk"
+const ApplicationName = "Seabird"
 
 type Application struct {
 	*adw.Application
@@ -30,7 +30,7 @@ func NewApplication(version string) (*Application, error) {
 	adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(prefs.ColorScheme))
 
 	a := Application{
-		Application: adw.NewApplication("io.github.jgillich.kubegtk", gio.ApplicationFlagsNone),
+		Application: adw.NewApplication("io.github.getseabird.seabird", gio.ApplicationFlagsNone),
 		version:     version,
 	}
 

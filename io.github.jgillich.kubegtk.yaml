@@ -1,10 +1,10 @@
-app-id: io.github.jgillich.kubegtk
+app-id: io.github.getseabird.seabird
 runtime: org.gnome.Sdk
 runtime-version: "45"
 sdk: org.gnome.Sdk
 sdk-extensions:
   - "org.freedesktop.Sdk.Extension.golang"
-command: kubegtk
+command: seabird
 
 build-options:
   build-args:
@@ -19,11 +19,11 @@ finish-args:
   - --device=dri
   - --talk-name=org.freedesktop.Notifications
 modules:
-  - name: kubegtk
+  - name: seabird
     buildsystem: simple
     build-commands:
-      - $GOROOT/bin/go build -trimpath -o kubegtk
-      - install -Dm00755 kubegtk $FLATPAK_DEST/bin/kubegtk
+      - $GOROOT/bin/go build -trimpath -o seabird
+      - install -Dm00755 seabird $FLATPAK_DEST/bin/seabird
       # - install -Dm00644 Icon.png $FLATPAK_DEST/share/icons/hicolor/256x256/apps/$FLATPAK_ID.png
       - install -Dm00644 $FLATPAK_ID.desktop $FLATPAK_DEST/share/applications/$FLATPAK_ID.desktop
       - install -Dm00644 $FLATPAK_ID.appdata.xml $FLATPAK_DEST/share/appdata/$FLATPAK_ID.appdata.xml

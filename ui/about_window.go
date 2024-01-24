@@ -16,8 +16,9 @@ func NewAboutWindow(parent *gtk.Window) *AboutWindow {
 	w.SetApplicationName(ApplicationName)
 	w.SetVersion(Version)
 	w.SetTransientFor(parent)
-	w.SetWebsite("https://github.com/jgillich/kubegtk")
-	w.SetIssueURL("https://github.com/jgillich/kubegtk/issues")
+	w.SetWebsite("https://github.com/getseabird/seabird")
+	w.SetIssueURL("https://github.com/getseabird/seabird/issues")
+	w.SetSupportURL("https://github.com/getseabird/seabird/discussions")
 	w.SetLicenseType(gtk.LicenseMPL20)
 	return &w
 }

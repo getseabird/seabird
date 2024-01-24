@@ -12,8 +12,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/jgillich/kubegio/internal"
-	"github.com/jgillich/kubegio/util"
+	"github.com/getseabird/seabird/internal"
+	"github.com/getseabird/seabird/util"
 	"github.com/kelindar/event"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )

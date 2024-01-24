@@ -69,15 +69,15 @@ jobs:
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
           go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.win.yaml --single-target --snapshot
-          ldd dist/kubegtk_windows_amd64_v1/kubegtk.exe | grep "=> /mingw64/bin/" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
+          ldd dist/seabird_windows_amd64_v1/seabird.exe | grep "=> /mingw64/bin/" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
           for run in {1..5}; do
             ldd *.dll | { grep "=> /mingw64/bin/" || true; } | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
           done
-          zip -j kubegtk_windows_amd64.zip README.md LICENSE dist/kubegtk_windows_amd64_v1/kubegtk.exe *.dll /mingw64/bin/gdbus.exe
-          pushd /mingw64 && zip "$workspace/kubegtk_windows_amd64.zip" -r ./share/glib-2.0 ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons && popd
+          zip -j seabird_windows_amd64.zip README.md LICENSE dist/seabird_windows_amd64_v1/seabird.exe *.dll /mingw64/bin/gdbus.exe
+          pushd /mingw64 && zip "$workspace/seabird_windows_amd64.zip" -r ./share/glib-2.0 ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons && popd
       - name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: kubegtk_windows_amd64.zip
+          file: seabird_windows_amd64.zip
           tag: ${{ github.ref }}

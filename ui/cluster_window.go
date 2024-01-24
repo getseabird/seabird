@@ -7,7 +7,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/jgillich/kubegio/state"
+	"github.com/getseabird/seabird/state"
 )
 
 type ClusterWindow struct {
@@ -26,7 +26,7 @@ func NewClusterWindow(app *gtk.Application, cluster *state.Cluster, prefs *state
 		prefs:             prefs,
 	}
 	w.SetTitle(fmt.Sprintf("%s - %s", cluster.Preferences.Name, ApplicationName))
-	w.SetDefaultSize(1000, 1000)
+	w.SetDefaultSize(1000, 800)
 
 	grid := gtk.NewGrid()
 	w.SetContent(grid)

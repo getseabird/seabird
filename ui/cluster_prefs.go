@@ -8,8 +8,8 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/jgillich/kubegio/state"
-	"github.com/jgillich/kubegio/util"
+	"github.com/getseabird/seabird/state"
+	"github.com/getseabird/seabird/util"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -198,7 +198,6 @@ func (p *ClusterPrefPage) createLoadActionRow() *adw.ActionRow {
 	row.SetActivatable(true)
 	row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 	row.SetTitle("Load kubeconfig")
-	row.AddCSSClass("accent")
 
 	row.ConnectActivated(func() {
 		fileChooser := gtk.NewFileChooserNative("Select kubeconfig", p.parent, gtk.FileChooserActionOpen, "Open", "Cancel")

@@ -1,4 +1,4 @@
-module github.com/jgillich/kubegio
+module github.com/getseabird/seabird
 
 go 1.21
 

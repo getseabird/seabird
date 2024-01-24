@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/jgillich/kubegio/ui"
+	"github.com/getseabird/seabird/ui"
 )
 
 var (
