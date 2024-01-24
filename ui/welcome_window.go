@@ -5,7 +5,7 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/jgillich/kubegio/state"
+	"github.com/getseabird/seabird/state"
 )
 
 type WelcomeWindow struct {

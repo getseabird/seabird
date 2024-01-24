@@ -1,8 +1,8 @@
-# kubegtk
+# Seabird
 
-A modern, native Kubernetes desktop client.
+A native Kubernetes desktop client.
 
-![Screenshot](screenshot.png)
+![Screenshot](https://getseabird.github.io/images/screenshot.png)
 
 ## Requirements
 

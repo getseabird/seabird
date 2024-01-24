@@ -7,7 +7,7 @@ import (
 	"path"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
-	"github.com/jgillich/kubegio/internal"
+	"github.com/getseabird/seabird/internal"
 	"github.com/kelindar/event"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,7 +25,7 @@ func PrefPath() string {
 	if err != nil {
 		panic(err)
 	}
-	return path.Join(cd, "kubegtk", "prefs.json")
+	return path.Join(cd, "seabird", "prefs.json")
 }
 
 type ClusterPreferences struct {
