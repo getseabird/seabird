@@ -12,11 +12,13 @@ import (
 
 type ClusterWindow struct {
 	*adw.ApplicationWindow
-	cluster    *state.Cluster
-	prefs      *state.Preferences
-	navigation *Navigation
-	listView   *ListView
-	detailView *DetailView
+	cluster      *state.Cluster
+	metrics      *state.Metrics
+	prefs        *state.Preferences
+	navigation   *Navigation
+	listView     *ListView
+	detailView   *DetailView
+	toastOverlay *adw.ToastOverlay
 }
 
 func NewClusterWindow(app *gtk.Application, cluster *state.Cluster, prefs *state.Preferences) *ClusterWindow {
@@ -26,10 +28,15 @@ func NewClusterWindow(app *gtk.Application, cluster *state.Cluster, prefs *state
 		prefs:             prefs,
 	}
 	w.SetTitle(fmt.Sprintf("%s - %s", cluster.Preferences.Name, ApplicationName))
-	w.SetDefaultSize(1000, 800)
+	w.SetDefaultSize(900, 700)
+
+	w.toastOverlay = adw.NewToastOverlay()
+	w.SetContent(w.toastOverlay)
+
+	w.metrics, _ = state.NewMetrics(cluster)
 
 	grid := gtk.NewGrid()
-	w.SetContent(grid)
+	w.toastOverlay.SetChild(grid)
 
 	w.detailView = NewDetailView(&w)
 	grid.Attach(w.detailView, 2, 0, 1, 1)
