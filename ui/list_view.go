@@ -47,7 +47,7 @@ func NewListView(root *ClusterWindow) *ListView {
 	sw := gtk.NewScrolledWindow()
 	sw.SetVExpand(true)
 	sw.SetHExpand(true)
-	sw.SetSizeRequest(600, 0)
+	sw.SetSizeRequest(550, 0)
 	vp := gtk.NewViewport(nil, nil)
 	vp.SetChild(l.columnView)
 	sw.SetChild(vp)

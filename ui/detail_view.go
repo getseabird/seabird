@@ -1,20 +1,25 @@
 package ui
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
+	"math"
 	"strconv"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/dustin/go-humanize"
 	"gopkg.in/yaml.v2"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
+	"k8s.io/apimachinery/pkg/types"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -163,7 +168,7 @@ func actionRow(title string, suffix gtk.Widgetter) *adw.ActionRow {
 
 func (d *DetailView) createProperties() *adw.PreferencesPage {
 	page := adw.NewPreferencesPage()
-	page.SetSizeRequest(400, 400)
+	page.SetSizeRequest(350, 350)
 	group := adw.NewPreferencesGroup()
 	group.SetTitle("Metadata")
 	d.nameLabel = gtk.NewLabel("")
@@ -227,12 +232,27 @@ func (d *DetailView) podProperties(pod *corev1.Pod) *adw.PreferencesGroup {
 	group := adw.NewPreferencesGroup()
 	group.SetTitle("Containers")
 
+	var podMetrics *metricsv1beta1.PodMetrics
+	if d.root.metrics != nil {
+		podMetrics, _ = d.root.metrics.Pod(context.TODO(), types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace})
+	}
+
 	for _, container := range pod.Spec.Containers {
 		var status corev1.ContainerStatus
 		for _, s := range pod.Status.ContainerStatuses {
 			if s.Name == container.Name {
 				status = s
 				break
+			}
+		}
+
+		var metrics *metricsv1beta1.ContainerMetrics
+		if podMetrics != nil {
+			for _, m := range podMetrics.Containers {
+				if m.Name == container.Name {
+					metrics = &m
+					break
+				}
 			}
 		}
 
@@ -289,6 +309,24 @@ func (d *DetailView) podProperties(pod *corev1.Pod) *adw.PreferencesGroup {
 			row.SetSubtitle(fmt.Sprintf("Waiting: %s", status.State.Waiting.Reason))
 		}
 		expander.AddRow(row)
+
+		if metrics != nil {
+			if cpu := metrics.Usage.Cpu(); cpu != nil {
+				row = adw.NewActionRow()
+				row.AddCSSClass("property")
+				row.SetTitle("CPU")
+				row.SetSubtitle(fmt.Sprintf("%v%%", math.Round(cpu.AsApproximateFloat64()*10000)/10000))
+				expander.AddRow(row)
+			}
+			if mem := metrics.Usage.Memory(); mem != nil {
+				row = adw.NewActionRow()
+				row.AddCSSClass("property")
+				row.SetTitle("Memory")
+				bytes, _ := mem.AsInt64()
+				row.SetSubtitle(humanize.Bytes(uint64(bytes)))
+				expander.AddRow(row)
+			}
+		}
 
 		row = adw.NewActionRow()
 		row.SetActivatable(true)

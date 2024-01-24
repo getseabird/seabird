@@ -7,6 +7,7 @@ import (
 	"github.com/go-logr/logr"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	eventsv1 "k8s.io/api/events/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -17,6 +18,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -49,6 +51,8 @@ func NewCluster(ctx context.Context, prefs *ClusterPreferences) (*Cluster, error
 	appsv1.AddToScheme(scheme)
 	rbacv1.AddToScheme(scheme)
 	storagev1.AddToScheme(scheme)
+	eventsv1.AddToScheme(scheme)
+	metricsv1beta1.AddToScheme(scheme)
 
 	rclient, err := client.New(config, client.Options{
 		Scheme: scheme,

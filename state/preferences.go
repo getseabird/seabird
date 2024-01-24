@@ -88,6 +88,10 @@ func (c *ClusterPreferences) Defaults() {
 				Resource: "namespaces",
 			},
 			{
+				Version:  corev1.SchemeGroupVersion.Version,
+				Resource: "services",
+			},
+			{
 				Group:    appsv1.SchemeGroupVersion.Group,
 				Version:  appsv1.SchemeGroupVersion.Version,
 				Resource: "deployments",
