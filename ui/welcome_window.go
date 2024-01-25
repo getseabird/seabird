@@ -48,37 +48,55 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	page := adw.NewPreferencesPage()
 	box.Append(page)
 
-	group := adw.NewPreferencesGroup()
-	group.SetTitle("Connect to Cluster")
-	page.Add(group)
+	if clusters := w.behavior.Preferences.Value().Clusters; len(clusters) > 0 {
+		group := adw.NewPreferencesGroup()
+		group.SetTitle("Connect to Cluster")
+		page.Add(group)
 
-	add := gtk.NewButton()
-	add.AddCSSClass("flat")
-	add.SetIconName("list-add")
-	add.ConnectClicked(func() {
-		pref := NewClusterPrefPage(&w.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
-		view.Push(pref.NavigationPage)
-	})
-
-	group.SetHeaderSuffix(add)
-
-	for _, c := range w.behavior.Preferences.Value().Clusters {
-		cluster := c
-		row := adw.NewActionRow()
-		row.SetTitle(cluster.Value().Name)
-		row.SetActivatable(true)
-		row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-		row.ConnectActivated(func() {
-			cluster, err := w.behavior.WithCluster(context.TODO(), cluster)
-			if err != nil {
-				ShowErrorDialog(&w.Window, "Cluster connection failed", err)
-				return
-			}
-			app := w.Application()
-			w.Close()
-			NewClusterWindow(app, cluster).Show()
+		add := gtk.NewButton()
+		add.AddCSSClass("flat")
+		add.SetIconName("list-add")
+		add.ConnectClicked(func() {
+			pref := NewClusterPrefPage(&w.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
+			view.Push(pref.NavigationPage)
 		})
-		group.Add(row)
+
+		group.SetHeaderSuffix(add)
+
+		for _, c := range w.behavior.Preferences.Value().Clusters {
+			cluster := c
+			row := adw.NewActionRow()
+			row.SetTitle(cluster.Value().Name)
+			row.SetActivatable(true)
+			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+			row.ConnectActivated(func() {
+				cluster, err := w.behavior.WithCluster(context.TODO(), cluster)
+				if err != nil {
+					ShowErrorDialog(&w.Window, "Cluster connection failed", err)
+					return
+				}
+				app := w.Application()
+				w.Close()
+				NewClusterWindow(app, cluster).Show()
+			})
+			group.Add(row)
+		}
+	} else {
+		status := adw.NewStatusPage()
+		status.SetIconName("network-workgroup-symbolic")
+		status.SetTitle("No Clusters Found")
+		status.SetDescription("Connect to a cluster to get started.")
+		btn := gtk.NewButton()
+		btn.ConnectClicked(func() {
+			pref := NewClusterPrefPage(&w.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
+			view.Push(pref.NavigationPage)
+		})
+		btn.SetHAlign(gtk.AlignCenter)
+		btn.SetLabel("New Cluster")
+		btn.AddCSSClass("pill")
+		btn.AddCSSClass("suggested-action")
+		status.SetChild(btn)
+		box.Append(status)
 	}
 
 	return view
