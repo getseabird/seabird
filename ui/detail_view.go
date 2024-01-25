@@ -71,7 +71,7 @@ func (d *DetailView) onPropertiesChange(properties []behavior.ObjectProperty) {
 				for _, p3 := range p2.Children {
 					if len(p3.Children) > 0 {
 						r3 := adw.NewActionRow()
-						r3.SetTitle(p2.Name)
+						r3.SetTitle(p3.Name)
 						r3.AddCSSClass("property")
 						r2.AddRow(r3)
 
