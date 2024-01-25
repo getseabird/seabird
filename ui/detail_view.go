@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"fmt"
+
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -63,23 +65,45 @@ func (d *DetailView) onPropertiesChange(properties []behavior.ObjectProperty) {
 		d.groups = append(d.groups, g)
 		for _, p2 := range p1.Children {
 			if len(p2.Children) > 0 {
-				parent := adw.NewExpanderRow()
-				parent.SetTitle(p2.Name)
-				g.Add(parent)
+				r2 := adw.NewExpanderRow()
+				r2.SetTitle(p2.Name)
+				g.Add(r2)
 				for _, p3 := range p2.Children {
-					child := adw.NewActionRow()
-					child.SetTitle(p3.Name)
-					child.SetSubtitle(p3.Value)
-					child.AddCSSClass("property")
-					parent.AddRow(child)
+					if len(p3.Children) > 0 {
+						r3 := adw.NewActionRow()
+						r3.SetTitle(p2.Name)
+						r3.AddCSSClass("property")
+						r2.AddRow(r3)
+
+						box := gtk.NewFlowBox()
+						box.SetColumnSpacing(2)
+						box.SetRowSpacing(2)
+						r3.FirstChild().(*gtk.Box).FirstChild().(*gtk.Box).NextSibling().(*gtk.Image).NextSibling().(*gtk.Box).Append(box)
+
+						for _, p4 := range p3.Children {
+							label := gtk.NewLabel(fmt.Sprintf("%s: %s", p4.Name, p4.Value))
+							label.SetSelectable(true)
+							label.AddCSSClass("badge")
+							box.Insert(label, -1)
+						}
+					} else {
+						r3 := adw.NewActionRow()
+						r3.SetTitle(p3.Name)
+						r3.SetSubtitle(p3.Value)
+						r3.SetSubtitleSelectable(true)
+						r3.AddCSSClass("property")
+						r2.AddRow(r3)
+					}
+
 				}
-				d.extendRow([]string{p1.Name, p2.Name}, parent)
+				d.extendRow([]string{p1.Name, p2.Name}, r2)
 			} else {
-				r := adw.NewActionRow()
-				r.SetTitle(p2.Name)
-				r.SetSubtitle(p2.Value)
-				r.AddCSSClass("property")
-				g.Add(r)
+				r2 := adw.NewActionRow()
+				r2.SetTitle(p2.Name)
+				r2.SetSubtitle(p2.Value)
+				r2.SetSubtitleSelectable(true)
+				r2.AddCSSClass("property")
+				g.Add(r2)
 			}
 		}
 	}
