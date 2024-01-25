@@ -2,47 +2,44 @@ package ui
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/state"
+	"github.com/getseabird/seabird/behavior"
 )
 
 type ClusterWindow struct {
 	*adw.ApplicationWindow
-	cluster      *state.Cluster
-	metrics      *state.Metrics
-	prefs        *state.Preferences
+	behavior     *behavior.ClusterBehavior
+	prefs        *behavior.Preferences
 	navigation   *Navigation
 	listView     *ListView
 	detailView   *DetailView
 	toastOverlay *adw.ToastOverlay
 }
 
-func NewClusterWindow(app *gtk.Application, cluster *state.Cluster, prefs *state.Preferences) *ClusterWindow {
+func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) *ClusterWindow {
 	w := ClusterWindow{
 		ApplicationWindow: adw.NewApplicationWindow(app),
-		cluster:           cluster,
-		prefs:             prefs,
+		behavior:          behavior,
 	}
-	w.SetTitle(fmt.Sprintf("%s - %s", cluster.Preferences.Name, ApplicationName))
+	w.SetTitle(fmt.Sprintf("%s - %s", behavior.ClusterPreferences.Value().Name, ApplicationName))
 	w.SetDefaultSize(900, 700)
 
 	w.toastOverlay = adw.NewToastOverlay()
 	w.SetContent(w.toastOverlay)
 
-	w.metrics, _ = state.NewMetrics(cluster)
-
 	grid := gtk.NewGrid()
 	w.toastOverlay.SetChild(grid)
 
-	w.detailView = NewDetailView(&w)
+	w.detailView = NewDetailView(&w.Window, behavior.NewDetailBehavior())
 	grid.Attach(w.detailView, 2, 0, 1, 1)
-	w.listView = NewListView(&w)
+	w.listView = NewListView(&w.Window, behavior.NewListBehavior())
 	grid.Attach(w.listView, 1, 0, 1, 1)
-	w.navigation = NewNavigation(&w)
+	w.navigation = NewNavigation(behavior)
 	grid.Attach(w.navigation, 0, 0, 1, 1)
 
 	w.createActions()
@@ -53,13 +50,13 @@ func NewClusterWindow(app *gtk.Application, cluster *state.Cluster, prefs *state
 func (w *ClusterWindow) createActions() {
 	newWindow := gio.NewSimpleAction("newWindow", nil)
 	newWindow.ConnectActivate(func(_ *glib.Variant) {
-		prefs, err := state.LoadPreferences()
+		prefs, err := behavior.LoadPreferences()
 		if err != nil {
 			ShowErrorDialog(&w.Window, "Could not load preferences", err)
 			return
 		}
 		prefs.Defaults()
-		NewWelcomeWindow(w.Application(), prefs).Show()
+		NewWelcomeWindow(w.Application(), w.behavior.Behavior).Show()
 	})
 	w.AddAction(newWindow)
 	w.Application().SetAccelsForAction("win.newWindow", []string{"<Ctrl>N"})
@@ -74,7 +71,7 @@ func (w *ClusterWindow) createActions() {
 
 	action := gio.NewSimpleAction("prefs", nil)
 	action.ConnectActivate(func(_ *glib.Variant) {
-		prefs := NewPreferencesWindow(w)
+		prefs := NewPreferencesWindow(w.behavior)
 		prefs.SetTransientFor(&w.Window)
 		prefs.Show()
 	})
@@ -85,4 +82,13 @@ func (w *ClusterWindow) createActions() {
 		NewAboutWindow(&w.Window).Show()
 	})
 	w.AddAction(action)
+
+	filterNamespace := gio.NewSimpleAction("filterNamespace", glib.NewVariantType("s"))
+	filterNamespace.ConnectActivate(func(parameter *glib.Variant) {
+		text := strings.Trim(fmt.Sprintf("%s ns:%s", w.behavior.SearchText.Value(), parameter.String()), " ")
+		w.behavior.SearchText.Update(text)
+	})
+	actionGroup := gio.NewSimpleActionGroup()
+	actionGroup.AddAction(filterNamespace)
+	w.InsertActionGroup("list", actionGroup)
 }

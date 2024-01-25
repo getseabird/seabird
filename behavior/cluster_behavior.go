@@ -1,10 +1,11 @@
-package state
+package behavior
 
 import (
 	"context"
 	"sort"
 
 	"github.com/go-logr/logr"
+	"github.com/imkira/go-observer/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
@@ -23,21 +24,34 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type Cluster struct {
-	client.Client
-	Clientset   *kubernetes.Clientset
-	Dynamic     *dynamic.DynamicClient
-	Preferences *ClusterPreferences
-	Scheme      *runtime.Scheme
-	Resources   []metav1.APIResource
+type ClusterBehavior struct {
+	*Behavior
+
+	client    client.Client
+	clientset *kubernetes.Clientset
+	dynamic   *dynamic.DynamicClient
+	scheme    *runtime.Scheme
+
+	ClusterPreferences observer.Property[ClusterPreferences]
+
+	metrics *Metrics
+
+	Resources  []metav1.APIResource
+	Namespaces observer.Property[[]corev1.Namespace]
+
+	SelectedResource observer.Property[*metav1.APIResource]
+	SelectedObject   observer.Property[client.Object]
+
+	SearchText   observer.Property[string]
+	SearchFilter observer.Property[SearchFilter]
 }
 
-func NewCluster(ctx context.Context, prefs *ClusterPreferences) (*Cluster, error) {
+func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPreferences]) (*ClusterBehavior, error) {
 	logf.SetLogger(logr.Discard())
 
 	config := &rest.Config{
-		Host:            prefs.Host,
-		TLSClientConfig: prefs.TLS,
+		Host:            clusterPrefs.Value().Host,
+		TLSClientConfig: clusterPrefs.Value().TLS,
 	}
 
 	discovery, err := discovery.NewDiscoveryClientForConfig(config)
@@ -71,12 +85,28 @@ func NewCluster(ctx context.Context, prefs *ClusterPreferences) (*Cluster, error
 		return nil, err
 	}
 
-	cluster := Cluster{
-		Client:      rclient,
-		Clientset:   clientset,
-		Preferences: prefs,
-		Scheme:      scheme,
-		Dynamic:     dynamicClient,
+	var namespaces corev1.NamespaceList
+	if err := rclient.List(context.TODO(), &namespaces); err != nil {
+		return nil, err
+	}
+
+	cluster := ClusterBehavior{
+		Behavior:           b,
+		client:             rclient,
+		clientset:          clientset,
+		scheme:             scheme,
+		ClusterPreferences: clusterPrefs,
+		dynamic:            dynamicClient,
+		Namespaces:         observer.NewProperty(namespaces.Items),
+		SelectedObject:     observer.NewProperty[client.Object](nil),
+		SelectedResource:   observer.NewProperty[*metav1.APIResource](nil),
+		SearchText:         observer.NewProperty(""),
+		SearchFilter:       observer.NewProperty(SearchFilter{}),
+	}
+
+	cluster.metrics, err = cluster.newMetrics(&cluster)
+	if err != nil {
+		// metrics disabled
 	}
 
 	resources, err := discovery.ServerPreferredResources()

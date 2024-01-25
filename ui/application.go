@@ -7,7 +7,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/state"
+	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/style"
 )
 
@@ -21,13 +21,15 @@ type Application struct {
 func NewApplication(version string) (*Application, error) {
 	gtk.Init()
 
-	prefs, err := state.LoadPreferences()
+	b, err := behavior.NewBehavior()
 	if err != nil {
 		return nil, err
 	}
-	prefs.Defaults()
 
-	adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(prefs.ColorScheme))
+	adw.StyleManagerGetDefault().SetColorScheme(b.Preferences.Value().ColorScheme)
+	onChange(b.Preferences, func(p behavior.Preferences) {
+		adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(p.ColorScheme))
+	})
 
 	a := Application{
 		Application: adw.NewApplication("io.github.getseabird.seabird", gio.ApplicationFlagsNone),
@@ -40,7 +42,7 @@ func NewApplication(version string) (*Application, error) {
 	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), provider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
 	a.ConnectActivate(func() {
-		NewWelcomeWindow(&a.Application.Application, prefs).Show()
+		NewWelcomeWindow(&a.Application.Application, b).Show()
 	})
 
 	return &a, nil
