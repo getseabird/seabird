@@ -146,7 +146,30 @@ func (b *DetailBehaviour) onObjectChange(object client.Object) {
 				props = append(props, ObjectProperty{Name: "Command", Value: strings.Join(container.Command, " ")})
 			}
 
-			// TODO env
+			prop := ObjectProperty{Name: "Env"}
+			for _, env := range container.Env {
+				if from := env.ValueFrom; from != nil {
+					if ref := from.ConfigMapKeyRef; ref != nil {
+						var cm corev1.ConfigMap
+						if err := b.client.Get(context.TODO(), types.NamespacedName{Name: ref.Name, Namespace: object.Namespace}, &cm); err != nil {
+							prop.Children = append(prop.Children, ObjectProperty{Name: env.Name, Value: fmt.Sprintf("error: %v", err)})
+						} else {
+							prop.Children = append(prop.Children, ObjectProperty{Name: env.Name, Value: cm.Data[ref.Key]})
+						}
+					} else if ref := from.SecretKeyRef; ref != nil {
+						var secret corev1.Secret
+						if err := b.client.Get(context.TODO(), types.NamespacedName{Name: ref.Name, Namespace: object.Namespace}, &secret); err != nil {
+							prop.Children = append(prop.Children, ObjectProperty{Name: env.Name, Value: fmt.Sprintf("error: %v", err)})
+						} else {
+							prop.Children = append(prop.Children, ObjectProperty{Name: env.Name, Value: string(secret.Data[ref.Key])})
+						}
+					}
+					// TODO field refs
+				} else {
+					prop.Children = append(prop.Children, ObjectProperty{Name: env.Name, Value: env.Value})
+				}
+			}
+			props = append(props, prop)
 
 			if metrics != nil {
 				if cpu := metrics.Usage.Cpu(); cpu != nil {
