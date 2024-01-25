@@ -44,7 +44,7 @@ type ClusterPreferences struct {
 func LoadPreferences() (*Preferences, error) {
 	if _, err := os.Stat(PrefPath()); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			var prefs Preferences
+			prefs := Preferences{basePreferences: &basePreferences{}}
 			prefs.Defaults()
 			return &prefs, nil
 		}
