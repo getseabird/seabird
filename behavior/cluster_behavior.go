@@ -2,6 +2,7 @@ package behavior
 
 import (
 	"context"
+	"log"
 	"sort"
 
 	"github.com/go-logr/logr"
@@ -104,11 +105,6 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		SearchFilter:       observer.NewProperty(SearchFilter{}),
 	}
 
-	cluster.metrics, err = cluster.newMetrics(&cluster)
-	if err != nil {
-		// metrics disabled
-	}
-
 	resources, err := discovery.ServerPreferredResources()
 	if err != nil {
 		return nil, err
@@ -128,6 +124,12 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 			cluster.Resources = append(cluster.Resources, res)
 		}
 	}
+
+	cluster.metrics, err = cluster.newMetrics(&cluster)
+	if err != nil {
+		log.Printf("metrics disabled: %w", err.Error())
+	}
+
 	sort.Slice(cluster.Resources, func(i, j int) bool {
 		return cluster.Resources[i].Kind[0] < cluster.Resources[j].Kind[0]
 	})
