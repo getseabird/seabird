@@ -1,41 +1,40 @@
 package ui
 
 import (
-	"context"
 	"strconv"
 	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/internal"
+	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/util"
-	"github.com/kelindar/event"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ListView struct {
 	*gtk.Box
-	root       *ClusterWindow
-	resource   *metav1.APIResource
-	items      []client.Object
+	behavior   *behavior.ListBehavior
+	parent     *gtk.Window
 	selection  *gtk.SingleSelection
 	columnView *gtk.ColumnView
 	columns    []*gtk.ColumnViewColumn
 }
 
-func NewListView(root *ClusterWindow) *ListView {
-	l := ListView{Box: gtk.NewBox(gtk.OrientationVertical, 0), root: root}
+func NewListView(parent *gtk.Window, behavior *behavior.ListBehavior) *ListView {
+	l := ListView{
+		Box:      gtk.NewBox(gtk.OrientationVertical, 0),
+		parent:   parent,
+		behavior: behavior,
+	}
 	l.AddCSSClass("view")
 
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
 	header.SetShowEndTitleButtons(false)
 	header.SetShowStartTitleButtons(false)
-	header.SetTitleWidget(NewListHeader(root))
+	header.SetTitleWidget(NewListHeader(behavior))
 	l.Append(header)
 
 	l.selection = l.createModel()
@@ -53,17 +52,13 @@ func NewListView(root *ClusterWindow) *ListView {
 	sw.SetChild(vp)
 	l.Append(sw)
 
+	onChange(l.behavior.Objects, l.onObjectsChange)
+	onChange(l.behavior.SearchFilter, l.onSearchFilterChange)
+
 	return &l
 }
 
-func (l *ListView) SetResource(gvr schema.GroupVersionResource) error {
-	for _, res := range l.root.cluster.Resources {
-		if res.Group == gvr.Group && res.Version == gvr.Version && res.Name == gvr.Resource {
-			l.resource = &res
-			break
-		}
-	}
-
+func (l *ListView) onObjectsChange(objects []client.Object) {
 	l.selection = l.createModel()
 	l.columnView.SetModel(l.selection)
 
@@ -75,28 +70,24 @@ func (l *ListView) SetResource(gvr schema.GroupVersionResource) error {
 		l.columnView.AppendColumn(column)
 	}
 
-	list, err := l.listResource(context.TODO(), gvr)
-	if err != nil {
-		return err
-	}
-	l.items = list
-	for i, _ := range list {
+	filter := l.behavior.SearchFilter.Value()
+	for i, o := range objects {
+		if !filter.Test(o) {
+			continue
+		}
 		l.selection.Model().Cast().(*gtk.StringList).Append(strconv.Itoa(i))
 	}
 
-	if len(l.items) > 0 {
+	if len(objects) > 0 {
 		l.selection.SetSelected(0)
-		l.root.detailView.SetObject(l.items[0])
+		l.behavior.SelectedObject.Update(objects[0])
 	}
-
-	return nil
-
 }
 
-func (l *ListView) SetFilter(filter SearchFilter) {
+func (l *ListView) onSearchFilterChange(filter behavior.SearchFilter) {
 	l.selection = l.createModel()
 	l.columnView.SetModel(l.selection)
-	for i, object := range l.items {
+	for i, object := range l.behavior.Objects.Value() {
 		if filter.Test(object) {
 			l.selection.Model().Cast().(*gtk.StringList).Append(strconv.Itoa(i))
 		}
@@ -112,7 +103,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 		listitem.SetChild(label)
 	}))
 
-	if l.resource.Namespaced {
+	if l.behavior.SelectedResource.Value().Namespaced {
 		columns = append(columns, l.createColumn("Namespace", func(listitem *gtk.ListItem, object client.Object) {
 			label := gtk.NewLabel(object.GetNamespace())
 			label.SetHAlign(gtk.AlignStart)
@@ -127,7 +118,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 		listitem.SetChild(label)
 	}))
 
-	switch util.ResourceGVR(l.resource).String() {
+	switch util.ResourceGVR(l.behavior.SelectedResource.Value()).String() {
 	case corev1.SchemeGroupVersion.WithResource("pods").String():
 		columns = append(columns,
 			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
@@ -193,16 +184,15 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 		)
 	}
 
-	event.Emit(internal.ResourceChanged{APIResource: l.resource})
-
 	return columns
 }
 
 func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, object client.Object)) *gtk.ColumnViewColumn {
+	objects := l.behavior.Objects.Value()
 	factory := gtk.NewSignalListItemFactory()
 	factory.ConnectBind(func(listitem *gtk.ListItem) {
 		idx, _ := strconv.Atoi(listitem.Item().Cast().(*gtk.StringObject).String())
-		object := l.items[idx]
+		object := objects[idx]
 		bind(listitem, object)
 	})
 	column := gtk.NewColumnViewColumn(name, &factory.ListItemFactory)
@@ -210,72 +200,10 @@ func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, o
 	return column
 }
 
-// We want typed objects for known resources so we can type switch them
-func (l *ListView) listResource(ctx context.Context, gvr schema.GroupVersionResource) ([]client.Object, error) {
-	var res []client.Object
-	var list client.ObjectList
-	switch gvr.String() {
-	case corev1.SchemeGroupVersion.WithResource("pods").String():
-		list = &corev1.PodList{}
-	case corev1.SchemeGroupVersion.WithResource("configmaps").String():
-		list = &corev1.ConfigMapList{}
-	case corev1.SchemeGroupVersion.WithResource("secrets").String():
-		list = &corev1.SecretList{}
-	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
-		list = &appsv1.DeploymentList{}
-	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
-		list = &appsv1.StatefulSetList{}
-	}
-	if list != nil {
-		if err := l.root.cluster.List(ctx, list); err != nil {
-			return nil, err
-		}
-		switch list := list.(type) {
-		case *corev1.PodList:
-			for _, i := range list.Items {
-				ii := i
-				res = append(res, &ii)
-			}
-		case *corev1.ConfigMapList:
-			for _, i := range list.Items {
-				ii := i
-				res = append(res, &ii)
-			}
-		case *corev1.SecretList:
-			for _, i := range list.Items {
-				ii := i
-				res = append(res, &ii)
-			}
-		case *appsv1.DeploymentList:
-			for _, i := range list.Items {
-				ii := i
-				res = append(res, &ii)
-			}
-		case *appsv1.StatefulSetList:
-			for _, i := range list.Items {
-				ii := i
-				res = append(res, &ii)
-			}
-		}
-
-		return res, nil
-	} else {
-		list, err := l.root.cluster.Dynamic.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
-		if err != nil {
-			return nil, err
-		}
-		for _, i := range list.Items {
-			ii := i
-			res = append(res, &ii)
-		}
-		return res, nil
-	}
-}
-
 func (l *ListView) createModel() *gtk.SingleSelection {
 	selection := gtk.NewSingleSelection(gtk.NewStringList([]string{}))
 	selection.ConnectSelectionChanged(func(_, _ uint) {
-		l.root.detailView.SetObject(l.items[l.selection.Selected()])
+		l.behavior.SelectedObject.Update(l.behavior.Objects.Value()[l.selection.Selected()])
 	})
 	return selection
 }

@@ -8,48 +8,64 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/state"
+	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/util"
+	"github.com/imkira/go-observer/v2"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
 type ClusterPrefPage struct {
 	*adw.NavigationPage
 	parent     *gtk.Window
-	prefs      *state.Preferences
-	active     *state.ClusterPreferences
-	page       *adw.PreferencesPage
+	content    *adw.Bin
+	behavior   *behavior.Behavior
+	active     observer.Property[behavior.ClusterPreferences]
 	name       *adw.EntryRow
 	host       *adw.EntryRow
 	cert       *adw.EntryRow
 	key        *adw.EntryRow
 	ca         *adw.EntryRow
-	favourites *adw.PreferencesGroup
+	favourites *adw.Bin
+	actions    *adw.Bin
 }
 
-func NewClusterPrefPage(parent *gtk.Window, prefs *state.Preferences, active *state.ClusterPreferences) *ClusterPrefPage {
-	content := gtk.NewBox(gtk.OrientationVertical, 0)
-	p := ClusterPrefPage{NavigationPage: adw.NewNavigationPage(content, "Cluster")}
-
-	p.parent = parent
-	p.prefs = prefs
-	p.active = active
+func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observer.Property[behavior.ClusterPreferences]) *ClusterPrefPage {
+	box := gtk.NewBox(gtk.OrientationVertical, 0)
+	content := adw.NewBin()
+	p := ClusterPrefPage{
+		NavigationPage: adw.NewNavigationPage(box, "Cluster"),
+		content:        content,
+		behavior:       b,
+		parent:         parent,
+		active:         active,
+	}
 
 	header := adw.NewHeaderBar()
 	header.SetShowEndTitleButtons(false)
 	header.PackEnd(p.createSaveButton())
-	content.Append(header)
-	p.page = adw.NewPreferencesPage()
-	content.Append(p.page)
+	box.Append(header)
+	box.Append(content)
+	content.SetChild(p.createContent())
 
-	if active == nil {
-		group := adw.NewPreferencesGroup()
-		p.page.Add(group)
-		group.Add(p.createLoadActionRow())
-	}
+	onChange(p.active, func(prefs behavior.ClusterPreferences) {
+		p.name.SetText(prefs.Name)
+		p.host.SetText(prefs.Host)
+		p.cert.SetText(string(prefs.TLS.CertData))
+		p.key.SetText(string(prefs.TLS.KeyData))
+		p.ca.SetText(string(prefs.TLS.CAData))
+
+		p.favourites.SetChild(p.createFavourites())
+		p.actions.SetChild(p.createActions())
+	})
+
+	return &p
+}
+
+func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
+	page := adw.NewPreferencesPage()
 
 	general := adw.NewPreferencesGroup()
-	p.page.Add(general)
+	page.Add(general)
 	p.name = adw.NewEntryRow()
 	p.name.SetTitle("Name")
 	general.Add(p.name)
@@ -70,40 +86,27 @@ func NewClusterPrefPage(parent *gtk.Window, prefs *state.Preferences, active *st
 	p.ca.SetTitle("CA certificate")
 	auth.AddRow(p.ca)
 
-	if active != nil {
-		p.setPrefs(active)
+	p.name.SetText(p.active.Value().Name)
+	p.host.SetText(p.active.Value().Host)
+	p.cert.SetText(string(p.active.Value().TLS.CertData))
+	p.key.SetText(string(p.active.Value().TLS.KeyData))
+	p.ca.SetText(string(p.active.Value().TLS.CAData))
 
-		delete := adw.NewActionRow()
-		delete.SetActivatable(true)
-		delete.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-		delete.SetTitle("Delete")
-		delete.AddCSSClass("error")
-		delete.ConnectActivated(func() {
-			dialog := adw.NewMessageDialog(parent, "Delete cluster?", fmt.Sprintf("Are you sure you want to delete cluster \"%s\"?", active.Name))
-			dialog.AddResponse("cancel", "Cancel")
-			dialog.AddResponse("delete", "Delete")
-			dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
-			dialog.Show()
-			dialog.ConnectResponse(func(response string) {
-				if response == "delete" {
-					var idx int
-					for i, c := range prefs.Clusters {
-						if c == active {
-							idx = i
-							break
-						}
-					}
-					prefs.Clusters = append(prefs.Clusters[:idx], prefs.Clusters[idx+1:]...)
-					p.Parent().(*adw.NavigationView).Pop()
-				}
-			})
-		})
-		group := adw.NewPreferencesGroup()
-		group.Add(delete)
-		p.page.Add(group)
+	p.favourites = adw.NewBin()
+	p.favourites.SetChild(p.createFavourites())
+	group := adw.NewPreferencesGroup()
+	group.Add(p.favourites)
+	if util.Index(p.behavior.Preferences.Value().Clusters, p.active) >= 0 {
+		page.Add(group)
 	}
 
-	return &p
+	p.actions = adw.NewBin()
+	p.actions.SetChild(p.createActions())
+	group = adw.NewPreferencesGroup()
+	group.Add(p.actions)
+	page.Add(group)
+
+	return page
 }
 
 func (p *ClusterPrefPage) createFavourites() *adw.PreferencesGroup {
@@ -111,7 +114,7 @@ func (p *ClusterPrefPage) createFavourites() *adw.PreferencesGroup {
 	group.SetTitle("Favourites")
 	group.SetHeaderSuffix(p.createFavouritesAddButton())
 
-	for i, fav := range p.active.Navigation.Favourites {
+	for i, fav := range p.active.Value().Navigation.Favourites {
 		idx := i
 		row := adw.NewActionRow()
 		row.AddCSSClass("property")
@@ -126,8 +129,9 @@ func (p *ClusterPrefPage) createFavourites() *adw.PreferencesGroup {
 		remove.AddCSSClass("flat")
 		remove.SetIconName("user-trash-symbolic")
 		remove.ConnectClicked(func() {
-			p.active.Navigation.Favourites = append(p.active.Navigation.Favourites[:idx], p.active.Navigation.Favourites[idx+1:]...)
-			p.setPrefs(p.active)
+			v := p.active.Value()
+			v.Navigation.Favourites = append(p.active.Value().Navigation.Favourites[:idx], p.active.Value().Navigation.Favourites[idx+1:]...)
+			p.active.Update(v)
 		})
 		row.AddSuffix(remove)
 		group.Add(row)
@@ -158,11 +162,11 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 		sw.SetChild(pp)
 		content.Append(sw)
 
-		cluster, _ := state.NewCluster(context.TODO(), p.active)
+		cluster, _ := p.behavior.WithCluster(context.TODO(), p.active)
 		for _, r := range cluster.Resources {
 			res := r
 			exists := false
-			for _, fav := range p.active.Navigation.Favourites {
+			for _, fav := range p.active.Value().Navigation.Favourites {
 				if util.ResourceGVR(&res).String() == fav.String() {
 					exists = true
 				}
@@ -182,9 +186,10 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 			row.SetActivatable(true)
 			row.ConnectActivated(func() {
-				p.active.Navigation.Favourites = append(p.active.Navigation.Favourites, util.ResourceGVR(&res))
+				v := p.active.Value()
+				v.Navigation.Favourites = append(p.active.Value().Navigation.Favourites, util.ResourceGVR(&res))
+				p.active.Update(v)
 				p.Parent().(*adw.NavigationView).Pop()
-				p.setPrefs(p.active)
 			})
 			group.Add(row)
 		}
@@ -193,13 +198,50 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 	return button
 }
 
-func (p *ClusterPrefPage) createLoadActionRow() *adw.ActionRow {
-	row := adw.NewActionRow()
-	row.SetActivatable(true)
-	row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-	row.SetTitle("Load kubeconfig")
+func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
+	button := gtk.NewButton()
+	button.SetLabel("Save")
+	button.AddCSSClass("suggested-action")
+	button.ConnectClicked(func() {
+		cluster := p.active.Value()
+		cluster.Name = p.name.Text()
+		cluster.Host = p.host.Text()
+		cluster.TLS.CertData = []byte(p.cert.Text())
+		cluster.TLS.KeyData = []byte(p.key.Text())
+		cluster.TLS.CAData = []byte(p.ca.Text())
+		cluster.Defaults()
 
-	row.ConnectActivated(func() {
+		if err := p.validate(cluster); err != nil {
+			ShowErrorDialog(p.parent, "Validation failed", err)
+			return
+		}
+		if _, err := p.behavior.WithCluster(context.TODO(), observer.NewProperty(cluster)); err != nil {
+			ShowErrorDialog(p.parent, "Cluster connection failed", err)
+			return
+		}
+
+		p.active.Update(cluster)
+		if util.Index(p.behavior.Preferences.Value().Clusters, p.active) < 0 {
+			prefs := p.behavior.Preferences.Value()
+			prefs.Clusters = append(prefs.Clusters, p.active)
+			p.behavior.Preferences.Update(prefs)
+		}
+
+		p.Parent().(*adw.NavigationView).Pop()
+	})
+
+	return button
+}
+
+func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
+	group := adw.NewPreferencesGroup()
+
+	load := adw.NewActionRow()
+	load.SetActivatable(true)
+	load.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+	load.SetTitle("Load kubeconfig")
+
+	load.ConnectActivated(func() {
 		fileChooser := gtk.NewFileChooserNative("Select kubeconfig", p.parent, gtk.FileChooserActionOpen, "Open", "Cancel")
 		filter := gtk.NewFileFilter()
 		filter.AddMIMEType("text/plain")
@@ -215,85 +257,65 @@ func (p *ClusterPrefPage) createLoadActionRow() *adw.ActionRow {
 					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
-				p.name.SetText(config.ServerName)
-				p.host.SetText(config.Host)
+				active := p.active.Value()
+				active.Name = config.ServerName
+				active.Host = config.Host
 				if config.CertFile != "" {
 					data, _ := os.ReadFile(config.CertFile)
-					p.cert.SetText(string(data))
+					active.TLS.CertData = data
 				} else {
-					p.cert.SetText(string(config.CertData))
+					active.TLS.CertData = config.CertData
 				}
 				if config.KeyFile != "" {
 					data, _ := os.ReadFile(config.KeyFile)
-					p.key.SetText(string(data))
+					active.TLS.KeyData = data
 				} else {
-					p.key.SetText(string(config.KeyData))
+					active.TLS.KeyData = config.KeyData
 				}
 				if config.CAFile != "" {
 					data, _ := os.ReadFile(config.CAFile)
-					p.ca.SetText(string(data))
+					active.TLS.CAData = data
 				} else {
-					p.ca.SetText(string(config.CAData))
+					active.TLS.CAData = config.CAData
 				}
+				p.active.Update(active)
 			}
 		})
 		fileChooser.Show()
 	})
+	group.Add(load)
 
-	return row
-}
-
-func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
-	button := gtk.NewButton()
-	button.SetLabel("Save")
-	button.AddCSSClass("suggested-action")
-	button.ConnectClicked(func() {
-		if err := p.validate(); err != nil {
-			ShowErrorDialog(p.parent, "Validation failed", err)
-			return
-		}
-
-		cluster := state.ClusterPreferences{}
-		cluster.Name = p.name.Text()
-		cluster.Host = p.host.Text()
-		cluster.TLS.CertData = []byte(p.cert.Text())
-		cluster.TLS.KeyData = []byte(p.key.Text())
-		cluster.TLS.CAData = []byte(p.ca.Text())
-		cluster.Defaults()
-
-		if _, err := state.NewCluster(context.TODO(), &cluster); err != nil {
-			ShowErrorDialog(p.parent, "Cluster connection failed", err)
-			return
-		}
-
-		if p.active == nil {
-			p.prefs.Clusters = append(p.prefs.Clusters, &cluster)
-		} else {
-			p.active = &cluster
-		}
-		p.Parent().(*adw.NavigationView).Pop()
-	})
-
-	return button
-}
-
-func (p *ClusterPrefPage) setPrefs(clusterPrefs *state.ClusterPreferences) {
-	p.active = clusterPrefs
-	p.name.SetText(clusterPrefs.Name)
-	p.host.SetText(clusterPrefs.Host)
-	p.cert.SetText(string(clusterPrefs.TLS.CertData))
-	p.key.SetText(string(clusterPrefs.TLS.KeyData))
-	p.ca.SetText(string(clusterPrefs.TLS.CAData))
-
-	if p.favourites != nil {
-		p.page.Remove(p.favourites)
+	if util.Index(p.behavior.Preferences.Value().Clusters, p.active) >= 0 {
+		delete := adw.NewActionRow()
+		delete.SetActivatable(true)
+		delete.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+		delete.SetTitle("Delete")
+		delete.AddCSSClass("error")
+		delete.ConnectActivated(func() {
+			dialog := adw.NewMessageDialog(p.parent, "Delete cluster?", fmt.Sprintf("Are you sure you want to delete cluster \"%s\"?", p.active.Value().Name))
+			dialog.AddResponse("cancel", "Cancel")
+			dialog.AddResponse("delete", "Delete")
+			dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
+			dialog.Show()
+			dialog.ConnectResponse(func(response string) {
+				if response == "delete" {
+					prefs := p.behavior.Preferences.Value()
+					if i := util.Index(prefs.Clusters, p.active); i >= 0 {
+						prefs.Clusters = append(prefs.Clusters[:i], prefs.Clusters[i+1:]...)
+						p.behavior.Preferences.Update(prefs)
+						p.Parent().(*adw.NavigationView).Pop()
+					}
+				}
+			})
+		})
+		group.Add(delete)
 	}
-	p.favourites = p.createFavourites()
-	p.page.Add(p.favourites)
+
+	return group
 }
 
-func (p *ClusterPrefPage) validate() error {
-	if len(p.name.Text()) == 0 {
+func (p *ClusterPrefPage) validate(pref behavior.ClusterPreferences) error {
+	if len(pref.Name) == 0 {
 		return errors.New("Name is required")
 	}
 

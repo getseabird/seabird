@@ -1,4 +1,4 @@
-package state
+package behavior
 
 import (
 	"encoding/json"
@@ -7,17 +7,21 @@ import (
 	"path"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
-	"github.com/getseabird/seabird/internal"
-	"github.com/kelindar/event"
+	"github.com/imkira/go-observer/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
 
-type Preferences struct {
+type basePreferences struct {
 	ColorScheme adw.ColorScheme
-	Clusters    []*ClusterPreferences
+	Clusters    []ClusterPreferences
+}
+
+type Preferences struct {
+	*basePreferences
+	Clusters []observer.Property[ClusterPreferences]
 }
 
 func PrefPath() string {
@@ -52,17 +56,23 @@ func LoadPreferences() (*Preferences, error) {
 		return nil, err
 	}
 
-	var prefs Preferences
-	if err := json.NewDecoder(f).Decode(&prefs); err != nil {
+	var base basePreferences
+	if err := json.NewDecoder(f).Decode(&base); err != nil {
 		return nil, err
 	}
+	base.Defaults()
 
-	prefs.Defaults()
+	prefs := Preferences{
+		basePreferences: &base,
+	}
+	for _, cluster := range base.Clusters {
+		prefs.Clusters = append(prefs.Clusters, observer.NewProperty(cluster))
+	}
 
 	return &prefs, nil
 }
 
-func (c *Preferences) Defaults() {
+func (c *basePreferences) Defaults() {
 	for i, _ := range c.Clusters {
 		c.Clusters[i].Defaults()
 	}
@@ -114,10 +124,14 @@ func (c *Preferences) Save() error {
 		return err
 	}
 
-	if err := json.NewEncoder(f).Encode(c); err != nil {
+	c.basePreferences.Clusters = []ClusterPreferences{}
+	for _, v := range c.Clusters {
+		c.basePreferences.Clusters = append(c.basePreferences.Clusters, v.Value())
+	}
+
+	if err := json.NewEncoder(f).Encode(c.basePreferences); err != nil {
 		return err
 	}
 
-	event.Emit(internal.PreferencesUpdated{})
 	return nil
 }

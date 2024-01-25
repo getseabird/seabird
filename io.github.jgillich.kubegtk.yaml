@@ -14,10 +14,12 @@ build-options:
     - GOROOT=/usr/lib/sdk/golang
 
 finish-args:
-  - --socket=wayland
+  - --share=ipc
   - --socket=fallback-x11
+  - --share=network
   - --device=dri
   - --talk-name=org.freedesktop.Notifications
+  - --filesystem=home
 modules:
   - name: seabird
     buildsystem: simple

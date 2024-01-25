@@ -6,13 +6,12 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
-	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/internal"
+	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/util"
-	"github.com/kelindar/event"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
@@ -20,18 +19,18 @@ import (
 
 type Navigation struct {
 	*adw.ToolbarView
-	root *ClusterWindow
-	list *gtk.ListBox
-	rows []*gtk.ListBoxRow
+	behavior *behavior.ClusterBehavior
+	list     *gtk.ListBox
+	rows     []*gtk.ListBoxRow
 }
 
-func NewNavigation(root *ClusterWindow) *Navigation {
-	n := &Navigation{ToolbarView: adw.NewToolbarView(), root: root}
-	n.SetSizeRequest(250, 250)
+func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
+	n := &Navigation{ToolbarView: adw.NewToolbarView(), behavior: b}
+	n.SetSizeRequest(200, 200)
 	n.SetVExpand(true)
 
 	header := adw.NewHeaderBar()
-	title := gtk.NewLabel(root.cluster.Preferences.Name)
+	title := gtk.NewLabel(b.ClusterPreferences.Value().Name)
 	title.AddCSSClass("heading")
 	header.SetTitleWidget(title)
 	header.SetShowEndTitleButtons(false)
@@ -58,35 +57,31 @@ func NewNavigation(root *ClusterWindow) *Navigation {
 
 	header.PackEnd(button)
 	n.AddTopBar(header)
-	n.SetContent(n.createFavourites())
+	n.SetContent(n.createFavourites(b.ClusterPreferences.Value()))
 
-	event.On(func(ev internal.PreferencesUpdated) {
-		glib.IdleAdd(func() {
-			n.SetContent(n.createFavourites())
-		})
+	onChange(b.ClusterPreferences, func(prefs behavior.ClusterPreferences) {
+		n.SetContent(n.createFavourites(prefs))
 	})
 
-	event.On(func(ev internal.ResourceChanged) {
+	onChange(b.SelectedResource, func(res *metav1.APIResource) {
 		var idx *int
-		for i, r := range n.root.cluster.Preferences.Navigation.Favourites {
-			if util.ResourceGVR(ev.APIResource).String() == r.String() {
+		for i, r := range b.ClusterPreferences.Value().Navigation.Favourites {
+			if util.ResourceGVR(res).String() == r.String() {
 				idx = ptr.To(i)
 				break
 			}
 		}
-		glib.IdleAdd(func() {
-			if idx != nil {
-				n.list.SelectRow(n.rows[*idx])
-			} else {
-				n.list.SelectRow(nil)
-			}
-		})
+		if idx != nil {
+			n.list.SelectRow(n.rows[*idx])
+		} else {
+			n.list.SelectRow(nil)
+		}
 	})
 
 	return n
 }
 
-func (n *Navigation) createFavourites() *gtk.ListBox {
+func (n *Navigation) createFavourites(prefs behavior.ClusterPreferences) *gtk.ListBox {
 	n.list = gtk.NewListBox()
 	n.list.AddCSSClass("dim-label")
 	n.list.AddCSSClass("navigation-sidebar")
@@ -100,14 +95,21 @@ func (n *Navigation) createFavourites() *gtk.ListBox {
 			log.Printf("failed to unmarshal gvr: %v", err)
 			return
 		}
-		n.root.listView.SetResource(gvr)
+
+		for _, res := range n.behavior.Resources {
+			if util.ResourceGVR(&res).String() == gvr.String() {
+				n.behavior.SelectedResource.Update(&res)
+				break
+			}
+		}
+
 	})
 
 	n.rows = nil
 
-	for i, gvr := range n.root.cluster.Preferences.Navigation.Favourites {
+	for i, gvr := range prefs.Navigation.Favourites {
 		var resource *v1.APIResource
-		for _, r := range n.root.cluster.Resources {
+		for _, r := range n.behavior.Resources {
 			if r.Group == gvr.Group && r.Version == gvr.Version && r.Name == gvr.Resource {
 				resource = &r
 				break

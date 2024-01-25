@@ -1,25 +1,23 @@
 package ui
 
 import (
-	"context"
-	"io"
-
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/getseabird/seabird/behavior"
 	corev1 "k8s.io/api/core/v1"
 )
 
 type LogWindow struct {
 	*adw.PreferencesWindow
-	root      *ClusterWindow
+	parent    *gtk.Window
 	pod       *corev1.Pod
 	container *corev1.Container
 }
 
-func NewLogWindow(root *ClusterWindow, pod *corev1.Pod, container *corev1.Container) *LogWindow {
+func NewLogWindow(parent *gtk.Window, behavior *behavior.DetailBehaviour, container *corev1.Container) *LogWindow {
 	w := LogWindow{PreferencesWindow: adw.NewPreferencesWindow()}
-	w.SetTransientFor(&root.Window)
+	w.SetTransientFor(parent)
 	w.SetDefaultSize(800, 800)
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
@@ -44,13 +42,7 @@ func NewLogWindow(root *ClusterWindow, pod *corev1.Pod, container *corev1.Contai
 	box.Append(scrolledWindow)
 
 	w.ConnectShow(func() {
-		req := root.cluster.Clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
-		r, err := req.Stream(context.TODO())
-		if err != nil {
-			ShowErrorDialog(&w.Window.Window, "Could not load logs", err)
-			return
-		}
-		logs, err := io.ReadAll(r)
+		logs, err := behavior.PodLogs()
 		if err != nil {
 			ShowErrorDialog(&w.Window.Window, "Could not load logs", err)
 			return

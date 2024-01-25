@@ -5,20 +5,21 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/state"
+	"github.com/getseabird/seabird/behavior"
+	"github.com/imkira/go-observer/v2"
 )
 
 type WelcomeWindow struct {
 	*adw.ApplicationWindow
-	content *adw.Bin
-	prefs   *state.Preferences
+	content  *adw.Bin
+	behavior *behavior.Behavior
 }
 
-func NewWelcomeWindow(app *gtk.Application, prefs *state.Preferences) *WelcomeWindow {
+func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *WelcomeWindow {
 	w := WelcomeWindow{
 		ApplicationWindow: adw.NewApplicationWindow(app),
 		content:           adw.NewBin(),
-		prefs:             prefs,
+		behavior:          behavior,
 	}
 	w.SetDefaultSize(600, 600)
 	w.SetContent(w.content)
@@ -30,7 +31,8 @@ func NewWelcomeWindow(app *gtk.Application, prefs *state.Preferences) *WelcomeWi
 func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	view := adw.NewNavigationView()
 	view.ConnectPopped(func(page *adw.NavigationPage) {
-		if err := w.prefs.Save(); err != nil {
+		prefs := w.behavior.Preferences.Value()
+		if err := prefs.Save(); err != nil {
 			ShowErrorDialog(&w.Window, "Could not save preferences", err)
 			return
 		}
@@ -54,27 +56,27 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	add.AddCSSClass("flat")
 	add.SetIconName("list-add")
 	add.ConnectClicked(func() {
-		pref := NewClusterPrefPage(&w.Window, w.prefs, nil)
+		pref := NewClusterPrefPage(&w.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
 		view.Push(pref.NavigationPage)
 	})
 
 	group.SetHeaderSuffix(add)
 
-	for _, c := range w.prefs.Clusters {
+	for _, c := range w.behavior.Preferences.Value().Clusters {
 		cluster := c
 		row := adw.NewActionRow()
-		row.SetTitle(cluster.Name)
+		row.SetTitle(cluster.Value().Name)
 		row.SetActivatable(true)
 		row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 		row.ConnectActivated(func() {
-			cluster, err := state.NewCluster(context.TODO(), cluster)
+			cluster, err := w.behavior.WithCluster(context.TODO(), cluster)
 			if err != nil {
 				ShowErrorDialog(&w.Window, "Cluster connection failed", err)
 				return
 			}
 			app := w.Application()
 			w.Close()
-			NewClusterWindow(app, cluster, w.prefs).Show()
+			NewClusterWindow(app, cluster).Show()
 		})
 		group.Add(row)
 	}

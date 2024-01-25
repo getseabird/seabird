@@ -3,16 +3,18 @@ package ui
 import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/getseabird/seabird/behavior"
+	"github.com/imkira/go-observer/v2"
 )
 
 type PrefsWindow struct {
 	*adw.PreferencesWindow
+	behavior       *behavior.ClusterBehavior
 	navigationView *adw.NavigationView
-	root           *ClusterWindow
 }
 
-func NewPreferencesWindow(root *ClusterWindow) *PrefsWindow {
-	w := PrefsWindow{PreferencesWindow: adw.NewPreferencesWindow(), root: root}
+func NewPreferencesWindow(behavior *behavior.ClusterBehavior) *PrefsWindow {
+	w := PrefsWindow{PreferencesWindow: adw.NewPreferencesWindow(), behavior: behavior}
 
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	w.navigationView = adw.NewNavigationView()
@@ -33,7 +35,8 @@ func NewPreferencesWindow(root *ClusterWindow) *PrefsWindow {
 	view.SetStack(stack)
 
 	w.ConnectUnrealize(func() {
-		if err := root.prefs.Save(); err != nil {
+		prefs := behavior.Preferences.Value()
+		if err := prefs.Save(); err != nil {
 			ShowErrorDialog(&w.Window.Window, "Could not save preferences", err)
 			return
 		}
@@ -54,13 +57,14 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	colorScheme.SetTitle("Color Scheme")
 	themes := gtk.NewStringList([]string{"Default", "Light", "Dark"})
 	colorScheme.SetModel(themes)
-	colorScheme.SetSelected(uint(w.root.prefs.ColorScheme))
+	colorScheme.SetSelected(uint(w.behavior.Preferences.Value().ColorScheme))
 	colorScheme.Connect("notify::selected-item", func() {
-		w.root.prefs.ColorScheme = adw.ColorScheme(colorScheme.Selected())
-		if w.root.prefs.ColorScheme == adw.ColorSchemePreferLight {
-			w.root.prefs.ColorScheme = adw.ColorSchemeForceDark
+		prefs := w.behavior.Preferences.Value()
+		prefs.ColorScheme = adw.ColorScheme(colorScheme.Selected())
+		if prefs.ColorScheme == adw.ColorSchemePreferLight {
+			prefs.ColorScheme = adw.ColorSchemeForceDark
 		}
-		adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(w.root.prefs.ColorScheme))
+		w.behavior.Preferences.Update(prefs)
 	})
 	general.Add(colorScheme)
 
@@ -70,18 +74,19 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	addCluster.AddCSSClass("flat")
 	addCluster.SetIconName("list-add")
 	addCluster.ConnectClicked(func() {
-		w.navigationView.Push(NewClusterPrefPage(&w.Window.Window, w.root.prefs, nil).NavigationPage)
+		page := NewClusterPrefPage(&w.Window.Window, w.behavior.Behavior, observer.NewProperty(behavior.ClusterPreferences{}))
+		w.navigationView.Push(page.NavigationPage)
 	})
 
 	clusters.SetHeaderSuffix(addCluster)
-	for _, c := range w.root.prefs.Clusters {
+	for _, c := range w.behavior.Preferences.Value().Clusters {
 		cluster := c
 		row := adw.NewActionRow()
 		row.SetActivatable(true)
 		row.ConnectActivated(func() {
-			w.navigationView.Push(NewClusterPrefPage(&w.Window.Window, w.root.prefs, cluster).NavigationPage)
+			w.navigationView.Push(NewClusterPrefPage(&w.Window.Window, w.behavior.Behavior, cluster).NavigationPage)
 		})
-		row.SetTitle(cluster.Name)
+		row.SetTitle(cluster.Value().Name)
 		row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 		clusters.Add(row)
 	}
