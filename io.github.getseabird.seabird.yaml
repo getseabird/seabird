@@ -20,16 +20,21 @@ finish-args:
   - --device=dri
   - --talk-name=org.freedesktop.Notifications
   - --filesystem=home
+
 modules:
   - name: seabird
     buildsystem: simple
     build-commands:
+      - $GOROOT/bin/go generate ./...
       - $GOROOT/bin/go build -trimpath -o seabird
       - install -Dm00755 seabird $FLATPAK_DEST/bin/seabird
-      # - install -Dm00644 Icon.png $FLATPAK_DEST/share/icons/hicolor/256x256/apps/$FLATPAK_ID.png
-      - install -Dm00644 $FLATPAK_ID.desktop $FLATPAK_DEST/share/applications/$FLATPAK_ID.desktop
-      - install -Dm00644 $FLATPAK_ID.appdata.xml $FLATPAK_DEST/share/appdata/$FLATPAK_ID.appdata.xml
+      - install -Dm00644 icon/seabird.svg
+        $FLATPAK_DEST/share/icons/hicolor/scalable/apps/$FLATPAK_ID.svg
+      - install -Dm00644 $FLATPAK_ID.desktop
+        $FLATPAK_DEST/share/applications/$FLATPAK_ID.desktop
+      - install -Dm00644 $FLATPAK_ID.appdata.xml
+        $FLATPAK_DEST/share/appdata/$FLATPAK_ID.appdata.xml
     sources:
       - type: git
         url: .
-        branch: main
+        branch: flatpak
