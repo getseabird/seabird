@@ -125,15 +125,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				pod := object.(*corev1.Pod)
 				for _, cond := range pod.Status.Conditions {
 					if cond.Type == corev1.ContainersReady {
-						if cond.Status == corev1.ConditionTrue {
-							icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
-							icon.AddCSSClass("success")
-							listitem.SetChild(icon)
-						} else {
-							icon := gtk.NewImageFromIconName("dialog-warning")
-							icon.AddCSSClass("warning")
-							listitem.SetChild(icon)
-						}
+						listitem.SetChild(createStatusIcon(cond.Status == corev1.ConditionTrue))
 					}
 				}
 			}),
@@ -154,15 +146,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				deployment := object.(*appsv1.Deployment)
 				for _, cond := range deployment.Status.Conditions {
 					if cond.Type == appsv1.DeploymentAvailable {
-						if cond.Status == corev1.ConditionTrue {
-							icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
-							icon.AddCSSClass("success")
-							listitem.SetChild(icon)
-						} else {
-							icon := gtk.NewImageFromIconName("dialog-warning")
-							icon.AddCSSClass("warning")
-							listitem.SetChild(icon)
-						}
+						listitem.SetChild(createStatusIcon(cond.Status == corev1.ConditionTrue))
 					}
 				}
 			}),
@@ -171,15 +155,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 		columns = append(columns,
 			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
 				statefulset := object.(*appsv1.StatefulSet)
-				if statefulset.Status.ReadyReplicas == statefulset.Status.Replicas {
-					icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
-					icon.AddCSSClass("success")
-					listitem.SetChild(icon)
-				} else {
-					icon := gtk.NewImageFromIconName("dialog-warning")
-					icon.AddCSSClass("warning")
-					listitem.SetChild(icon)
-				}
+				listitem.SetChild(createStatusIcon(statefulset.Status.ReadyReplicas == statefulset.Status.Replicas))
 			}),
 		)
 	}
@@ -197,6 +173,7 @@ func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, o
 	})
 	column := gtk.NewColumnViewColumn(name, &factory.ListItemFactory)
 	column.SetResizable(true)
+	column.SetExpand(true)
 	return column
 }
 
@@ -206,4 +183,17 @@ func (l *ListView) createModel() *gtk.SingleSelection {
 		l.behavior.SelectedObject.Update(l.behavior.Objects.Value()[l.selection.Selected()])
 	})
 	return selection
+}
+
+func createStatusIcon(ok bool) *gtk.Image {
+	if ok {
+		icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
+		icon.AddCSSClass("success")
+		icon.SetHAlign(gtk.AlignStart)
+		return icon
+	}
+	icon := gtk.NewImageFromIconName("dialog-warning")
+	icon.AddCSSClass("warning")
+	icon.SetHAlign(gtk.AlignStart)
+	return icon
 }
