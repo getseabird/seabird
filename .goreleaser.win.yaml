@@ -10,7 +10,7 @@ builds:
     goarch:
       - amd64
     ldflags:
-      - -ldflags -H=windowsgui
+      - -H=windowsgui
 
 archives:
   - format: zip
