@@ -60,8 +60,9 @@ jobs:
       - name: Set up msys
         uses: msys2/setup-msys2@v2
         with:
-          msystem: MSYS
+          msystem: MINGW64
           update: true
+          release: false
           install: |
             git zip
             mingw-w64-x86_64-gcc 
