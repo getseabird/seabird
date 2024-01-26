@@ -25,15 +25,14 @@ modules:
   - name: seabird
     buildsystem: simple
     build-commands:
-      - $GOROOT/bin/go generate ./...
-      - $GOROOT/bin/go build -trimpath -o seabird
-      - install -Dm00755 seabird $FLATPAK_DEST/bin/seabird
-      - install -Dm00644 icon/seabird.svg
-        $FLATPAK_DEST/share/icons/hicolor/scalable/apps/$FLATPAK_ID.svg
-      - install -Dm00644 $FLATPAK_ID.desktop
-        $FLATPAK_DEST/share/applications/$FLATPAK_ID.desktop
-      - install -Dm00644 $FLATPAK_ID.appdata.xml
-        $FLATPAK_DEST/share/appdata/$FLATPAK_ID.appdata.xml
+      - |
+        set -e
+        $GOROOT/bin/go generate ./...
+        $GOROOT/bin/go build -trimpath -o seabird
+        install -Dm00755 -t /app/bin seabird
+        install -Dm00644 icon/seabird.svg /app/share/icons/hicolor/scalable/apps/$FLATPAK_ID.svg
+        install -Dm00644 -t /app/share/applications $FLATPAK_ID.desktop
+        install -Dm00644 -t /app/share/metainfo $FLATPAK_ID.appdata.xml
     sources:
       - type: git
         url: .

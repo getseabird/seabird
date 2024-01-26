@@ -6,6 +6,6 @@ Comment=Kubernetes desktop client
 Categories=Development;Documentation;
 Keywords=seabird;
 
-Icon=io.github.getseabirrd.seabird
+Icon=io.github.getseabird.seabird
 Exec=seabird
 Terminal=false

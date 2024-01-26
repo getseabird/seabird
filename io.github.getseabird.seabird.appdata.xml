@@ -8,7 +8,7 @@
   <description>
     <p>Seabird is the native desktop app that simplifies working with Kubernetes.</p>
   </description>
-  <launchable type="desktop-id">io.github.getseabirrd.seabird</launchable>
+  <launchable type="desktop-id">io.github.getseabird.seabird.desktop</launchable>
   <screenshots>
     <screenshot type="default">
       <image>https://getseabird.github.io/images/screenshot.png</image>
