@@ -13,14 +13,14 @@ import (
 type DetailView struct {
 	*gtk.Box
 	parent   *gtk.Window
-	behavior *behavior.DetailBehaviour
+	behavior *behavior.DetailBehavior
 	prefPage *adw.PreferencesPage
 	groups   []*adw.PreferencesGroup
 
 	sourceBuffer *gtksource.Buffer
 }
 
-func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehaviour) *DetailView {
+func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *DetailView {
 	d := DetailView{
 		Box:      gtk.NewBox(gtk.OrientationVertical, 0),
 		behavior: behavior,

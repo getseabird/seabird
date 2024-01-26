@@ -7,9 +7,11 @@ import (
 	"os"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/util"
+	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -200,9 +202,11 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 
 func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 	button := gtk.NewButton()
-	button.SetLabel("Save")
+	spinner := widget.NewFallbackSpinner(gtk.NewLabel("Save"))
+	button.SetChild(spinner)
 	button.AddCSSClass("suggested-action")
 	button.ConnectClicked(func() {
+		spinner.Start()
 		cluster := p.active.Value()
 		cluster.Name = p.name.Text()
 		cluster.Host = p.host.Text()
@@ -215,19 +219,25 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 			ShowErrorDialog(p.parent, "Validation failed", err)
 			return
 		}
-		if _, err := p.behavior.WithCluster(context.TODO(), observer.NewProperty(cluster)); err != nil {
-			ShowErrorDialog(p.parent, "Cluster connection failed", err)
-			return
-		}
+		go func() {
+			_, err := p.behavior.WithCluster(context.TODO(), observer.NewProperty(cluster))
+			glib.IdleAdd(func() {
+				defer spinner.Stop()
+				if err != nil {
+					ShowErrorDialog(p.parent, "Cluster connection failed", err)
+					return
+				}
+				p.active.Update(cluster)
+				if util.Index(p.behavior.Preferences.Value().Clusters, p.active) < 0 {
+					prefs := p.behavior.Preferences.Value()
+					prefs.Clusters = append(prefs.Clusters, p.active)
+					p.behavior.Preferences.Update(prefs)
+				}
 
-		p.active.Update(cluster)
-		if util.Index(p.behavior.Preferences.Value().Clusters, p.active) < 0 {
-			prefs := p.behavior.Preferences.Value()
-			prefs.Clusters = append(prefs.Clusters, p.active)
-			p.behavior.Preferences.Update(prefs)
-		}
+				p.Parent().(*adw.NavigationView).Pop()
+			})
 
-		p.Parent().(*adw.NavigationView).Pop()
+		}()
 	})
 
 	return button

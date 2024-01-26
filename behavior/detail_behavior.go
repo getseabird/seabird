@@ -19,15 +19,15 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type DetailBehaviour struct {
+type DetailBehavior struct {
 	*ClusterBehavior
 
 	Yaml       observer.Property[string]
 	Properties observer.Property[[]ObjectProperty]
 }
 
-func (b *ClusterBehavior) NewDetailBehavior() *DetailBehaviour {
-	d := DetailBehaviour{
+func (b *ClusterBehavior) NewDetailBehavior() *DetailBehavior {
+	d := DetailBehavior{
 		ClusterBehavior: b,
 		Yaml:            observer.NewProperty[string](""),
 		Properties:      observer.NewProperty[[]ObjectProperty](nil),
@@ -38,7 +38,7 @@ func (b *ClusterBehavior) NewDetailBehavior() *DetailBehaviour {
 	return &d
 }
 
-func (b *DetailBehaviour) onObjectChange(object client.Object) {
+func (b *DetailBehavior) onObjectChange(object client.Object) {
 	if object == nil {
 		b.Properties.Update([]ObjectProperty{})
 		b.Yaml.Update("")
@@ -215,7 +215,7 @@ type ObjectProperty struct {
 	Children []ObjectProperty
 }
 
-func (b *DetailBehaviour) PodLogs() ([]byte, error) {
+func (b *DetailBehavior) PodLogs() ([]byte, error) {
 	pod := b.SelectedObject.Value().(*corev1.Pod)
 	req := b.clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
 	r, err := req.Stream(context.TODO())

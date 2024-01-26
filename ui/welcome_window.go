@@ -4,8 +4,10 @@ import (
 	"context"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/behavior"
+	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
 )
 
@@ -69,16 +71,23 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 			row := adw.NewActionRow()
 			row.SetTitle(cluster.Value().Name)
 			row.SetActivatable(true)
-			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+			spinner := widget.NewFallbackSpinner(gtk.NewImageFromIconName("go-next-symbolic"))
+			row.AddSuffix(spinner)
 			row.ConnectActivated(func() {
-				cluster, err := w.behavior.WithCluster(context.TODO(), cluster)
-				if err != nil {
-					ShowErrorDialog(&w.Window, "Cluster connection failed", err)
-					return
-				}
-				app := w.Application()
-				w.Close()
-				NewClusterWindow(app, cluster).Show()
+				spinner.Start()
+				go func() {
+					behavior, err := w.behavior.WithCluster(context.TODO(), cluster)
+					glib.IdleAdd(func() {
+						spinner.Stop()
+						if err != nil {
+							ShowErrorDialog(&w.Window, "Cluster connection failed", err)
+							return
+						}
+						app := w.Application()
+						w.Close()
+						NewClusterWindow(app, behavior).Show()
+					})
+				}()
 			})
 			group.Add(row)
 		}

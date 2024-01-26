@@ -15,7 +15,7 @@ type LogWindow struct {
 	container *corev1.Container
 }
 
-func NewLogWindow(parent *gtk.Window, behavior *behavior.DetailBehaviour, container *corev1.Container) *LogWindow {
+func NewLogWindow(parent *gtk.Window, behavior *behavior.DetailBehavior, container *corev1.Container) *LogWindow {
 	w := LogWindow{PreferencesWindow: adw.NewPreferencesWindow()}
 	w.SetTransientFor(parent)
 	w.SetDefaultSize(800, 800)
