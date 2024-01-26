@@ -52,17 +52,13 @@ jobs:
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: seabird.flatpak
-          build-bundle: false
           manifest-path: io.github.getseabird.seabird.yaml
           cache-key: flatpak-builder-${{ github.sha }}
-    - uses: flatpak/flatpak-github-actions/flat-manager@v4
-      name: "Deploy"
-      with:
-        repository: elementary
-        flat-manager-url: https://flatpak-api.elementary.io
-        token: some_very_hidden_token
-        end-of-life: "The application has been renamed to..."
-        end-of-life-rebase: "org.zbrown.Palette"
+      - uses: actions/upload-artifact@v4
+        with:
+          path: seabird.flatpak
+          if-no-files-found: error
+          retention-days: 30
   msys2:
     needs: goreleaser
     runs-on: windows-latest

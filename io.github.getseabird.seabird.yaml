@@ -1,5 +1,5 @@
 app-id: io.github.getseabird.seabird
-runtime: org.gnome.Sdk
+runtime: org.gnome.Platform
 runtime-version: "45"
 sdk: org.gnome.Sdk
 sdk-extensions:
