@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<gresources>
+  <gresource prefix="/io/github/getseabird/seabird/icons/scalable/actions/">
+    <file preprocess="xml-stripblanks">seabird.svg</file>
+
+    <!-- Must convert strokes to fills when adding icons from Lucide https://iconly.io/tools/svg-convert-stroke-to-fill-->
+    <file alias="box-symbolic.svg" preprocess="xml-stripblanks">lucide/box.svg</file>
+    <file alias="database-symbolic.svg" preprocess="xml-stripblanks">lucide/database.svg</file>
+    <file alias="file-key-2-symbolic.svg" preprocess="xml-stripblanks">lucide/file-key-2.svg</file>
+    <file alias="file-sliders-symbolic.svg" preprocess="xml-stripblanks">lucide/file-sliders.svg</file>
+    <file alias="layers-2-symbolic.svg" preprocess="xml-stripblanks">lucide/layers-2.svg</file>
+    <file alias="orbit-symbolic.svg" compressed="true" preprocess="xml-stripblanks">lucide/orbit.svg</file>
+    <file alias="server-symbolic.svg" preprocess="xml-stripblanks">lucide/server.svg</file>
+    <file alias="share-symbolic.svg" preprocess="xml-stripblanks">lucide/share.svg</file>
+    <file alias="blocks-symbolic.svg" preprocess="xml-stripblanks">lucide/blocks.svg</file>
+    <file alias="briefcase-symbolic.svg" preprocess="xml-stripblanks">lucide/briefcase.svg</file>
+    <file alias="hard-drive-download-symbolic.svg" compressed="true" preprocess="xml-stripblanks">lucide/hard-drive-download.svg</file>
+    <file alias="hard-drive-upload-symbolic.svg" preprocess="xml-stripblanks">lucide/hard-drive-upload.svg</file>
+    <file alias="layers-3-symbolic.svg" preprocess="xml-stripblanks">lucide/layers-3.svg</file>
+    <file alias="timer-reset-symbolic.svg" preprocess="xml-stripblanks">lucide/timer-reset.svg</file>
+    <file alias="waypoints-symbolic.svg" preprocess="xml-stripblanks">lucide/waypoints.svg</file>
+    <file alias="radio-tower-symbolic.svg" preprocess="xml-stripblanks">lucide/radio-tower.svg</file>
+  </gresource>
+</gresources>

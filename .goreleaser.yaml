@@ -1,5 +1,10 @@
 version: 1
 
+before:
+  hooks:
+    - go generate ./...
+
+
 builds:
   - goos:
       - linux

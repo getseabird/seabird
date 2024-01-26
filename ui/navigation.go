@@ -10,7 +10,9 @@ import (
 	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/util"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -26,7 +28,7 @@ type Navigation struct {
 
 func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	n := &Navigation{ToolbarView: adw.NewToolbarView(), behavior: b}
-	n.SetSizeRequest(200, 200)
+	n.SetSizeRequest(225, 200)
 	n.SetVExpand(true)
 
 	header := adw.NewHeaderBar()
@@ -149,23 +151,45 @@ func (n *Navigation) resIcon(gvk schema.GroupVersionResource) *gtk.Image {
 		{
 			switch gvk.Resource {
 			case "pods":
-				return gtk.NewImageFromIconName("application-x-executable-symbolic")
+				return gtk.NewImageFromIconName("box-symbolic")
 			case "configmaps":
-				return gtk.NewImageFromIconName("preferences-system-symbolic")
+				return gtk.NewImageFromIconName("file-sliders-symbolic")
 			case "secrets":
-				return gtk.NewImageFromIconName("channel-secure-symbolic")
+				return gtk.NewImageFromIconName("file-key-2-symbolic")
 			case "namespaces":
-				return gtk.NewImageFromIconName("application-rss+xml-symbolic")
+				return gtk.NewImageFromIconName("orbit-symbolic")
+			case "services":
+				return gtk.NewImageFromIconName("waypoints-symbolic")
+			case "nodes":
+				return gtk.NewImageFromIconName("server-symbolic")
+			case "persistentvolumes":
+				return gtk.NewImageFromIconName("hard-drive-download-symbolic")
+			case "persistentvolumeclaims":
+				return gtk.NewImageFromIconName("hard-drive-upload-symbolic")
 			}
 		}
 	case appsv1.GroupName:
 		switch gvk.Resource {
+		case "replicasets":
+			return gtk.NewImageFromIconName("layers-2-symbolic")
 		case "deployments":
-			return gtk.NewImageFromIconName("preferences-system-network-symbolic")
+			return gtk.NewImageFromIconName("layers-3-symbolic")
 		case "statefulsets":
-			return gtk.NewImageFromIconName("drive-harddisk-symbolic")
+			return gtk.NewImageFromIconName("database-symbolic")
+		}
+	case batchv1.GroupName:
+		switch gvk.Resource {
+		case "jobs":
+			return gtk.NewImageFromIconName("briefcase-symbolic")
+		case "cronjobs":
+			return gtk.NewImageFromIconName("timer-reset-symbolic")
+		}
+	case networkingv1.GroupName:
+		switch gvk.Resource {
+		case "ingresses":
+			return gtk.NewImageFromIconName("radio-tower-symbolic")
 		}
 	}
 
-	return gtk.NewImageFromIconName("application-x-addon-symbolic")
+	return gtk.NewImageFromIconName("blocks")
 }

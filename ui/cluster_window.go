@@ -26,6 +26,7 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 		ApplicationWindow: adw.NewApplicationWindow(app),
 		behavior:          behavior,
 	}
+	w.SetIconName("seabird")
 	w.SetTitle(fmt.Sprintf("%s - %s", behavior.ClusterPreferences.Value().Name, ApplicationName))
 	w.SetDefaultSize(900, 700)
 

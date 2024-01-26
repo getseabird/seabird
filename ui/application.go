@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"log"
 	"os"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -8,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/behavior"
+	"github.com/getseabird/seabird/icon"
 	"github.com/getseabird/seabird/style"
 )
 
@@ -20,6 +22,10 @@ type Application struct {
 
 func NewApplication(version string) (*Application, error) {
 	gtk.Init()
+
+	if err := icon.Register(); err != nil {
+		log.Printf("failed to load icons: %v", err)
+	}
 
 	b, err := behavior.NewBehavior()
 	if err != nil {

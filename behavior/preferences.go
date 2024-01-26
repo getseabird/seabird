@@ -10,6 +10,7 @@ import (
 	"github.com/imkira/go-observer/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
 )
@@ -82,24 +83,24 @@ func (c *ClusterPreferences) Defaults() {
 	if len(c.Navigation.Favourites) == 0 {
 		c.Navigation.Favourites = []schema.GroupVersionResource{
 			{
+				Group:    corev1.SchemeGroupVersion.Group,
 				Version:  corev1.SchemeGroupVersion.Version,
 				Resource: "pods",
 			},
 			{
+				Group:    corev1.SchemeGroupVersion.Group,
 				Version:  corev1.SchemeGroupVersion.Version,
 				Resource: "configmaps",
 			},
 			{
+				Group:    corev1.SchemeGroupVersion.Group,
 				Version:  corev1.SchemeGroupVersion.Version,
 				Resource: "secrets",
 			},
 			{
+				Group:    corev1.SchemeGroupVersion.Group,
 				Version:  corev1.SchemeGroupVersion.Version,
-				Resource: "namespaces",
-			},
-			{
-				Version:  corev1.SchemeGroupVersion.Version,
-				Resource: "services",
+				Resource: "persistentvolumeclaims",
 			},
 			{
 				Group:    appsv1.SchemeGroupVersion.Group,
@@ -110,6 +111,26 @@ func (c *ClusterPreferences) Defaults() {
 				Group:    appsv1.SchemeGroupVersion.Group,
 				Version:  appsv1.SchemeGroupVersion.Version,
 				Resource: "statefulsets",
+			},
+			{
+				Group:    corev1.SchemeGroupVersion.Group,
+				Version:  corev1.SchemeGroupVersion.Version,
+				Resource: "services",
+			},
+			{
+				Group:    networkingv1.SchemeGroupVersion.Group,
+				Version:  networkingv1.SchemeGroupVersion.Version,
+				Resource: "ingresses",
+			},
+			{
+				Group:    corev1.SchemeGroupVersion.Group,
+				Version:  corev1.SchemeGroupVersion.Version,
+				Resource: "namespaces",
+			},
+			{
+				Group:    corev1.SchemeGroupVersion.Group,
+				Version:  corev1.SchemeGroupVersion.Version,
+				Resource: "nodes",
 			},
 		}
 	}

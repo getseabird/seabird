@@ -21,6 +21,7 @@ func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *Welcom
 		content:           adw.NewBin(),
 		behavior:          behavior,
 	}
+	w.SetIconName("seabird")
 	w.SetDefaultSize(600, 600)
 	w.SetContent(w.content)
 	w.content.SetChild(w.createContent())
@@ -83,7 +84,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		}
 	} else {
 		status := adw.NewStatusPage()
-		status.SetIconName("network-workgroup-symbolic")
+		status.SetIconName("seabird")
 		status.SetTitle("No Clusters Found")
 		status.SetDescription("Connect to a cluster to get started.")
 		btn := gtk.NewButton()

@@ -13,6 +13,7 @@ type AboutWindow struct {
 
 func NewAboutWindow(parent *gtk.Window) *AboutWindow {
 	w := AboutWindow{adw.NewAboutWindow()}
+	w.SetApplicationIcon("seabird")
 	w.SetApplicationName(ApplicationName)
 	w.SetVersion(Version)
 	w.SetTransientFor(parent)
