@@ -39,6 +39,12 @@ func (b *ClusterBehavior) NewDetailBehavior() *DetailBehaviour {
 }
 
 func (b *DetailBehaviour) onObjectChange(object client.Object) {
+	if object == nil {
+		b.Properties.Update([]ObjectProperty{})
+		b.Yaml.Update("")
+		return
+	}
+
 	codec := unstructured.NewJSONFallbackEncoder(serializer.NewCodecFactory(b.scheme).LegacyCodec(b.scheme.PreferredVersionAllGroups()...))
 	encoded, err := runtime.Encode(codec, object)
 	if err != nil {

@@ -81,6 +81,8 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 	if len(objects) > 0 {
 		l.selection.SetSelected(0)
 		l.behavior.SelectedObject.Update(objects[0])
+	} else {
+		l.behavior.SelectedObject.Update(nil)
 	}
 }
 
