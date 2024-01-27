@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
@@ -37,9 +38,7 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
-	if parent.Decorated() {
-		header.SetShowEndTitleButtons(false)
-	}
+	header.SetShowEndTitleButtons(runtime.GOOS != "windows")
 	switcher := adw.NewViewSwitcher()
 	switcher.SetPolicy(adw.ViewSwitcherPolicyWide)
 	switcher.SetStack(stack)

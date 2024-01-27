@@ -23,7 +23,7 @@ func NewUniversalWindow() *UniversalWindow {
 		return &UniversalWindow{Window: w}
 	default:
 		w := adw.NewWindow()
-		w.SetDecorated(false)
+		// w.SetDecorated(false)
 		return &UniversalWindow{Window: &w.Window, AdwWindow: w}
 	}
 }

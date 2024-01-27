@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -45,7 +46,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	view.Add(adw.NewNavigationPage(box, ApplicationName))
 
-	if !w.Decorated() {
+	if runtime.GOOS != "windows" {
 		header := gtk.NewHeaderBar()
 		box.Append(header)
 	}

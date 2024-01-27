@@ -23,7 +23,8 @@ func NewUniversalApplicationWindow(app *gtk.Application) *UniversalApplicationWi
 		return &UniversalApplicationWindow{ApplicationWindow: w}
 	default:
 		w := adw.NewApplicationWindow(app)
-		w.SetDecorated(false)
+		// causes odd visual glitches around corners
+		// w.Window.SetDecorated(false)
 		return &UniversalApplicationWindow{ApplicationWindow: &w.ApplicationWindow, AdwWindow: w}
 	}
 }
