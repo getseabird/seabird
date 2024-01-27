@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -13,24 +12,22 @@ import (
 )
 
 type WelcomeWindow struct {
-	*adw.ApplicationWindow
+	*widget.UniversalApplicationWindow
 	content  *adw.Bin
 	behavior *behavior.Behavior
 }
 
 func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *WelcomeWindow {
 	w := WelcomeWindow{
-		ApplicationWindow: adw.NewApplicationWindow(app),
-		content:           adw.NewBin(),
-		behavior:          behavior,
+		UniversalApplicationWindow: widget.NewUniversalApplicationWindow(app),
+		content:                    adw.NewBin(),
+		behavior:                   behavior,
 	}
+	w.SetApplication(app)
 	w.SetIconName("seabird")
 	w.SetDefaultSize(600, 600)
 	w.SetContent(w.content)
 	w.content.SetChild(w.createContent())
-	if runtime.GOOS == "windows" {
-		w.SetDecorated(true) // https://gitlab.gnome.org/GNOME/gtk/-/issues/3749
-	}
 	return &w
 }
 
@@ -39,7 +36,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	view.ConnectPopped(func(page *adw.NavigationPage) {
 		prefs := w.behavior.Preferences.Value()
 		if err := prefs.Save(); err != nil {
-			ShowErrorDialog(&w.Window, "Could not save preferences", err)
+			ShowErrorDialog(&w.ApplicationWindow.Window, "Could not save preferences", err)
 			return
 		}
 		w.content.SetChild(w.createContent())
@@ -48,8 +45,10 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	view.Add(adw.NewNavigationPage(box, ApplicationName))
 
-	header := adw.NewHeaderBar()
-	box.Append(header)
+	if !w.Decorated() {
+		header := gtk.NewHeaderBar()
+		box.Append(header)
+	}
 
 	page := adw.NewPreferencesPage()
 	box.Append(page)
@@ -63,7 +62,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		add.AddCSSClass("flat")
 		add.SetIconName("list-add")
 		add.ConnectClicked(func() {
-			pref := NewClusterPrefPage(&w.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
+			pref := NewClusterPrefPage(&w.ApplicationWindow.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
 			view.Push(pref.NavigationPage)
 		})
 
@@ -83,7 +82,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 					glib.IdleAdd(func() {
 						spinner.Stop()
 						if err != nil {
-							ShowErrorDialog(&w.Window, "Cluster connection failed", err)
+							ShowErrorDialog(&w.ApplicationWindow.Window, "Cluster connection failed", err)
 							return
 						}
 						app := w.Application()
@@ -101,7 +100,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		status.SetDescription("Connect to a cluster to get started.")
 		btn := gtk.NewButton()
 		btn.ConnectClicked(func() {
-			pref := NewClusterPrefPage(&w.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
+			pref := NewClusterPrefPage(&w.ApplicationWindow.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
 			view.Push(pref.NavigationPage)
 		})
 		btn.SetHAlign(gtk.AlignCenter)
