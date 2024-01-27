@@ -45,9 +45,9 @@ func NewListView(parent *gtk.Window, behavior *behavior.ListBehavior) *ListView 
 	l.columnView.SetMarginBottom(16)
 
 	sw := gtk.NewScrolledWindow()
-	sw.SetVExpand(true)
 	sw.SetHExpand(true)
-	sw.SetSizeRequest(550, 0)
+	sw.SetVExpand(true)
+	sw.SetSizeRequest(500, 0)
 	vp := gtk.NewViewport(nil, nil)
 	vp.SetChild(l.columnView)
 	sw.SetChild(vp)

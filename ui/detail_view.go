@@ -2,6 +2,8 @@ package ui
 
 import (
 	"fmt"
+	"log"
+	"math"
 	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -10,6 +12,7 @@ import (
 	"github.com/getseabird/seabird/behavior"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 )
 
 type DetailView struct {
@@ -122,6 +125,7 @@ func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProper
 	return nil
 }
 
+// This is a bit of a hack, should probably extend ObjectProperty with this stuff...
 func (d *DetailView) extendRow(widget gtk.Widgetter, level uint, prop behavior.ObjectProperty) {
 	switch selected := d.behavior.SelectedObject.Value().(type) {
 	case *corev1.Pod:
@@ -135,6 +139,37 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level uint, prop behavior.O
 				}
 			}
 			widget.(*adw.ExpanderRow).AddPrefix(createStatusIcon(status.Ready))
+
+			var currentMem *resource.Quantity
+			for _, p := range prop.Children {
+				if p.Name == "Memory" {
+					v, err := resource.ParseQuantity(p.Value)
+					if err != nil {
+						log.Printf(err.Error())
+					} else {
+						currentMem = &v
+					}
+				}
+			}
+			if currentMem != nil {
+				targetMem := object.Resources.Requests.Memory()
+				if targetMem == nil || targetMem.IsZero() {
+					targetMem = object.Resources.Limits.Memory()
+				}
+				if targetMem != nil && !targetMem.IsZero() {
+					percent := currentMem.AsApproximateFloat64() / targetMem.AsApproximateFloat64()
+					levelBar := gtk.NewLevelBar()
+					levelBar.SetSizeRequest(50, -1)
+					levelBar.SetHAlign(gtk.AlignCenter)
+					levelBar.SetVAlign(gtk.AlignCenter)
+					levelBar.SetValue(math.Min(percent, 1))
+					levelBar.AddOffsetValue("lb-warning", .75)
+					levelBar.AddOffsetValue("lb-error", 1)
+					levelBar.SetTooltipText(fmt.Sprintf("%.0f%%", percent*100))
+					widget.(*adw.ExpanderRow).AddSuffix(levelBar)
+					widget.(*adw.ExpanderRow).AddSuffix(gtk.NewImageFromIconName("memory-stick-symbolic"))
+				}
+			}
 
 			logs := adw.NewActionRow()
 			logs.SetActivatable(true)

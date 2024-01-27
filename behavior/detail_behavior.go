@@ -8,12 +8,12 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/dustin/go-humanize"
 	"github.com/getseabird/seabird/util"
 	"github.com/imkira/go-observer/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -194,8 +194,10 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 					props = append(props, ObjectProperty{Name: "CPU", Value: fmt.Sprintf("%v%%", math.Round(cpu.AsApproximateFloat64()*10000)/10000)})
 				}
 				if mem := metrics.Usage.Memory(); mem != nil {
-					bytes, _ := mem.AsInt64()
-					props = append(props, ObjectProperty{Name: "Memory", Value: humanize.Bytes(uint64(bytes))})
+					m, _ := mem.AsInt64()
+					mem = resource.NewQuantity(m, resource.DecimalSI)
+					mem.RoundUp(resource.Mega)
+					props = append(props, ObjectProperty{Name: "Memory", Value: fmt.Sprintf("%v", mem)})
 				}
 			}
 

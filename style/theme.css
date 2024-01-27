@@ -15,3 +15,11 @@ label.badge {
   border-radius: .6rem;
   font-size: 0.9em;
 }
+
+levelbar block.lb-error {
+  background-color: @destructive_bg_color;
+}
+
+levelbar block.lb-warning {
+  background-color: @warning_bg_color;
+}
