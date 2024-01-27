@@ -39,9 +39,36 @@ jobs:
           GOOS: linux
       - uses: actions/upload-artifact@v4
         with:
+          name: goreleaser
           path: dist
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 14
+  flatpak:
+    needs: goreleaser
+    runs-on: ubuntu-latest
+    container:
+      image: bilelmoussaoui/flatpak-github-actions:gnome-44
+      options: --privileged
+    steps:
+      - uses: actions/checkout@v4
+      - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
+        with:
+          bundle: seabird.flatpak
+          manifest-path: io.github.getseabird.seabird.yaml
+          cache-key: flatpak-builder-${{ github.sha }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flatpak
+          path: seabird.flatpak
+          if-no-files-found: error
+          retention-days: 14
+      - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: seabird.flatpak
+          tag: ${{ github.ref }}
   msys2:
     needs: goreleaser
     runs-on: windows-latest
@@ -89,10 +116,10 @@ jobs:
           pushd /mingw64 && zip "$workspace/seabird_windows_amd64.zip" -r ./share/glib-2.0 ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons && popd
       - uses: actions/upload-artifact@v4
         with:
-          name: seabird_windows_amd64.zip
+          name: msys2
           path: seabird_windows_amd64.zip
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 14
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2

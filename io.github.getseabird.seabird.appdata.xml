@@ -2,13 +2,13 @@
 <component type="desktop-application">
   <id>io.github.getseabird.seabird</id>
   <name>Seabird</name>
-  <summary>A native Kubernetes desktop client.</summary>
+  <summary>Kubernetes desktop client</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MPL-2.0</project_license>
   <description>
-    <p>A easy to use Kubernetes client for the GNOME desktop environment.</p>
+    <p>Seabird is the native desktop app that simplifies working with Kubernetes.</p>
   </description>
-  <launchable type="desktop-id">io.fyne.flatpak_demo.desktop</launchable>
+  <launchable type="desktop-id">io.github.getseabird.seabird.desktop</launchable>
   <screenshots>
     <screenshot type="default">
       <image>https://getseabird.github.io/images/screenshot.png</image>

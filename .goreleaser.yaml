@@ -4,9 +4,10 @@ before:
   hooks:
     - go generate ./...
 
-
 builds:
-  - goos:
+  - flags:
+      - -trimpath
+    goos:
       - linux
     goarch:
       - amd64
