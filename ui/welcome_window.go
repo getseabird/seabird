@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -27,7 +28,9 @@ func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *Welcom
 	w.SetDefaultSize(600, 600)
 	w.SetContent(w.content)
 	w.content.SetChild(w.createContent())
-
+	if runtime.GOOS == "windows" {
+		w.SetDecorated(true) // https://gitlab.gnome.org/GNOME/gtk/-/issues/3749
+	}
 	return &w
 }
 

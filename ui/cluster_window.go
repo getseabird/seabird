@@ -2,6 +2,7 @@ package ui
 
 import (
 	"fmt"
+	"runtime"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -29,6 +30,9 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 	w.SetIconName("seabird")
 	w.SetTitle(fmt.Sprintf("%s - %s", behavior.ClusterPreferences.Value().Name, ApplicationName))
 	w.SetDefaultSize(900, 700)
+	if runtime.GOOS == "windows" {
+		w.SetDecorated(true) // https://gitlab.gnome.org/GNOME/gtk/-/issues/3749
+	}
 
 	w.toastOverlay = adw.NewToastOverlay()
 	w.SetContent(w.toastOverlay)
