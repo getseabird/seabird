@@ -160,12 +160,17 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				listitem.SetChild(label)
 			}),
 		)
-
 	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
 		columns = append(columns,
 			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
 				statefulset := object.(*appsv1.StatefulSet)
 				listitem.SetChild(createStatusIcon(statefulset.Status.ReadyReplicas == statefulset.Status.Replicas))
+			}),
+			l.createColumn("Available", func(listitem *gtk.ListItem, object client.Object) {
+				statefulSet := object.(*appsv1.StatefulSet)
+				label := gtk.NewLabel(fmt.Sprintf("%d/%d", statefulSet.Status.AvailableReplicas, statefulSet.Status.Replicas))
+				label.SetHAlign(gtk.AlignStart)
+				listitem.SetChild(label)
 			}),
 		)
 	}

@@ -145,7 +145,27 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level uint, prop behavior.O
 			})
 			widget.(*adw.ExpanderRow).AddRow(logs)
 		}
+
 	case *appsv1.Deployment:
+		switch object := prop.Object.(type) {
+		case *corev1.Pod:
+			for _, cond := range object.Status.Conditions {
+				if cond.Type == corev1.ContainersReady {
+					row := widget.(*adw.ActionRow)
+					row.AddPrefix(createStatusIcon(cond.Status == corev1.ConditionTrue))
+					row.SetActivatable(true)
+					row.SetSubtitleSelectable(false)
+					row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+					row.ConnectActivated(func() {
+						dv := NewDetailView(d.parent, d.behavior.NewDetailBehavior())
+						dv.behavior.SelectedObject.Update(object)
+						d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
+					})
+				}
+			}
+		}
+
+	case *appsv1.StatefulSet:
 		switch object := prop.Object.(type) {
 		case *corev1.Pod:
 			for _, cond := range object.Status.Conditions {

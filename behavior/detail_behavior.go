@@ -242,9 +242,27 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 		prop := ObjectProperty{Name: "Pods"}
 		var pods v1.PodList
 		b.client.List(context.TODO(), &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
-		// TODO should we also filter pods by owner?
+		// TODO should we also filter pods by owner? takes one more api call to fetch replicasets
 		for _, p := range pods.Items {
 			pod := p
+			prop.Children = append(prop.Children, ObjectProperty{Value: pod.Name, Object: &pod})
+		}
+		properties = append(properties, prop)
+	case *appsv1.StatefulSet:
+		prop := ObjectProperty{Name: "Pods"}
+		var pods v1.PodList
+		b.client.List(context.TODO(), &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
+		for _, p := range pods.Items {
+			pod := p
+			var ok bool
+			for _, owner := range pod.OwnerReferences {
+				if owner.UID == object.UID {
+					ok = true
+				}
+			}
+			if !ok {
+				continue
+			}
 			prop.Children = append(prop.Children, ObjectProperty{Value: pod.Name, Object: &pod})
 		}
 		properties = append(properties, prop)
