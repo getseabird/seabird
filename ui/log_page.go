@@ -8,23 +8,21 @@ import (
 	corev1 "k8s.io/api/core/v1"
 )
 
-type LogWindow struct {
-	*adw.PreferencesWindow
+type LogPage struct {
+	*adw.NavigationPage
 	parent    *gtk.Window
 	pod       *corev1.Pod
 	container *corev1.Container
 }
 
-func NewLogWindow(parent *gtk.Window, behavior *behavior.DetailBehavior, container *corev1.Container) *LogWindow {
-	w := LogWindow{PreferencesWindow: adw.NewPreferencesWindow()}
-	w.SetTransientFor(parent)
-	w.SetDefaultSize(800, 800)
-
+func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, container *corev1.Container) *LogPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
-	w.SetContent(box)
+	p := LogPage{NavigationPage: adw.NewNavigationPage(box, container.Name)}
+	p.SetSizeRequest(350, 350)
 
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(gtk.NewLabel(container.Name))
+	header.AddCSSClass("flat")
 	box.Append(header)
 
 	buffer := gtksource.NewBuffer(nil)
@@ -41,14 +39,12 @@ func NewLogWindow(parent *gtk.Window, behavior *behavior.DetailBehavior, contain
 	scrolledWindow.SetChild(view)
 	box.Append(scrolledWindow)
 
-	w.ConnectShow(func() {
-		logs, err := behavior.PodLogs()
-		if err != nil {
-			ShowErrorDialog(&w.Window.Window, "Could not load logs", err)
-			return
-		}
+	logs, err := behavior.PodLogs()
+	if err != nil {
+		ShowErrorDialog(parent, "Could not load logs", err)
+	} else {
 		buffer.SetText(string(logs))
-	})
+	}
 
-	return &w
+	return &p
 }

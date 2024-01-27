@@ -8,24 +8,27 @@ import (
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/behavior"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 )
 
 type DetailView struct {
-	*gtk.Box
-	parent   *gtk.Window
-	behavior *behavior.DetailBehavior
-	prefPage *adw.PreferencesPage
-	groups   []*adw.PreferencesGroup
-
+	*adw.NavigationPage
+	parent       *gtk.Window
+	behavior     *behavior.DetailBehavior
+	prefPage     *adw.PreferencesPage
+	groups       []*adw.PreferencesGroup
 	sourceBuffer *gtksource.Buffer
 }
 
 func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *DetailView {
+	content := gtk.NewBox(gtk.OrientationVertical, 0)
+
 	d := DetailView{
-		Box:      gtk.NewBox(gtk.OrientationVertical, 0),
-		behavior: behavior,
-		parent:   parent,
+		// NavigationView: adw.NewNavigationView(),
+		NavigationPage: adw.NewNavigationPage(content, "main"),
+		behavior:       behavior,
+		parent:         parent,
 	}
 
 	stack := adw.NewViewStack()
@@ -44,8 +47,8 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 	switcher.SetStack(stack)
 	header.SetTitleWidget(switcher)
 
-	d.Append(header)
-	d.Append(stack)
+	content.Append(header)
+	content.Append(stack)
 
 	onChange(d.behavior.Yaml, func(yaml string) {
 		d.sourceBuffer.SetText(string(yaml))
@@ -61,53 +64,8 @@ func (d *DetailView) onPropertiesChange(properties []behavior.ObjectProperty) {
 	}
 	d.groups = nil
 
-	for _, p1 := range properties {
-		g := adw.NewPreferencesGroup()
-		g.SetTitle(p1.Name)
-		d.groups = append(d.groups, g)
-		for _, p2 := range p1.Children {
-			if len(p2.Children) > 0 {
-				r2 := adw.NewExpanderRow()
-				r2.SetTitle(p2.Name)
-				g.Add(r2)
-				for _, p3 := range p2.Children {
-					if len(p3.Children) > 0 {
-						r3 := adw.NewActionRow()
-						r3.SetTitle(p3.Name)
-						r3.AddCSSClass("property")
-						r2.AddRow(r3)
-
-						box := gtk.NewFlowBox()
-						box.SetColumnSpacing(2)
-						box.SetRowSpacing(2)
-						r3.FirstChild().(*gtk.Box).FirstChild().(*gtk.Box).NextSibling().(*gtk.Image).NextSibling().(*gtk.Box).Append(box)
-
-						for _, p4 := range p3.Children {
-							label := gtk.NewLabel(fmt.Sprintf("%s: %s", p4.Name, p4.Value))
-							label.SetSelectable(true)
-							label.AddCSSClass("badge")
-							box.Insert(label, -1)
-						}
-					} else {
-						r3 := adw.NewActionRow()
-						r3.SetTitle(p3.Name)
-						r3.SetSubtitle(p3.Value)
-						r3.SetSubtitleSelectable(true)
-						r3.AddCSSClass("property")
-						r2.AddRow(r3)
-					}
-
-				}
-				d.extendRow([]string{p1.Name, p2.Name}, r2)
-			} else {
-				r2 := adw.NewActionRow()
-				r2.SetTitle(p2.Name)
-				r2.SetSubtitle(p2.Value)
-				r2.SetSubtitleSelectable(true)
-				r2.AddCSSClass("property")
-				g.Add(r2)
-			}
-		}
+	for _, prop := range properties {
+		d.groups = append(d.groups, d.renderObjectProperty(0, prop).(*adw.PreferencesGroup))
 	}
 
 	for _, g := range d.groups {
@@ -115,42 +73,96 @@ func (d *DetailView) onPropertiesChange(properties []behavior.ObjectProperty) {
 	}
 }
 
-func (d *DetailView) extendRow(path []string, widget gtk.Widgetter) {
-	switch obj := d.behavior.SelectedObject.Value().(type) {
-	case *corev1.Pod:
-		if len(path) == 2 && path[0] == "Containers" {
-			var status corev1.ContainerStatus
-			for _, s := range obj.Status.ContainerStatuses {
-				if s.Name == path[1] {
-					status = s
-				}
-			}
-			if status.Ready {
-				icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
-				icon.AddCSSClass("success")
-				widget.(*adw.ExpanderRow).AddSuffix(icon)
-			} else {
-				icon := gtk.NewImageFromIconName("dialog-warning-symbolic")
-				icon.AddCSSClass("warning")
-				widget.(*adw.ExpanderRow).AddSuffix(icon)
-			}
-
-			row := adw.NewActionRow()
-			row.SetActivatable(true)
-			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-			row.SetTitle("Logs")
-			row.ConnectActivated(func() {
-				var container corev1.Container
-				for _, c := range obj.Spec.Containers {
-					if c.Name == path[1] {
-						container = c
-					}
-				}
-				NewLogWindow(d.parent, d.behavior, &container).Show()
-			})
-			widget.(*adw.ExpanderRow).AddRow(row)
+func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProperty) gtk.Widgetter {
+	switch level {
+	case 0:
+		g := adw.NewPreferencesGroup()
+		g.SetTitle(prop.Name)
+		for _, child := range prop.Children {
+			g.Add(d.renderObjectProperty(level+1, child))
 		}
+		return g
+	case 1:
+		if len(prop.Children) > 0 {
+			row := adw.NewExpanderRow()
+			row.SetTitle(prop.Name)
+			for _, child := range prop.Children {
+				row.AddRow(d.renderObjectProperty(level+1, child))
+			}
+			d.extendRow(row, level, prop)
+			return row
+		}
+		fallthrough
+	case 2:
+		row := adw.NewActionRow()
+		row.SetTitle(prop.Name)
+		if len(prop.Children) > 0 {
+			box := gtk.NewFlowBox()
+			box.SetColumnSpacing(2)
+			box.SetRowSpacing(2)
+			row.FirstChild().(*gtk.Box).FirstChild().(*gtk.Box).NextSibling().(*gtk.Image).NextSibling().(*gtk.Box).Append(box)
+			for _, child := range prop.Children {
+				box.Insert(d.renderObjectProperty(level+1, child), -1)
+			}
+		} else {
+			row.SetSubtitle(prop.Value)
+			row.SetSubtitleSelectable(true)
+		}
+		row.AddCSSClass("property")
 
+		d.extendRow(row, level, prop)
+		return row
+	case 3:
+		label := gtk.NewLabel(fmt.Sprintf("%s: %s", prop.Name, prop.Value))
+		label.SetSelectable(true)
+		label.AddCSSClass("badge")
+		return label
+	}
+
+	return nil
+}
+
+func (d *DetailView) extendRow(widget gtk.Widgetter, level uint, prop behavior.ObjectProperty) {
+	switch selected := d.behavior.SelectedObject.Value().(type) {
+	case *corev1.Pod:
+		switch object := prop.Object.(type) {
+		case *corev1.Container:
+			var status corev1.ContainerStatus
+			for _, s := range selected.Status.ContainerStatuses {
+				if s.Name == object.Name {
+					status = s
+					break
+				}
+			}
+			widget.(*adw.ExpanderRow).AddPrefix(createStatusIcon(status.Ready))
+
+			logs := adw.NewActionRow()
+			logs.SetActivatable(true)
+			logs.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+			logs.SetTitle("Logs")
+			logs.ConnectActivated(func() {
+				d.Parent().(*adw.NavigationView).Push(NewLogPage(d.parent, d.behavior, object).NavigationPage)
+			})
+			widget.(*adw.ExpanderRow).AddRow(logs)
+		}
+	case *appsv1.Deployment:
+		switch object := prop.Object.(type) {
+		case *corev1.Pod:
+			for _, cond := range object.Status.Conditions {
+				if cond.Type == corev1.ContainersReady {
+					row := widget.(*adw.ActionRow)
+					row.AddPrefix(createStatusIcon(cond.Status == corev1.ConditionTrue))
+					row.SetActivatable(true)
+					row.SetSubtitleSelectable(false)
+					row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+					row.ConnectActivated(func() {
+						dv := NewDetailView(d.parent, d.behavior.NewDetailBehavior())
+						dv.behavior.SelectedObject.Update(object)
+						d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
+					})
+				}
+			}
+		}
 	}
 }
 

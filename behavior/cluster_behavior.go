@@ -41,10 +41,11 @@ type ClusterBehavior struct {
 	Namespaces observer.Property[[]corev1.Namespace]
 
 	SelectedResource observer.Property[*metav1.APIResource]
-	SelectedObject   observer.Property[client.Object]
 
 	SearchText   observer.Property[string]
 	SearchFilter observer.Property[SearchFilter]
+
+	RootDetailBehavior *DetailBehavior
 }
 
 func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPreferences]) (*ClusterBehavior, error) {
@@ -99,7 +100,6 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		ClusterPreferences: clusterPrefs,
 		dynamic:            dynamicClient,
 		Namespaces:         observer.NewProperty(namespaces.Items),
-		SelectedObject:     observer.NewProperty[client.Object](nil),
 		SelectedResource:   observer.NewProperty[*metav1.APIResource](nil),
 		SearchText:         observer.NewProperty(""),
 		SearchFilter:       observer.NewProperty(SearchFilter{}),

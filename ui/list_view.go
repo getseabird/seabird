@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"fmt"
 	"strconv"
 	"time"
 
@@ -80,9 +81,9 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 
 	if len(objects) > 0 {
 		l.selection.SetSelected(0)
-		l.behavior.SelectedObject.Update(objects[0])
+		l.behavior.RootDetailBehavior.SelectedObject.Update(objects[0])
 	} else {
-		l.behavior.SelectedObject.Update(nil)
+		l.behavior.RootDetailBehavior.SelectedObject.Update(nil)
 	}
 }
 
@@ -152,7 +153,14 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 					}
 				}
 			}),
+			l.createColumn("Available", func(listitem *gtk.ListItem, object client.Object) {
+				deployment := object.(*appsv1.Deployment)
+				label := gtk.NewLabel(fmt.Sprintf("%d/%d", deployment.Status.AvailableReplicas, deployment.Status.Replicas))
+				label.SetHAlign(gtk.AlignStart)
+				listitem.SetChild(label)
+			}),
 		)
+
 	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
 		columns = append(columns,
 			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
@@ -182,7 +190,7 @@ func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, o
 func (l *ListView) createModel() *gtk.SingleSelection {
 	selection := gtk.NewSingleSelection(gtk.NewStringList([]string{}))
 	selection.ConnectSelectionChanged(func(_, _ uint) {
-		l.behavior.SelectedObject.Update(l.behavior.Objects.Value()[l.selection.Selected()])
+		l.behavior.RootDetailBehavior.SelectedObject.Update(l.behavior.Objects.Value()[l.selection.Selected()])
 	})
 	return selection
 }

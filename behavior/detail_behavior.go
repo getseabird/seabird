@@ -11,7 +11,9 @@ import (
 	"github.com/dustin/go-humanize"
 	"github.com/getseabird/seabird/util"
 	"github.com/imkira/go-observer/v2"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
@@ -23,13 +25,21 @@ import (
 type DetailBehavior struct {
 	*ClusterBehavior
 
-	Yaml       observer.Property[string]
-	Properties observer.Property[[]ObjectProperty]
+	SelectedObject observer.Property[client.Object]
+	Yaml           observer.Property[string]
+	Properties     observer.Property[[]ObjectProperty]
+}
+
+func (b *ClusterBehavior) NewRootDetailBehavior() *DetailBehavior {
+	db := b.NewDetailBehavior()
+	b.RootDetailBehavior = db
+	return db
 }
 
 func (b *ClusterBehavior) NewDetailBehavior() *DetailBehavior {
 	d := DetailBehavior{
 		ClusterBehavior: b,
+		SelectedObject:  observer.NewProperty[client.Object](nil),
 		Yaml:            observer.NewProperty[string](""),
 		Properties:      observer.NewProperty[[]ObjectProperty](nil),
 	}
@@ -109,7 +119,8 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 			podMetrics = b.metrics.PodValue(types.NamespacedName{Name: object.Name, Namespace: object.Namespace})
 		}
 
-		for _, container := range object.Spec.Containers {
+		for _, c := range object.Spec.Containers {
+			container := c
 			var props []ObjectProperty
 			var status corev1.ContainerStatus
 			for _, s := range object.Status.ContainerStatuses {
@@ -188,7 +199,7 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 				}
 			}
 
-			containers = append(containers, ObjectProperty{Name: container.Name, Children: props})
+			containers = append(containers, ObjectProperty{Name: container.Name, Children: props, Object: &container})
 		}
 
 		properties = append(properties, ObjectProperty{Name: "Containers", Children: containers})
@@ -227,6 +238,16 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 			{Name: "Request", Value: object.Spec.Resources.Requests.Storage().String()},
 			{Name: "Access modes", Value: strings.Join(accessModes, ", ")},
 		}})
+	case *appsv1.Deployment:
+		prop := ObjectProperty{Name: "Pods"}
+		var pods v1.PodList
+		b.client.List(context.TODO(), &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
+		// TODO should we also filter pods by owner?
+		for _, p := range pods.Items {
+			pod := p
+			prop.Children = append(prop.Children, ObjectProperty{Value: pod.Name, Object: &pod})
+		}
+		properties = append(properties, prop)
 	}
 
 	b.Properties.Update(properties)
@@ -234,6 +255,7 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 }
 
 type ObjectProperty struct {
+	Object   any
 	Name     string
 	Value    string
 	Children []ObjectProperty
