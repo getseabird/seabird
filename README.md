@@ -26,8 +26,8 @@ sudo dnf install libadwaita gtksourceview5
 sudo apt install libadwaita-1 libgtksourceview-5
 ```
 
-Note: Releases older than Debian Trixie or Ubuntu Mantic are not supported. We
-plan to release a Flatpak in the future that will work on all distributions.
+Note: Releases older than Debian Trixie or Ubuntu Mantic are not supported.
+Please use the Flatpak instead.
 
 ## Reporting Issues
 

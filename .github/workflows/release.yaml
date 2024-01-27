@@ -44,6 +44,7 @@ jobs:
           if-no-files-found: error
           retention-days: 14
   flatpak:
+    needs: goreleaser
     runs-on: ubuntu-latest
     container:
       image: bilelmoussaoui/flatpak-github-actions:gnome-44
@@ -61,6 +62,13 @@ jobs:
           path: seabird.flatpak
           if-no-files-found: error
           retention-days: 14
+      - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: seabird.flatpak
+          tag: ${{ github.ref }}
   msys2:
     needs: goreleaser
     runs-on: windows-latest

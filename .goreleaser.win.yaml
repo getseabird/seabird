@@ -5,8 +5,8 @@ before:
     - go generate ./...
 
 builds:
-  - goos:
-      - windows
+  - flags:
+      - -trimpath
     goarch:
       - amd64
     ldflags:
