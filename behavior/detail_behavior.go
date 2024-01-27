@@ -213,6 +213,20 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 			{Name: "Cluster IP", Value: object.Spec.ClusterIP},
 			{Name: "Ports", Children: ports},
 		}})
+	case *corev1.PersistentVolumeClaim:
+		var accessModes []string
+		for _, m := range object.Spec.AccessModes {
+			accessModes = append(accessModes, string(m))
+		}
+		var storageClass string
+		if object.Spec.StorageClassName != nil {
+			storageClass = *object.Spec.StorageClassName
+		}
+		properties = append(properties, ObjectProperty{Name: "Persistent Volume Claim", Children: []ObjectProperty{
+			{Name: "Class", Value: storageClass},
+			{Name: "Request", Value: object.Spec.Resources.Requests.Storage().String()},
+			{Name: "Access modes", Value: strings.Join(accessModes, ", ")},
+		}})
 	}
 
 	b.Properties.Update(properties)
