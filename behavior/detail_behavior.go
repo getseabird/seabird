@@ -134,7 +134,7 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 			} else if status.State.Terminated != nil {
 				message := status.State.Terminated.Message
 				if len(message) == 0 {
-					message = status.State.Waiting.Reason
+					message = status.State.Terminated.Reason
 				}
 				state = fmt.Sprintf("Terminated: %s", message)
 			} else if status.State.Waiting != nil {
