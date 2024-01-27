@@ -10,10 +10,11 @@ import (
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/behavior"
+	"github.com/getseabird/seabird/widget"
 )
 
 type ClusterWindow struct {
-	*adw.ApplicationWindow
+	*widget.UniversalApplicationWindow
 	behavior     *behavior.ClusterBehavior
 	prefs        *behavior.Preferences
 	navigation   *Navigation
@@ -24,8 +25,8 @@ type ClusterWindow struct {
 
 func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) *ClusterWindow {
 	w := ClusterWindow{
-		ApplicationWindow: adw.NewApplicationWindow(app),
-		behavior:          behavior,
+		UniversalApplicationWindow: widget.NewUniversalApplicationWindow(app),
+		behavior:                   behavior,
 	}
 	w.SetIconName("seabird")
 	w.SetTitle(fmt.Sprintf("%s - %s", behavior.ClusterPreferences.Value().Name, ApplicationName))

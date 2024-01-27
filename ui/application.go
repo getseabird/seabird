@@ -3,6 +3,7 @@ package ui
 import (
 	"log"
 	"os"
+	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
@@ -21,6 +22,11 @@ type Application struct {
 }
 
 func NewApplication(version string) (*Application, error) {
+	switch runtime.GOOS {
+	case "windows":
+		os.Setenv("GTK_CSD", "0")
+	}
+
 	gtk.Init()
 
 	if err := icon.Register(); err != nil {
