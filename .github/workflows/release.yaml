@@ -89,7 +89,7 @@ jobs:
         with:
           msystem: MINGW64
           update: true
-          release: false
+          # release: false
           install: |
             git zip
             mingw-w64-x86_64-gcc 
@@ -113,7 +113,7 @@ jobs:
             ldd *.dll | { grep "=> /mingw64/bin/" || true; } | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
           done
           zip -j seabird_windows_amd64.zip README.md LICENSE dist/seabird_windows_amd64_v1/seabird.exe *.dll /mingw64/bin/gdbus.exe
-          pushd /mingw64 && zip "$workspace/seabird_windows_amd64.zip" -r ./share/glib-2.0 ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons && popd
+          pushd /mingw64 && zip "$workspace/seabird_windows_amd64.zip" -r ./share/glib-2.0/schemas/gschemas.compiled ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons && popd
       - uses: actions/upload-artifact@v4
         with:
           name: msys2
