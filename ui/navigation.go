@@ -106,7 +106,6 @@ func (n *Navigation) createFavourites(prefs behavior.ClusterPreferences) *gtk.Li
 
 		for _, res := range n.behavior.Resources {
 			if util.GVREquals(util.ResourceGVR(&res), gvr) {
-				// && n.behavior.SelectedResource.Value() == nil || !util.ResourceEquals(&res, n.behavior.SelectedResource.Value())
 				if n.spinner == nil {
 					n.spinner = gtk.NewSpinner()
 					n.spinner.Start()
