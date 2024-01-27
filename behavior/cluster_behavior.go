@@ -127,7 +127,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 
 	cluster.metrics, err = cluster.newMetrics(&cluster)
 	if err != nil {
-		log.Printf("metrics disabled: %w", err.Error())
+		log.Printf("metrics disabled: %s", err.Error())
 	}
 
 	sort.Slice(cluster.Resources, func(i, j int) bool {

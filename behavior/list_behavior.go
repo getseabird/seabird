@@ -41,6 +41,8 @@ func (b *ListBehavior) onSelectedResourceChange(resource *metav1.APIResource) {
 		list = &corev1.ConfigMapList{}
 	case corev1.SchemeGroupVersion.WithResource("secrets").String():
 		list = &corev1.SecretList{}
+	case corev1.SchemeGroupVersion.WithResource("services").String():
+		list = &corev1.ServiceList{}
 	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
 		list = &appsv1.DeploymentList{}
 	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
@@ -63,6 +65,11 @@ func (b *ListBehavior) onSelectedResourceChange(resource *metav1.APIResource) {
 				res = append(res, &ii)
 			}
 		case *corev1.SecretList:
+			for _, i := range list.Items {
+				ii := i
+				res = append(res, &ii)
+			}
+		case *corev1.ServiceList:
 			for _, i := range list.Items {
 				ii := i
 				res = append(res, &ii)

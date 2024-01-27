@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"io"
 	"math"
+	"strconv"
 	"strings"
 
 	"github.com/dustin/go-humanize"
@@ -203,6 +204,15 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 			data = append(data, ObjectProperty{Name: key, Value: string(value)})
 		}
 		properties = append(properties, ObjectProperty{Name: "Data", Children: data})
+	case *corev1.Service:
+		var ports []ObjectProperty
+		for _, p := range object.Spec.Ports {
+			ports = append(ports, ObjectProperty{Name: p.Name, Value: strconv.Itoa(int(p.Port))})
+		}
+		properties = append(properties, ObjectProperty{Name: "Service", Children: []ObjectProperty{
+			{Name: "Cluster IP", Value: object.Spec.ClusterIP},
+			{Name: "Ports", Children: ports},
+		}})
 	}
 
 	b.Properties.Update(properties)
