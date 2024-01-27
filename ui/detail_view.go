@@ -37,6 +37,9 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
+	if parent.Decorated() {
+		header.SetShowEndTitleButtons(false)
+	}
 	switcher := adw.NewViewSwitcher()
 	switcher.SetPolicy(adw.ViewSwitcherPolicyWide)
 	switcher.SetStack(stack)
