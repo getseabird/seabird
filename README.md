@@ -29,6 +29,26 @@ sudo apt install libadwaita-1 libgtksourceview-5
 Note: Releases older than Debian Trixie or Ubuntu Mantic are not supported.
 Please use the Flatpak instead.
 
+## Building From Source
+
+Build dependencies for Debian, adapt to your platform:
+
+```
+sudo apt install libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev libglib2.0-dev-bin golang-go
+```
+
+Run go generate to create the embedded resource file:
+
+```
+go generate ./...
+```
+
+Then build with:
+
+```
+go build
+```
+
 ## Reporting Issues
 
 If you experience problems, please open an
