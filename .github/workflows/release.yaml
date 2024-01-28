@@ -138,7 +138,7 @@ jobs:
         run: |
           go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.darwin.yaml --single-target --snapshot
 
-          dist=dist/seabird_darwin_`uname -m`_v1
+          dist=dist/seabird_darwin_amd64_v1
           brew_prefix=$(brew --prefix)
           mkdir -p $dist/lib/gdk-pixbuf-2.0 $dist/share/glib-2.0/schemas $dist/share/icons
 
@@ -193,7 +193,7 @@ jobs:
           echo '"$LAUNCH_DIR/seabird"'
           chmod 755 $launcher_file
 
-          tar cvzf seabird_darwin_`uname -m`.tar.gz -C $dist .
+          tar cvzf seabird_darwin_amd64.tar.gz -C $dist .
       - uses: actions/upload-artifact@v4
         with:
           name: darwin
