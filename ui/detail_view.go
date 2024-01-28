@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"log"
-	"math"
 	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -162,7 +161,7 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level uint, prop behavior.O
 					levelBar.SetSizeRequest(50, -1)
 					levelBar.SetHAlign(gtk.AlignCenter)
 					levelBar.SetVAlign(gtk.AlignCenter)
-					levelBar.SetValue(math.Min(percent, 1))
+					levelBar.SetValue(min(percent, 1))
 					levelBar.AddOffsetValue("lb-warning", .75)
 					levelBar.AddOffsetValue("lb-error", 1)
 					levelBar.SetTooltipText(fmt.Sprintf("%.0f%%", percent*100))

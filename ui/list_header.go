@@ -29,7 +29,9 @@ func NewListHeader(b *behavior.ListBehavior) *ListHeader {
 	}
 	kind.Connect("notify::selected-item", func() {
 		res := b.Resources[kind.Selected()]
-		b.SelectedResource.Update(&res)
+		if !util.ResourceEquals(b.SelectedResource.Value(), &res) {
+			b.SelectedResource.Update(&res)
+		}
 	})
 	box.Append(kind)
 

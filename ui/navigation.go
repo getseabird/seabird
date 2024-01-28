@@ -60,7 +60,6 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 
 	header.PackEnd(button)
 	n.AddTopBar(header)
-	n.SetContent(n.createFavourites(b.ClusterPreferences.Value()))
 
 	onChange(b.ClusterPreferences, func(prefs behavior.ClusterPreferences) {
 		n.SetContent(n.createFavourites(prefs))
@@ -86,6 +85,8 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 		}
 	})
 
+	n.SetContent(n.createFavourites(b.ClusterPreferences.Value()))
+
 	return n
 }
 
@@ -105,7 +106,7 @@ func (n *Navigation) createFavourites(prefs behavior.ClusterPreferences) *gtk.Li
 		}
 
 		for _, res := range n.behavior.Resources {
-			if util.GVREquals(util.ResourceGVR(&res), gvr) {
+			if util.GVREquals(util.ResourceGVR(&res), gvr) && !util.ResourceEquals(n.behavior.SelectedResource.Value(), &res) {
 				if n.spinner == nil {
 					n.spinner = gtk.NewSpinner()
 					n.spinner.Start()
