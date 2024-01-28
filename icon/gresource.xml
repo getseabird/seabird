@@ -3,8 +3,7 @@
   <gresource prefix="/io/github/getseabird/seabird/icons/scalable/actions/">
     <file preprocess="xml-stripblanks">seabird.svg</file>
 
-    <!-- Must convert strokes to fills when adding icons from Lucide
-    https://iconly.io/tools/svg-convert-stroke-to-fill-->
+    <!-- Must convert strokes to fills when adding icons from Lucide https://iconly.io/tools/svg-convert-stroke-to-fill-->
     <file alias="box-symbolic.svg" preprocess="xml-stripblanks">lucide/box.svg</file>
     <file alias="database-symbolic.svg" preprocess="xml-stripblanks">lucide/database.svg</file>
     <file alias="file-key-2-symbolic.svg" preprocess="xml-stripblanks">lucide/file-key-2.svg</file>
@@ -22,5 +21,6 @@
     <file alias="waypoints-symbolic.svg" preprocess="xml-stripblanks">lucide/waypoints.svg</file>
     <file alias="radio-tower-symbolic.svg" preprocess="xml-stripblanks">lucide/radio-tower.svg</file>
     <file alias="memory-stick-symbolic.svg" preprocess="xml-stripblanks">lucide/memory-stick.svg</file>
+    <file alias="cpu-symbolic.svg" preprocess="xml-stripblanks">lucide/cpu.svg</file>
   </gresource>
 </gresources>

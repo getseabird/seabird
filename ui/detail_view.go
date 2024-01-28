@@ -155,35 +155,24 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level uint, prop behavior.O
 			}
 			widget.(*adw.ExpanderRow).AddPrefix(createStatusIcon(status.Ready))
 
-			var currentMem *resource.Quantity
 			for _, p := range prop.Children {
 				if p.Name == "Memory" {
 					v, err := resource.ParseQuantity(p.Value)
 					if err != nil {
 						log.Printf(err.Error())
 					} else {
-						currentMem = &v
+						widget.(*adw.ExpanderRow).AddSuffix(createMemoryBar(v, object.Resources))
 					}
 				}
 			}
-			if currentMem != nil {
-				targetMem := object.Resources.Requests.Memory()
-				if targetMem == nil || targetMem.IsZero() {
-					targetMem = object.Resources.Limits.Memory()
-				}
-				if targetMem != nil && !targetMem.IsZero() {
-					percent := currentMem.AsApproximateFloat64() / targetMem.AsApproximateFloat64()
-					levelBar := gtk.NewLevelBar()
-					levelBar.SetSizeRequest(50, -1)
-					levelBar.SetHAlign(gtk.AlignCenter)
-					levelBar.SetVAlign(gtk.AlignCenter)
-					levelBar.SetValue(min(percent, 1))
-					// down from offset, not up
-					levelBar.AddOffsetValue("lb-warning", .9)
-					levelBar.AddOffsetValue("lb-error", 1)
-					levelBar.SetTooltipText(fmt.Sprintf("%.0f%%", percent*100))
-					widget.(*adw.ExpanderRow).AddSuffix(levelBar)
-					widget.(*adw.ExpanderRow).AddSuffix(gtk.NewImageFromIconName("memory-stick-symbolic"))
+			for _, p := range prop.Children {
+				if p.Name == "CPU" {
+					v, err := resource.ParseQuantity(p.Value)
+					if err != nil {
+						log.Printf(err.Error())
+					} else {
+						widget.(*adw.ExpanderRow).AddSuffix(createCPUBar(v, object.Resources))
+					}
 				}
 			}
 
@@ -283,4 +272,59 @@ func (d *DetailView) setSourceColorScheme() {
 	} else {
 		d.sourceBuffer.SetStyleScheme(gtksource.StyleSchemeManagerGetDefault().Scheme("Adwaita"))
 	}
+}
+
+func createMemoryBar(actual resource.Quantity, res corev1.ResourceRequirements) *gtk.Box {
+	box := gtk.NewBox(gtk.OrientationVertical, 4)
+	box.SetVAlign(gtk.AlignCenter)
+	req := res.Requests.Memory()
+	if req == nil || req.IsZero() {
+		req = res.Limits.Memory()
+	}
+	if req == nil || req.IsZero() {
+		return box
+	}
+
+	percent := actual.AsApproximateFloat64() / req.AsApproximateFloat64()
+	levelBar := gtk.NewLevelBar()
+	levelBar.SetSizeRequest(50, -1)
+	levelBar.SetHAlign(gtk.AlignCenter)
+	levelBar.SetVAlign(gtk.AlignCenter)
+	levelBar.SetValue(min(percent, 1))
+	// down from offset, not up
+	levelBar.AddOffsetValue("lb-warning", .9)
+	levelBar.AddOffsetValue("lb-error", 1)
+	box.SetTooltipText(fmt.Sprintf("%.0f%% Memory", percent*100))
+
+	box.Append(gtk.NewImageFromIconName("memory-stick-symbolic"))
+	box.Append(levelBar)
+
+	return box
+}
+
+func createCPUBar(actual resource.Quantity, res corev1.ResourceRequirements) *gtk.Box {
+	box := gtk.NewBox(gtk.OrientationVertical, 4)
+	box.SetVAlign(gtk.AlignCenter)
+	req := res.Requests.Cpu()
+	if req == nil || req.IsZero() {
+		req = res.Limits.Cpu()
+	}
+	if req == nil || req.IsZero() {
+		return box
+	}
+
+	percent := actual.AsApproximateFloat64() / req.AsApproximateFloat64()
+	levelBar := gtk.NewLevelBar()
+	levelBar.SetSizeRequest(50, -1)
+	levelBar.SetHAlign(gtk.AlignCenter)
+	levelBar.SetVAlign(gtk.AlignCenter)
+	levelBar.SetValue(min(percent, 1))
+	levelBar.AddOffsetValue("lb-warning", .9)
+	levelBar.AddOffsetValue("lb-error", 1)
+	box.SetTooltipText(fmt.Sprintf("%.0f%% CPU", percent*100))
+
+	box.Append(gtk.NewImageFromIconName("cpu-symbolic"))
+	box.Append(levelBar)
+
+	return box
 }

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"io"
-	"math"
 	"strconv"
 	"strings"
 
@@ -15,6 +14,7 @@ import (
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
@@ -191,7 +191,10 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 
 			if metrics != nil {
 				if cpu := metrics.Usage.Cpu(); cpu != nil {
-					props = append(props, ObjectProperty{Name: "CPU", Value: fmt.Sprintf("%v%%", math.Round(cpu.AsApproximateFloat64()*10000)/10000)})
+					c, _ := cpu.AsInt64()
+					cpu = resource.NewQuantity(c, resource.DecimalSI)
+					cpu.RoundUp(resource.Milli)
+					props = append(props, ObjectProperty{Name: "CPU", Value: fmt.Sprintf("%v", cpu)})
 				}
 				if mem := metrics.Usage.Memory(); mem != nil {
 					m, _ := mem.AsInt64()
