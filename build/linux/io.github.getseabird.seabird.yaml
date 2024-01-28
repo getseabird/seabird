@@ -2,16 +2,7 @@ app-id: io.github.getseabird.seabird
 runtime: org.gnome.Platform
 runtime-version: "45"
 sdk: org.gnome.Sdk
-# sdk-extensions:
-#   - "org.freedesktop.Sdk.Extension.golang"
 command: seabird
-
-build-options:
-  # build-args:
-  #   - --share=network
-  # env:
-  #   - GOBIN=/app/bin
-  #   - GOROOT=/usr/lib/sdk/golang
 
 finish-args:
   - --share=ipc
@@ -26,19 +17,19 @@ modules:
     buildsystem: simple
     build-commands:
       - |
-        set -e
-        # $GOROOT/bin/go generate ./...
-        # $GOROOT/bin/go build -trimpath -o seabird
-        # install -Dm00755 -t /app/bin seabird
-        ls -la
         install -Dm00755 -t /app/bin linux_amd64/seabird
-        install -Dm00644 icon/seabird.svg /app/share/icons/hicolor/scalable/apps/$FLATPAK_ID.svg
+        install -Dm00644 seabird.svg /app/share/icons/hicolor/scalable/apps/$FLATPAK_ID.svg
         install -Dm00644 -t /app/share/applications $FLATPAK_ID.desktop
         install -Dm00644 -t /app/share/metainfo $FLATPAK_ID.appdata.xml
     sources:
-      - type: git
-        url: .
-        branch: main
+      - type: file
+        path: io.github.getseabird.seabird.desktop
+      - type: file
+        path: io.github.getseabird.seabird.appdata.xml
+      - type: file
+        filename: seabird.svg
+        url: https://raw.githubusercontent.com/getseabird/seabird/main/icon/seabird.svg
+        sha256: 6593267d7c60a8a84c350250854fc3f2929c17af612a3b4e44d958b5301cd4fe
       - type: archive
         strip-components: 0
         dest: linux_amd64

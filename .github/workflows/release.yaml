@@ -33,7 +33,7 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          args: release --clean ${{ env.flags }}
+          args: release -f build/linux/.goreleaser.yaml --clean ${{ env.flags }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOS: linux
@@ -53,7 +53,7 @@ jobs:
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: seabird.flatpak
-          manifest-path: io.github.getseabird.seabird.yaml
+          manifest-path: build/linux/io.github.getseabird.seabird.yaml
           cache-key: flatpak-builder-${{ github.sha }}
       - uses: actions/upload-artifact@v4
         with:
@@ -99,7 +99,7 @@ jobs:
           export PATH="/mingw64/bin:$PATH"
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
-          go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.win.yaml --single-target --snapshot
+          go run github.com/goreleaser/goreleaser@latest build -f build/windows/.goreleaser.yaml --single-target --snapshot
           ldd dist/seabird_windows_amd64_v1/seabird.exe | grep "=> /mingw64/bin/" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
           for run in {1..5}; do
             ldd *.dll | { grep "=> /mingw64/bin/" || true; } | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
@@ -136,13 +136,13 @@ jobs:
           brew install gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme
       - name: Build
         run: |
-          go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.darwin.yaml --single-target --snapshot
+          go run github.com/goreleaser/goreleaser@latest build -f build/darwin/.goreleaser.yaml --single-target --snapshot
 
           dist=dist/seabird_darwin_amd64_v1
           brew_prefix=$(brew --prefix)
           mkdir -p $dist/lib/gdk-pixbuf-2.0 $dist/share/glib-2.0/schemas $dist/share/icons
 
-          cp README.md LICENSE $dist
+          cp README.md LICENSE build/darwin/seabird.sh $dist
           otool -L $dist/seabird | awk -v pat="$brew_prefix" '$0~pat {print $1}' | xargs -I '{}' cp '{}' $dist/lib
 
           for lib in \
@@ -182,16 +182,6 @@ jobs:
           cp -r $brew_prefix/opt/gtksourceview5/share/gtksourceview-5 $dist/share/gtksourceview-5 
           cp -r $brew_prefix/opt/gtk4/share/gtk-4.0 $dist/share
           cp -r $brew_prefix/share/icons/hicolor $brew_prefix/opt/adwaita-icon-theme/share/icons/Adwaita $dist/share/icons
-
-          launcher_file=$dist/seabird_launcher.sh
-          echo 'cd "$(dirname "$0")"' >>$launcher_file
-          echo 'LAUNCH_DIR="$(pwd)"' >>$launcher_file
-          echo 'export DYLD_LIBRARY_PATH="$LAUNCH_DIR/lib"' >>$launcher_file
-          echo 'export GSETTINGS_SCHEMA_DIR="$LAUNCH_DIR/share/glib-2.0/schemas"' >>$launcher_file
-          echo 'export GDK_PIXBUF_MODULEDIR="$LAUNCH_DIR/lib/gdk-pixbuf-2.0"' >>$launcher_file
-          echo 'export GDK_PIXBUF_MODULE_FILE="$LAUNCH_DIR/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"' >>$launcher_file
-          echo '"$LAUNCH_DIR/seabird"'
-          chmod 755 $launcher_file
 
           tar cvzf seabird_darwin_amd64.tar.gz -C $dist .
       - uses: actions/upload-artifact@v4
