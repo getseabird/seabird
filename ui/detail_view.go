@@ -4,11 +4,14 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strconv"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/behavior"
+	"github.com/getseabird/seabird/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -21,16 +24,17 @@ type DetailView struct {
 	prefPage     *adw.PreferencesPage
 	groups       []*adw.PreferencesGroup
 	sourceBuffer *gtksource.Buffer
+	expanded     map[string]bool
 }
 
 func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *DetailView {
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 
 	d := DetailView{
-		// NavigationView: adw.NewNavigationView(),
 		NavigationPage: adw.NewNavigationPage(content, "main"),
 		behavior:       behavior,
 		parent:         parent,
+		expanded:       map[string]bool{},
 	}
 
 	stack := adw.NewViewStack()
@@ -87,6 +91,18 @@ func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProper
 	case 1:
 		if len(prop.Children) > 0 {
 			row := adw.NewExpanderRow()
+			id := strings.Join([]string{
+				util.ResourceGVR(d.behavior.SelectedResource.Value()).String(),
+				string(d.behavior.SelectedObject.Value().GetUID()),
+				prop.Name,
+				strconv.Itoa(int(level)),
+			}, "-")
+			if e, ok := d.expanded[id]; ok && e {
+				row.SetExpanded(true)
+			}
+			row.Connect("state-flags-changed", func() {
+				d.expanded[id] = row.Expanded()
+			})
 			row.SetTitle(prop.Name)
 			for _, child := range prop.Children {
 				row.AddRow(d.renderObjectProperty(level+1, child))
