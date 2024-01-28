@@ -128,3 +128,109 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: seabird_windows_amd64.zip
           tag: ${{ github.ref }}
+
+  darwin:
+    needs: goreleaser
+    runs-on: macos-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v4
+        with:
+          go-version: '1.21'
+
+      - name: Install brew
+        run: |
+          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
+          brew --version
+
+      - name: Install dependencies
+        run: |
+          brew install gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme
+
+      - name: Build
+        run: |
+          # Build
+          go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.darwin.yaml --single-target --snapshot
+
+          # Folders
+          dist_folder=dist/seabird_darwin_`uname -m`_v1
+          lib_folder=$dist_folder/lib
+          share_folder=$dist_folder/share
+          brew_prefix=$(brew --prefix)
+          mkdir -p $lib_folder/gdk-pixbuf-2.0
+          mkdir -p $share_folder/glib-2.0/schemas
+          mkdir -p $share_folder/icons
+
+          # Files
+          cp README.md LICENSE $dist_folder
+
+          # lib
+          otool -L $dist_folder/seabird | awk -v pat="$brew_prefix" '$0~pat {print $1}' | xargs -I '{}' cp '{}' $lib_folder
+
+          for lib in \
+            libfribidi.0.dylib \
+            libgmodule-2.0.0.dylib \
+            libpangoft2-1.0.0.dylib \
+            libfreetype.6.dylib \
+            libpng16.16.dylib \
+            libappstream.5.dylib \
+            libepoxy.0.dylib \
+            libfontconfig.1.dylib \
+            libgraphite2.3.dylib \
+            libjpeg.8.dylib \
+            libtiff.6.dylib \
+            libharfbuzz-gobject.0.dylib \
+            libX11.6.dylib \
+            libxmlb.2.dylib \
+            libcairo-script-interpreter.2.dylib \
+            libXext.6.dylib \
+            libyaml-0.2.dylib \
+            libXrender.1.dylib \
+            libxcb.1.dylib \
+            libxcb-render.0.dylib \
+            libxcb-shm.0.dylib \
+            libpixman-1.0.dylib \
+            libXau.6.dylib \
+            liblzo2.2.dylib \
+            libXdmcp.6.dylib \
+            librsvg-2.2.dylib \
+          ; do
+            cp -f $brew_prefix/lib/$lib $lib_folder
+          done
+
+          # ./lib/gdk-pixbuf-2.0
+          cp -r $brew_prefix/lib/gdk-pixbuf-2.0 $lib_folder
+          sed -i '' "s|$brew_prefix/||" $lib_folder/gdk-pixbuf-2.0/2.10.0/loaders.cache
+          # ./share/glib-2.0/schemas
+          cp -r $brew_prefix/share/glib-2.0/schemas $share_folder/glib-2.0
+          # ./share/gtksourceview-5
+          cp -r $brew_prefix/opt/gtksourceview5/share/gtksourceview-5 $share_folder/gtksourceview-5 
+          # ./share/gtk-4.0
+          cp -r $brew_prefix/opt/gtk4/share/gtk-4.0 $share_folder
+          # ./share/icons
+          cp -r $brew_prefix/opt/adwaita-icon-theme/share/icons/Adwaita $share_folder/icons
+          cp -r $brew_prefix/share/icons/hicolor $share_folder/icons
+
+          # Runner file
+          launcher_file=$dist_folder/seabird_launcher.sh
+          echo 'cd "$(dirname "$0")"' >>$launcher_file
+          echo 'LAUNCH_DIR="$(pwd)"' >>$launcher_file
+          echo 'export DYLD_LIBRARY_PATH="$LAUNCH_DIR/lib"' >>$launcher_file
+          echo 'export GSETTINGS_SCHEMA_DIR="$LAUNCH_DIR/share/glib-2.0/schemas"' >>$launcher_file
+          echo 'export GDK_PIXBUF_MODULEDIR="$LAUNCH_DIR/lib/gdk-pixbuf-2.0"' >>$launcher_file
+          echo 'export GDK_PIXBUF_MODULE_FILE="$LAUNCH_DIR/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"' >>$launcher_file
+          echo '"$LAUNCH_DIR/seabird"'
+          chmod 777 $launcher_file
+
+          # Archive
+          tar cvzf seabird_darwin_`uname -m`.tar.gz -C $dist_folder .
+
+      - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: seabird_darwin_amd64.tar.gz
+          tag: ${{ github.ref }}
