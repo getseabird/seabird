@@ -178,7 +178,8 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level uint, prop behavior.O
 					levelBar.SetHAlign(gtk.AlignCenter)
 					levelBar.SetVAlign(gtk.AlignCenter)
 					levelBar.SetValue(min(percent, 1))
-					levelBar.AddOffsetValue("lb-warning", .75)
+					// down from offset, not up
+					levelBar.AddOffsetValue("lb-warning", .9)
 					levelBar.AddOffsetValue("lb-error", 1)
 					levelBar.SetTooltipText(fmt.Sprintf("%.0f%%", percent*100))
 					widget.(*adw.ExpanderRow).AddSuffix(levelBar)
