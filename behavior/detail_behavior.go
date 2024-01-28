@@ -240,6 +240,15 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 			{Name: "Request", Value: object.Spec.Resources.Requests.Storage().String()},
 			{Name: "Access modes", Value: strings.Join(accessModes, ", ")},
 		}})
+	case *corev1.Node:
+		prop := ObjectProperty{Name: "Pods"}
+		var pods v1.PodList
+		b.client.List(context.TODO(), &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", object.Name)})
+		for _, p := range pods.Items {
+			pod := p
+			prop.Children = append(prop.Children, ObjectProperty{Value: pod.Name, Object: &pod})
+		}
+		properties = append(properties, prop)
 	case *appsv1.Deployment:
 		prop := ObjectProperty{Name: "Pods"}
 		var pods v1.PodList
