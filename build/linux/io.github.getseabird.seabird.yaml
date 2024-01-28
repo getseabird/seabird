@@ -1,0 +1,37 @@
+app-id: io.github.getseabird.seabird
+runtime: org.gnome.Platform
+runtime-version: "45"
+sdk: org.gnome.Sdk
+command: seabird
+
+finish-args:
+  - --share=ipc
+  - --socket=fallback-x11
+  - --share=network
+  - --device=dri
+  - --talk-name=org.freedesktop.Notifications
+  - --filesystem=home
+
+modules:
+  - name: seabird
+    buildsystem: simple
+    build-commands:
+      - |
+        install -Dm00755 -t /app/bin linux_amd64/seabird
+        install -Dm00644 seabird.svg /app/share/icons/hicolor/scalable/apps/$FLATPAK_ID.svg
+        install -Dm00644 -t /app/share/applications $FLATPAK_ID.desktop
+        install -Dm00644 -t /app/share/metainfo $FLATPAK_ID.appdata.xml
+    sources:
+      - type: file
+        path: io.github.getseabird.seabird.desktop
+      - type: file
+        path: io.github.getseabird.seabird.appdata.xml
+      - type: file
+        filename: seabird.svg
+        url: https://raw.githubusercontent.com/getseabird/seabird/main/icon/seabird.svg
+        sha256: 6593267d7c60a8a84c350250854fc3f2929c17af612a3b4e44d958b5301cd4fe
+      - type: archive
+        strip-components: 0
+        dest: linux_amd64
+        url: https://github.com/getseabird/seabird/releases/download/v0.0.16/seabird_linux_amd64.tar.gz
+        sha256: b4f0af4d203032d5ec6f5c8c7d8edde925377282ca93d62806f6d7f20648a2c6

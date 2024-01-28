@@ -33,7 +33,7 @@ jobs:
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@v5
         with:
-          args: release --clean ${{ env.flags }}
+          args: release -f build/linux/.goreleaser.yaml --clean ${{ env.flags }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOS: linux
@@ -42,7 +42,6 @@ jobs:
           name: goreleaser
           path: dist
           if-no-files-found: error
-          retention-days: 14
   flatpak:
     needs: goreleaser
     runs-on: ubuntu-latest
@@ -54,14 +53,13 @@ jobs:
       - uses: flatpak/flatpak-github-actions/flatpak-builder@v6
         with:
           bundle: seabird.flatpak
-          manifest-path: io.github.getseabird.seabird.yaml
+          manifest-path: build/linux/io.github.getseabird.seabird.yaml
           cache-key: flatpak-builder-${{ github.sha }}
       - uses: actions/upload-artifact@v4
         with:
           name: flatpak
           path: seabird.flatpak
           if-no-files-found: error
-          retention-days: 14
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
@@ -69,6 +67,7 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: seabird.flatpak
           tag: ${{ github.ref }}
+  # Could consider using Fedora instead https://fedoraproject.org/wiki/Changes/F37MingwUCRT
   msys2:
     needs: goreleaser
     runs-on: windows-latest
@@ -78,18 +77,11 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-      - name: Cache msys2
-        id: cache-msys2
-        uses: actions/cache@v4
-        with:
-          path: /msys2/mingw64/
-          key: ${{ runner.os }}-msys2
       - name: Set up msys
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          update: true
-          # release: false
+          release: false
           install: |
             git zip
             mingw-w64-x86_64-gcc 
@@ -107,7 +99,7 @@ jobs:
           export PATH="/mingw64/bin:$PATH"
           export GOROOT=/mingw64/lib/go
           export GOPATH=/mingw64
-          go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.win.yaml --single-target --snapshot
+          go run github.com/goreleaser/goreleaser@latest build -f build/windows/.goreleaser.yaml --single-target --snapshot
           ldd dist/seabird_windows_amd64_v1/seabird.exe | grep "=> /mingw64/bin/" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
           for run in {1..5}; do
             ldd *.dll | { grep "=> /mingw64/bin/" || true; } | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
@@ -120,7 +112,6 @@ jobs:
           name: msys2
           path: seabird_windows_amd64.zip
           if-no-files-found: error
-          retention-days: 14
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
@@ -128,46 +119,31 @@ jobs:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
           file: seabird_windows_amd64.zip
           tag: ${{ github.ref }}
-
   darwin:
     needs: goreleaser
     runs-on: macos-latest
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-
+      - name: Set up Homebrew
+        id: set-up-homebrew
+        uses: Homebrew/actions/setup-homebrew@master
       - uses: actions/setup-go@v4
         with:
-          go-version: '1.21'
-
-      - name: Install brew
-        run: |
-          /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install.sh)"
-          brew --version
-
+          go-version: "1.21"
       - name: Install dependencies
         run: |
           brew install gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme
-
       - name: Build
         run: |
-          # Build
-          go run github.com/goreleaser/goreleaser@latest build -f .goreleaser.darwin.yaml --single-target --snapshot
+          go run github.com/goreleaser/goreleaser@latest build -f build/darwin/.goreleaser.yaml --single-target --snapshot
 
-          # Folders
-          dist_folder=dist/seabird_darwin_`uname -m`_v1
-          lib_folder=$dist_folder/lib
-          share_folder=$dist_folder/share
+          dist=dist/seabird_darwin_amd64_v1
           brew_prefix=$(brew --prefix)
-          mkdir -p $lib_folder/gdk-pixbuf-2.0
-          mkdir -p $share_folder/glib-2.0/schemas
-          mkdir -p $share_folder/icons
+          mkdir -p $dist/lib/gdk-pixbuf-2.0 $dist/share/glib-2.0/schemas $dist/share/icons
 
-          # Files
-          cp README.md LICENSE $dist_folder
-
-          # lib
-          otool -L $dist_folder/seabird | awk -v pat="$brew_prefix" '$0~pat {print $1}' | xargs -I '{}' cp '{}' $lib_folder
+          cp README.md LICENSE build/darwin/seabird.sh $dist
+          otool -L $dist/seabird | awk -v pat="$brew_prefix" '$0~pat {print $1}' | xargs -I '{}' cp '{}' $dist/lib
 
           for lib in \
             libfribidi.0.dylib \
@@ -197,36 +173,22 @@ jobs:
             libXdmcp.6.dylib \
             librsvg-2.2.dylib \
           ; do
-            cp -f $brew_prefix/lib/$lib $lib_folder
+            cp -f $brew_prefix/lib/$lib $dist/lib
           done
 
-          # ./lib/gdk-pixbuf-2.0
-          cp -r $brew_prefix/lib/gdk-pixbuf-2.0 $lib_folder
-          sed -i '' "s|$brew_prefix/||" $lib_folder/gdk-pixbuf-2.0/2.10.0/loaders.cache
-          # ./share/glib-2.0/schemas
-          cp -r $brew_prefix/share/glib-2.0/schemas $share_folder/glib-2.0
-          # ./share/gtksourceview-5
-          cp -r $brew_prefix/opt/gtksourceview5/share/gtksourceview-5 $share_folder/gtksourceview-5 
-          # ./share/gtk-4.0
-          cp -r $brew_prefix/opt/gtk4/share/gtk-4.0 $share_folder
-          # ./share/icons
-          cp -r $brew_prefix/opt/adwaita-icon-theme/share/icons/Adwaita $share_folder/icons
-          cp -r $brew_prefix/share/icons/hicolor $share_folder/icons
+          cp -r $brew_prefix/lib/gdk-pixbuf-2.0 $dist/lib
+          sed -i '' "s|$brew_prefix/||" $dist/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
+          cp -r $brew_prefix/share/glib-2.0/schemas $dist/share/glib-2.0
+          cp -r $brew_prefix/opt/gtksourceview5/share/gtksourceview-5 $dist/share/gtksourceview-5 
+          cp -r $brew_prefix/opt/gtk4/share/gtk-4.0 $dist/share
+          cp -r $brew_prefix/share/icons/hicolor $brew_prefix/opt/adwaita-icon-theme/share/icons/Adwaita $dist/share/icons
 
-          # Runner file
-          launcher_file=$dist_folder/seabird_launcher.sh
-          echo 'cd "$(dirname "$0")"' >>$launcher_file
-          echo 'LAUNCH_DIR="$(pwd)"' >>$launcher_file
-          echo 'export DYLD_LIBRARY_PATH="$LAUNCH_DIR/lib"' >>$launcher_file
-          echo 'export GSETTINGS_SCHEMA_DIR="$LAUNCH_DIR/share/glib-2.0/schemas"' >>$launcher_file
-          echo 'export GDK_PIXBUF_MODULEDIR="$LAUNCH_DIR/lib/gdk-pixbuf-2.0"' >>$launcher_file
-          echo 'export GDK_PIXBUF_MODULE_FILE="$LAUNCH_DIR/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache"' >>$launcher_file
-          echo '"$LAUNCH_DIR/seabird"'
-          chmod 777 $launcher_file
-
-          # Archive
-          tar cvzf seabird_darwin_`uname -m`.tar.gz -C $dist_folder .
-
+          tar cvzf seabird_darwin_amd64.tar.gz -C $dist .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: darwin
+          path: seabird_darwin_amd64.tar.gz
+          if-no-files-found: error
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
