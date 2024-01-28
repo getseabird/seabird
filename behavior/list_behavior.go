@@ -2,6 +2,7 @@ package behavior
 
 import (
 	"context"
+	"log"
 	"time"
 
 	"github.com/getseabird/seabird/util"
@@ -71,7 +72,20 @@ func (b *ListBehavior) onSelectedResourceChange(resource *metav1.APIResource) {
 		obj = &appsv1.StatefulSet{}
 	default:
 		go func() {
-			w, _ := b.dynamic.Resource(gvr).Watch(context.TODO(), metav1.ListOptions{})
+			w, err := b.dynamic.Resource(gvr).Watch(context.TODO(), metav1.ListOptions{})
+			if err != nil {
+				log.Printf("watch failed: %s", err.Error())
+				list, err := b.dynamic.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
+				if err != nil {
+					log.Printf("list failed: %s", err.Error())
+					return
+				}
+				for _, i := range list.Items {
+					ii := i
+					b.objects = append(b.objects, &ii)
+				}
+				return
+			}
 			for {
 				select {
 				case res := <-w.ResultChan():
