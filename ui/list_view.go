@@ -11,6 +11,7 @@ import (
 	"github.com/getseabird/seabird/util"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -21,6 +22,8 @@ type ListView struct {
 	selection  *gtk.SingleSelection
 	columnView *gtk.ColumnView
 	columns    []*gtk.ColumnViewColumn
+	columnType *v1.APIResource
+	objects    []client.Object
 }
 
 func NewListView(parent *gtk.Window, behavior *behavior.ListBehavior) *ListView {
@@ -60,15 +63,25 @@ func NewListView(parent *gtk.Window, behavior *behavior.ListBehavior) *ListView 
 }
 
 func (l *ListView) onObjectsChange(objects []client.Object) {
-	l.selection = l.createModel()
-	l.columnView.SetModel(l.selection)
+	l.objects = objects
+	var selected uint
+	if l.columnType == nil || !util.ResourceEquals(l.columnType, l.behavior.SelectedResource.Value()) {
+		l.columnType = l.behavior.SelectedResource.Value()
 
-	for _, column := range l.columns {
-		l.columnView.RemoveColumn(column)
-	}
-	l.columns = l.createColumns()
-	for _, column := range l.columns {
-		l.columnView.AppendColumn(column)
+		l.selection = l.createModel()
+		l.columnView.SetModel(l.selection)
+
+		for _, column := range l.columns {
+			l.columnView.RemoveColumn(column)
+		}
+		l.columns = l.createColumns()
+		for _, column := range l.columns {
+			l.columnView.AppendColumn(column)
+		}
+	} else {
+		selected = l.selection.Selected()
+		list := l.selection.Model().Cast().(*gtk.StringList)
+		list.Splice(0, list.NItems(), nil)
 	}
 
 	filter := l.behavior.SearchFilter.Value()
@@ -79,8 +92,8 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 		l.selection.Model().Cast().(*gtk.StringList).Append(strconv.Itoa(i))
 	}
 
+	l.selection.SetSelected(min(selected, uint(len(objects))))
 	if len(objects) > 0 {
-		l.selection.SetSelected(0)
 		l.behavior.RootDetailBehavior.SelectedObject.Update(objects[0])
 	} else {
 		l.behavior.RootDetailBehavior.SelectedObject.Update(nil)
@@ -179,11 +192,10 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 }
 
 func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, object client.Object)) *gtk.ColumnViewColumn {
-	objects := l.behavior.Objects.Value()
 	factory := gtk.NewSignalListItemFactory()
 	factory.ConnectBind(func(listitem *gtk.ListItem) {
 		idx, _ := strconv.Atoi(listitem.Item().Cast().(*gtk.StringObject).String())
-		object := objects[idx]
+		object := l.objects[idx]
 		bind(listitem, object)
 	})
 	column := gtk.NewColumnViewColumn(name, &factory.ListItemFactory)
@@ -195,7 +207,7 @@ func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, o
 func (l *ListView) createModel() *gtk.SingleSelection {
 	selection := gtk.NewSingleSelection(gtk.NewStringList([]string{}))
 	selection.ConnectSelectionChanged(func(_, _ uint) {
-		l.behavior.RootDetailBehavior.SelectedObject.Update(l.behavior.Objects.Value()[l.selection.Selected()])
+		l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[l.selection.Selected()])
 	})
 	return selection
 }
