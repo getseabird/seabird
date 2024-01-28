@@ -12,8 +12,11 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
+
+const GtkInvalidListPosition uint = 4294967295
 
 type ListView struct {
 	*gtk.Box
@@ -24,6 +27,7 @@ type ListView struct {
 	columns    []*gtk.ColumnViewColumn
 	columnType *v1.APIResource
 	objects    []client.Object
+	selected   types.UID
 }
 
 func NewListView(parent *gtk.Window, behavior *behavior.ListBehavior) *ListView {
@@ -64,7 +68,7 @@ func NewListView(parent *gtk.Window, behavior *behavior.ListBehavior) *ListView 
 
 func (l *ListView) onObjectsChange(objects []client.Object) {
 	l.objects = objects
-	var selected uint
+
 	if l.columnType == nil || !util.ResourceEquals(l.columnType, l.behavior.SelectedResource.Value()) {
 		l.columnType = l.behavior.SelectedResource.Value()
 
@@ -79,7 +83,6 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 			l.columnView.AppendColumn(column)
 		}
 	} else {
-		selected = l.selection.Selected()
 		list := l.selection.Model().Cast().(*gtk.StringList)
 		list.Splice(0, list.NItems(), nil)
 	}
@@ -90,11 +93,18 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 			continue
 		}
 		l.selection.Model().Cast().(*gtk.StringList).Append(strconv.Itoa(i))
+		if o.GetUID() == l.selected {
+			l.selection.SetSelected(uint(i))
+		}
 	}
 
-	l.selection.SetSelected(min(selected, uint(len(objects))))
-	if len(objects) > 0 {
-		l.behavior.RootDetailBehavior.SelectedObject.Update(objects[0])
+	if len(l.objects) > 0 {
+		if selected := l.selection.Selected(); selected == GtkInvalidListPosition {
+			l.selection.SetSelected(0)
+			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[0])
+		} else {
+			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[selected])
+		}
 	} else {
 		l.behavior.RootDetailBehavior.SelectedObject.Update(nil)
 	}
@@ -207,7 +217,9 @@ func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, o
 func (l *ListView) createModel() *gtk.SingleSelection {
 	selection := gtk.NewSingleSelection(gtk.NewStringList([]string{}))
 	selection.ConnectSelectionChanged(func(_, _ uint) {
-		l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[l.selection.Selected()])
+		obj := l.objects[l.selection.Selected()]
+		l.selected = obj.GetUID()
+		l.behavior.RootDetailBehavior.SelectedObject.Update(obj)
 	})
 	return selection
 }
