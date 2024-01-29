@@ -34,14 +34,6 @@ func NewPreferencesWindow(behavior *behavior.ClusterBehavior) *PrefsWindow {
 	content.Append(stack)
 	view.SetStack(stack)
 
-	w.ConnectUnrealize(func() {
-		prefs := behavior.Preferences.Value()
-		if err := prefs.Save(); err != nil {
-			ShowErrorDialog(&w.Window.Window, "Could not save preferences", err)
-			return
-		}
-	})
-
 	w.navigationView.ConnectPopped(func(page *adw.NavigationPage) {
 		generalPage.SetChild(w.createGeneralPage())
 	})

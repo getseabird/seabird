@@ -35,6 +35,20 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 		w.SetDecorated(true) // https://gitlab.gnome.org/GNOME/gtk/-/issues/3749
 	}
 
+	var h glib.SignalHandle
+	h = w.ConnectCloseRequest(func() bool {
+		prefs := behavior.Preferences.Value()
+		if err := prefs.Save(); err != nil {
+			d := ShowErrorDialog(&w.Window, "Could not save preferences", err)
+			d.ConnectUnrealize(func() {
+				w.Close()
+			})
+			w.HandlerDisconnect(h)
+			return true
+		}
+		return false
+	})
+
 	w.toastOverlay = adw.NewToastOverlay()
 	w.SetContent(w.toastOverlay)
 

@@ -35,11 +35,6 @@ func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *Welcom
 func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	view := adw.NewNavigationView()
 	view.ConnectPopped(func(page *adw.NavigationPage) {
-		prefs := w.behavior.Preferences.Value()
-		if err := prefs.Save(); err != nil {
-			ShowErrorDialog(&w.ApplicationWindow.Window, "Could not save preferences", err)
-			return
-		}
 		w.content.SetChild(w.createContent())
 	})
 
