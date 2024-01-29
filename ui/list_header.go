@@ -20,9 +20,9 @@ func NewListHeader(b *behavior.ListBehavior) *ListHeader {
 	box.SetMarginStart(12)
 	box.SetMarginEnd(12)
 
-	kind := gtk.NewDropDown(gtk.NewStringList(nil), nil)
-	// TODO need expression? https://docs.gtk.org/gtk4/property.DropDown.expression.html
-	// dropdown.SetEnableSearch(true)
+	// TODO expression triggers G_IS_OBJECT (object) assertion fails
+	kind := gtk.NewDropDown(gtk.NewStringList([]string{}), gtk.NewPropertyExpression(gtk.GTypeStringObject, nil, "string"))
+	kind.SetEnableSearch(true)
 
 	for _, r := range b.Resources {
 		kind.Model().Cast().(*gtk.StringList).Append(r.Kind)
