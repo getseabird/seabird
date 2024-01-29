@@ -53,6 +53,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 
 	config := &rest.Config{
 		Host:            clusterPrefs.Value().Host,
+		BearerToken:     clusterPrefs.Value().BearerToken,
 		TLSClientConfig: clusterPrefs.Value().TLS,
 	}
 

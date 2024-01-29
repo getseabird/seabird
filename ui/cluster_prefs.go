@@ -27,6 +27,7 @@ type ClusterPrefPage struct {
 	cert       *adw.EntryRow
 	key        *adw.EntryRow
 	ca         *adw.EntryRow
+	bearer     *adw.EntryRow
 	favourites *adw.Bin
 	actions    *adw.Bin
 }
@@ -55,6 +56,7 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observe
 		p.cert.SetText(string(prefs.TLS.CertData))
 		p.key.SetText(string(prefs.TLS.KeyData))
 		p.ca.SetText(string(prefs.TLS.CAData))
+		p.bearer.SetText(string(prefs.BearerToken))
 
 		p.favourites.SetChild(p.createFavourites())
 		p.actions.SetChild(p.createActions())
@@ -86,13 +88,19 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	auth.AddRow(p.key)
 	p.ca = adw.NewEntryRow()
 	p.ca.SetTitle("CA certificate")
+	p.ca = adw.NewEntryRow()
+	p.ca.SetTitle("CA certificate")
 	auth.AddRow(p.ca)
+	p.bearer = adw.NewEntryRow()
+	p.bearer.SetTitle("Bearer token")
+	auth.AddRow(p.bearer)
 
 	p.name.SetText(p.active.Value().Name)
 	p.host.SetText(p.active.Value().Host)
 	p.cert.SetText(string(p.active.Value().TLS.CertData))
 	p.key.SetText(string(p.active.Value().TLS.KeyData))
 	p.ca.SetText(string(p.active.Value().TLS.CAData))
+	p.bearer.SetText(string(p.active.Value().BearerToken))
 
 	p.favourites = adw.NewBin()
 	p.favourites.SetChild(p.createFavourites())
@@ -213,6 +221,7 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		cluster.TLS.CertData = []byte(p.cert.Text())
 		cluster.TLS.KeyData = []byte(p.key.Text())
 		cluster.TLS.CAData = []byte(p.ca.Text())
+		cluster.BearerToken = p.bearer.Text()
 		cluster.Defaults()
 
 		if err := p.validate(cluster); err != nil {
@@ -271,22 +280,44 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 				active.Name = config.ServerName
 				active.Host = config.Host
 				if config.CertFile != "" {
-					data, _ := os.ReadFile(config.CertFile)
+					data, err := os.ReadFile(config.CertFile)
+					if err != nil {
+						ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+						return
+					}
 					active.TLS.CertData = data
 				} else {
 					active.TLS.CertData = config.CertData
 				}
 				if config.KeyFile != "" {
-					data, _ := os.ReadFile(config.KeyFile)
+					data, err := os.ReadFile(config.KeyFile)
+					if err != nil {
+						ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+						return
+					}
 					active.TLS.KeyData = data
 				} else {
 					active.TLS.KeyData = config.KeyData
 				}
 				if config.CAFile != "" {
-					data, _ := os.ReadFile(config.CAFile)
+					data, err := os.ReadFile(config.CAFile)
+					if err != nil {
+						ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+						return
+					}
 					active.TLS.CAData = data
 				} else {
 					active.TLS.CAData = config.CAData
+				}
+				if config.BearerTokenFile != "" {
+					data, err := os.ReadFile(config.BearerTokenFile)
+					if err != nil {
+						ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+						return
+					}
+					active.BearerToken = string(data)
+				} else {
+					active.BearerToken = config.BearerToken
 				}
 				p.active.Update(active)
 			}

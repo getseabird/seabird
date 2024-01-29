@@ -29,6 +29,7 @@ func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *Welcom
 	w.SetDefaultSize(600, 600)
 	w.SetContent(w.content)
 	w.content.SetChild(w.createContent())
+	w.SetTitle(ApplicationName)
 	return &w
 }
 

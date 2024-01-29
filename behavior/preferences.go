@@ -25,7 +25,7 @@ type Preferences struct {
 	Clusters []observer.Property[ClusterPreferences]
 }
 
-func PrefPath() string {
+func prefsPath() string {
 	cd, err := os.UserConfigDir()
 	if err != nil {
 		panic(err)
@@ -34,16 +34,17 @@ func PrefPath() string {
 }
 
 type ClusterPreferences struct {
-	Name       string
-	Host       string
-	TLS        rest.TLSClientConfig
-	Navigation struct {
+	Name        string
+	Host        string
+	BearerToken string
+	TLS         rest.TLSClientConfig
+	Navigation  struct {
 		Favourites []schema.GroupVersionResource
 	}
 }
 
 func LoadPreferences() (*Preferences, error) {
-	if _, err := os.Stat(PrefPath()); err != nil {
+	if _, err := os.Stat(prefsPath()); err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			prefs := Preferences{basePreferences: &basePreferences{}}
 			prefs.Defaults()
@@ -52,7 +53,7 @@ func LoadPreferences() (*Preferences, error) {
 		return nil, err
 	}
 
-	f, err := os.Open(PrefPath())
+	f, err := os.Open(prefsPath())
 	if err != nil {
 		return nil, err
 	}
@@ -137,10 +138,10 @@ func (c *ClusterPreferences) Defaults() {
 }
 
 func (c *Preferences) Save() error {
-	if err := os.MkdirAll(path.Dir(PrefPath()), os.ModePerm); err != nil {
+	if err := os.MkdirAll(path.Dir(prefsPath()), os.ModePerm); err != nil {
 		return err
 	}
-	f, err := os.Create(PrefPath())
+	f, err := os.Create(prefsPath())
 	if err != nil {
 		return err
 	}

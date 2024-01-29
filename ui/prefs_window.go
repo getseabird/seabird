@@ -18,7 +18,7 @@ func NewPreferencesWindow(behavior *behavior.ClusterBehavior) *PrefsWindow {
 
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	w.navigationView = adw.NewNavigationView()
-	w.navigationView.Add(adw.NewNavigationPage(content, "main"))
+	w.navigationView.Add(adw.NewNavigationPage(content, "Preferences"))
 	w.SetContent(w.navigationView)
 
 	header := adw.NewHeaderBar()
