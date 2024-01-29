@@ -61,8 +61,19 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	header.PackEnd(button)
 	n.AddTopBar(header)
 
+	content := gtk.NewBox(gtk.OrientationVertical, 0)
+	sw := gtk.NewScrolledWindow()
+	sw.SetChild(content)
+	n.SetContent(sw)
+
+	favouritesBin := adw.NewBin()
+	favouritesBin.SetVExpand(false)
+	content.Append(favouritesBin)
+	addFavouriteBin := adw.NewBin()
+	content.Append(addFavouriteBin)
+
 	onChange(b.ClusterPreferences, func(prefs behavior.ClusterPreferences) {
-		n.SetContent(n.createFavourites(prefs))
+		favouritesBin.SetChild(n.createFavourites(prefs))
 	})
 
 	onChange(b.SelectedResource, func(res *metav1.APIResource) {
@@ -80,12 +91,17 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 		}
 		if idx != nil {
 			n.list.SelectRow(n.rows[*idx])
+			addFavouriteBin.SetChild(nil)
 		} else {
 			n.list.SelectRow(nil)
+			addFavouriteBin.SetChild(n.createAddFavourite(res))
 		}
 	})
 
-	n.SetContent(n.createFavourites(b.ClusterPreferences.Value()))
+	favouritesBin.SetChild(n.createFavourites(b.ClusterPreferences.Value()))
+	if len(n.rows) > 0 {
+		n.list.SelectRow(n.rows[0])
+	}
 
 	return n
 }
@@ -94,7 +110,6 @@ func (n *Navigation) createFavourites(prefs behavior.ClusterPreferences) *gtk.Li
 	n.list = gtk.NewListBox()
 	n.list.AddCSSClass("dim-label")
 	n.list.AddCSSClass("navigation-sidebar")
-	n.list.SetVExpand(true)
 	n.list.ConnectRowSelected(func(row *gtk.ListBoxRow) {
 		if row == nil {
 			return
@@ -118,12 +133,11 @@ func (n *Navigation) createFavourites(prefs behavior.ClusterPreferences) *gtk.Li
 				break
 			}
 		}
-
 	})
 
 	n.rows = nil
 
-	for i, gvr := range prefs.Navigation.Favourites {
+	for _, gvr := range prefs.Navigation.Favourites {
 		var resource *v1.APIResource
 		for _, r := range n.behavior.Resources {
 			if r.Group == gvr.Group && r.Version == gvr.Version && r.Name == gvr.Resource {
@@ -148,15 +162,52 @@ func (n *Navigation) createFavourites(prefs behavior.ClusterPreferences) *gtk.Li
 		label := gtk.NewLabel(resource.Kind)
 		box.Append(label)
 		row.SetChild(box)
+
+		// TODO add right click menu with an option to remove favourite
+		// gesture := gtk.NewGestureClick()
+		// gesture.SetButton(gdk.BUTTON_SECONDARY)
+		// gesture.ConnectPressed(func(nPress int, x, y float64) {
+		// 	log.Printf("pressed")
+		// 	// model := gtk.NewStringList([]string{})
+		// 	popover := gtk.NewPopoverMenuFromModel(nil)
+		// 	popover.SetChild(gtk.NewLabel("popover"))
+		// 	row.FirstChild().(*gtk.Box).Append(popover)
+		// 	popover.Show()
+		// })
+		// row.AddController(gesture)
+
 		n.list.Append(row)
 		n.rows = append(n.rows, row)
 
-		if i == 0 {
+		if res := n.behavior.SelectedResource.Value(); res != nil && util.GVREquals(util.ResourceGVR(res), gvr) {
 			n.list.SelectRow(row)
 		}
 	}
 
 	return n.list
+}
+
+func (n *Navigation) createAddFavourite(res *metav1.APIResource) *gtk.Box {
+	content := gtk.NewBox(gtk.OrientationVertical, 0)
+	content.Append(gtk.NewSeparator(gtk.OrientationHorizontal))
+	list := gtk.NewListBox()
+	list.AddCSSClass("dim-label")
+	list.AddCSSClass("navigation-sidebar")
+	row := gtk.NewListBoxRow()
+	row.AddCSSClass("accent")
+	box := gtk.NewBox(gtk.OrientationHorizontal, 8)
+	box.Append(gtk.NewImageFromIconName("list-add"))
+	box.Append(gtk.NewLabel(res.Kind))
+	row.SetChild(box)
+	list.Append(row)
+	list.ConnectRowSelected(func(row *gtk.ListBoxRow) {
+		v := n.behavior.ClusterPreferences.Value()
+		v.Navigation.Favourites = append(v.Navigation.Favourites, util.ResourceGVR(res))
+		n.behavior.ClusterPreferences.Update(v)
+		content.Hide()
+	})
+	content.Append(list)
+	return content
 }
 
 func (n *Navigation) resIcon(gvk schema.GroupVersionResource) *gtk.Image {
