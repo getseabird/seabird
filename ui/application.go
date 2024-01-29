@@ -44,7 +44,7 @@ func NewApplication(version string) (*Application, error) {
 	})
 
 	a := Application{
-		Application: adw.NewApplication("io.github.getseabird.seabird", gio.ApplicationFlagsNone),
+		Application: adw.NewApplication("dev.skynomads.Seabird", gio.ApplicationFlagsNone),
 		version:     version,
 	}
 

@@ -1,4 +1,4 @@
-app-id: io.github.getseabird.seabird
+app-id: dev.skynomads.Seabird
 runtime: org.gnome.Platform
 runtime-version: "45"
 sdk: org.gnome.Sdk
@@ -6,8 +6,9 @@ command: seabird
 
 finish-args:
   - --share=ipc
-  - --socket=fallback-x11
   - --share=network
+  - --socket=wayland
+  - --socket=fallback-x11
   - --device=dri
   - --talk-name=org.freedesktop.Notifications
   - --filesystem=home
@@ -23,12 +24,12 @@ modules:
         install -Dm00644 -t /app/share/metainfo $FLATPAK_ID.appdata.xml
     sources:
       - type: file
-        path: io.github.getseabird.seabird.desktop
+        path: dev.skynomads.Seabird.desktop
       - type: file
-        path: io.github.getseabird.seabird.appdata.xml
+        path: dev.skynomads.Seabird.appdata.xml
       - type: file
         filename: seabird.svg
-        url: https://raw.githubusercontent.com/getseabird/seabird/main/icon/seabird.svg
+        url: https://raw.githubusercontent.com/getseabird/seabird/d1c2366c5e6d5f12f070e446ceb99511f56ab7e8/icon/seabird.svg
         sha256: 6593267d7c60a8a84c350250854fc3f2929c17af612a3b4e44d958b5301cd4fe
       - type: archive
         strip-components: 0
