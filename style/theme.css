@@ -11,7 +11,7 @@ columnview>listview>row:selected {
 
 label.badge {
   background-color: @window_bg_color;
-  padding: .3em 0 .3em 0;
+  padding: .6em;
   border-radius: .6rem;
   font-size: 0.9em;
 }

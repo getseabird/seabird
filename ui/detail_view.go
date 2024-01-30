@@ -116,8 +116,7 @@ func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProper
 		row.SetTitle(prop.Name)
 		if len(prop.Children) > 0 {
 			box := gtk.NewFlowBox()
-			box.SetColumnSpacing(2)
-			box.SetRowSpacing(2)
+			box.SetSelectionMode(gtk.SelectionNone)
 			row.FirstChild().(*gtk.Box).FirstChild().(*gtk.Box).NextSibling().(*gtk.Image).NextSibling().(*gtk.Box).Append(box)
 			for _, child := range prop.Children {
 				box.Insert(d.renderObjectProperty(level+1, child), -1)
@@ -131,10 +130,17 @@ func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProper
 		d.extendRow(row, level, prop)
 		return row
 	case 3:
-		label := gtk.NewLabel(fmt.Sprintf("%s: %s", prop.Name, prop.Value))
+		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
+		label := gtk.NewLabel(fmt.Sprintf("%s:", prop.Name))
 		label.SetSelectable(true)
-		label.AddCSSClass("badge")
-		return label
+		label.AddCSSClass("caption")
+		box.Append(label)
+		label = gtk.NewLabel(prop.Value)
+		label.SetSelectable(true)
+		label.AddCSSClass("caption-heading")
+		box.Append(label)
+		box.SetHAlign(gtk.AlignStart)
+		return box
 	}
 
 	return nil
