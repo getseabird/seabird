@@ -2,3 +2,4 @@
 dist/
 *.gresource
 *.syso
+vendor
