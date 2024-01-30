@@ -21,7 +21,7 @@ jobs:
         run: |
           # dpkg --add-architecture arm64
           apt update
-          apt install -yq libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev git golang-go libglib2.0-dev-bin
+          apt install -yq libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev git zip golang-go libglib2.0-dev-bin
           # apt install -yq gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgtk-4-dev:arm64 libgtksourceview-5-dev:arm64 libadwaita-1-dev:arm64 libgirepository1.0-dev:arm64
           git config --global --add safe.directory '*'
       - name: Checkout
