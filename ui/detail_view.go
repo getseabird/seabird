@@ -9,6 +9,7 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
+	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/util"
@@ -114,32 +115,47 @@ func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProper
 	case 2:
 		row := adw.NewActionRow()
 		row.SetTitle(prop.Name)
+		row.AddCSSClass("property")
+
 		if len(prop.Children) > 0 {
 			box := gtk.NewFlowBox()
+			box.SetColumnSpacing(8)
 			box.SetSelectionMode(gtk.SelectionNone)
 			row.FirstChild().(*gtk.Box).FirstChild().(*gtk.Box).NextSibling().(*gtk.Image).NextSibling().(*gtk.Box).Append(box)
 			for _, child := range prop.Children {
 				box.Insert(d.renderObjectProperty(level+1, child), -1)
+				prop.Value += fmt.Sprintf("%s: %s\n", child.Name, child.Value)
 			}
 		} else {
 			row.SetSubtitle(prop.Value)
-			row.SetSubtitleSelectable(true)
 		}
-		row.AddCSSClass("property")
+
+		copy := gtk.NewButton()
+		copy.SetIconName("edit-copy-symbolic")
+		copy.AddCSSClass("flat")
+		copy.AddCSSClass("dim-label")
+		copy.SetVAlign(gtk.AlignCenter)
+		copy.ConnectClicked(func() {
+			gdk.DisplayGetDefault().Clipboard().SetText(prop.Value)
+		})
+		row.AddSuffix(copy)
 
 		d.extendRow(row, level, prop)
 		return row
 	case 3:
-		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
-		label := gtk.NewLabel(fmt.Sprintf("%s:", prop.Name))
-		label.SetSelectable(true)
-		label.AddCSSClass("caption")
-		box.Append(label)
-		label = gtk.NewLabel(prop.Value)
-		label.SetSelectable(true)
-		label.AddCSSClass("caption-heading")
-		box.Append(label)
+		box := gtk.NewBox(gtk.OrientationHorizontal, 16)
 		box.SetHAlign(gtk.AlignStart)
+
+		label := gtk.NewLabel(fmt.Sprintf("%s:", prop.Name))
+		label.AddCSSClass("caption")
+		label.SetVAlign(gtk.AlignStart)
+		box.Append(label)
+
+		label = gtk.NewLabel(prop.Value)
+		label.AddCSSClass("caption")
+		label.SetWrap(true)
+		box.Append(label)
+
 		return box
 	}
 
