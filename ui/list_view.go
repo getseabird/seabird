@@ -166,6 +166,20 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				listitem.SetChild(label)
 			}),
 		)
+	case corev1.SchemeGroupVersion.WithResource("persistentvolumeclaims").String():
+		columns = append(columns,
+			l.createColumn("Size", func(listitem *gtk.ListItem, object client.Object) {
+				pvc := object.(*corev1.PersistentVolumeClaim)
+				listitem.SetChild(gtk.NewLabel(pvc.Spec.Resources.Requests.Storage().String()))
+			}),
+		)
+	case corev1.SchemeGroupVersion.WithResource("persistentvolumes").String():
+		columns = append(columns,
+			l.createColumn("Size", func(listitem *gtk.ListItem, object client.Object) {
+				pvc := object.(*corev1.PersistentVolume)
+				listitem.SetChild(gtk.NewLabel(pvc.Spec.Capacity.Storage().String()))
+			}),
+		)
 	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
 		columns = append(columns,
 			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {

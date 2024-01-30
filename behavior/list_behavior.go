@@ -62,6 +62,8 @@ func (b *ListBehavior) onSelectedResourceChange(resource *metav1.APIResource) {
 		obj = &corev1.Secret{}
 	case corev1.SchemeGroupVersion.WithResource("services").String():
 		obj = &corev1.Service{}
+	case corev1.SchemeGroupVersion.WithResource("persistentvolumes").String():
+		obj = &corev1.PersistentVolume{}
 	case corev1.SchemeGroupVersion.WithResource("persistentvolumeclaims").String():
 		obj = &corev1.PersistentVolumeClaim{}
 	case corev1.SchemeGroupVersion.WithResource("nodes").String():

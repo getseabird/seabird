@@ -243,6 +243,16 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 			{Name: "Request", Value: object.Spec.Resources.Requests.Storage().String()},
 			{Name: "Access modes", Value: strings.Join(accessModes, ", ")},
 		}})
+	case *corev1.PersistentVolume:
+		var accessModes []string
+		for _, m := range object.Spec.AccessModes {
+			accessModes = append(accessModes, string(m))
+		}
+		properties = append(properties, ObjectProperty{Name: "Persistent Volume", Children: []ObjectProperty{
+			{Name: "Class", Value: object.Spec.StorageClassName},
+			{Name: "Capacity", Value: object.Spec.Capacity.Storage().String()},
+			{Name: "Access modes", Value: strings.Join(accessModes, ", ")},
+		}})
 	case *corev1.Node:
 		prop := ObjectProperty{Name: "Pods"}
 		var pods v1.PodList
