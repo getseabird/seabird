@@ -52,7 +52,9 @@ jobs:
       - uses: actions/upload-artifact@v4
         with:
           name: goreleaser
-          path: dist source.zip
+          path: |
+            dist
+            source.zip
           if-no-files-found: error
   # flatpak:
   #   needs: goreleaser
