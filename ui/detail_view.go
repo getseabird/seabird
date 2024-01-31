@@ -4,8 +4,6 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"strconv"
-	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
@@ -71,8 +69,8 @@ func (d *DetailView) onPropertiesChange(properties []behavior.ObjectProperty) {
 	}
 	d.groups = nil
 
-	for _, prop := range properties {
-		d.groups = append(d.groups, d.renderObjectProperty(0, prop).(*adw.PreferencesGroup))
+	for i, prop := range properties {
+		d.groups = append(d.groups, d.renderObjectProperty(0, i, prop).(*adw.PreferencesGroup))
 	}
 
 	for _, g := range d.groups {
@@ -80,24 +78,19 @@ func (d *DetailView) onPropertiesChange(properties []behavior.ObjectProperty) {
 	}
 }
 
-func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProperty) gtk.Widgetter {
+func (d *DetailView) renderObjectProperty(level, index int, prop behavior.ObjectProperty) gtk.Widgetter {
 	switch level {
 	case 0:
 		g := adw.NewPreferencesGroup()
 		g.SetTitle(prop.Name)
-		for _, child := range prop.Children {
-			g.Add(d.renderObjectProperty(level+1, child))
+		for i, child := range prop.Children {
+			g.Add(d.renderObjectProperty(level+1, i, child))
 		}
 		return g
 	case 1:
 		if len(prop.Children) > 0 {
 			row := adw.NewExpanderRow()
-			id := strings.Join([]string{
-				util.ResourceGVR(d.behavior.SelectedResource.Value()).String(),
-				string(d.behavior.SelectedObject.Value().GetUID()),
-				prop.Name,
-				strconv.Itoa(int(level)),
-			}, "-")
+			id := fmt.Sprintf("%s-%d-%d", util.ResourceGVR(d.behavior.SelectedResource.Value()).String(), level, index)
 			if e, ok := d.expanded[id]; ok && e {
 				row.SetExpanded(true)
 			}
@@ -105,8 +98,8 @@ func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProper
 				d.expanded[id] = row.Expanded()
 			})
 			row.SetTitle(prop.Name)
-			for _, child := range prop.Children {
-				row.AddRow(d.renderObjectProperty(level+1, child))
+			for i, child := range prop.Children {
+				row.AddRow(d.renderObjectProperty(level+1, i, child))
 			}
 			d.extendRow(row, level, prop)
 			return row
@@ -122,8 +115,8 @@ func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProper
 			box.SetColumnSpacing(8)
 			box.SetSelectionMode(gtk.SelectionNone)
 			row.FirstChild().(*gtk.Box).FirstChild().(*gtk.Box).NextSibling().(*gtk.Image).NextSibling().(*gtk.Box).Append(box)
-			for _, child := range prop.Children {
-				box.Insert(d.renderObjectProperty(level+1, child), -1)
+			for i, child := range prop.Children {
+				box.Insert(d.renderObjectProperty(level+1, i, child), -1)
 				prop.Value += fmt.Sprintf("%s: %s\n", child.Name, child.Value)
 			}
 		} else {
@@ -163,7 +156,7 @@ func (d *DetailView) renderObjectProperty(level uint, prop behavior.ObjectProper
 }
 
 // This is a bit of a hack, should probably extend ObjectProperty with this stuff...
-func (d *DetailView) extendRow(widget gtk.Widgetter, level uint, prop behavior.ObjectProperty) {
+func (d *DetailView) extendRow(widget gtk.Widgetter, level int, prop behavior.ObjectProperty) {
 	switch selected := d.behavior.SelectedObject.Value().(type) {
 	case *corev1.Pod:
 		switch object := prop.Object.(type) {
