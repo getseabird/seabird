@@ -32,16 +32,17 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 
 	d := DetailView{
 		NavigationPage: adw.NewNavigationPage(content, "main"),
+		prefPage:       adw.NewPreferencesPage(),
 		behavior:       behavior,
 		parent:         parent,
 		expanded:       map[string]bool{},
 	}
 
+	clamp := d.prefPage.FirstChild().(*gtk.ScrolledWindow).FirstChild().(*gtk.Viewport).FirstChild().(*adw.Clamp)
+	clamp.SetTighteningThreshold(300)
+	clamp.SetMaximumSize(10000)
+
 	stack := adw.NewViewStack()
-
-	d.prefPage = adw.NewPreferencesPage()
-	d.prefPage.SetSizeRequest(350, 350)
-
 	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "document-properties-symbolic")
 	stack.AddTitledWithIcon(d.createSource(), "source", "Source", "accessories-text-editor-symbolic")
 
@@ -149,12 +150,12 @@ func (d *DetailView) renderObjectProperty(level, index int, prop behavior.Object
 		label.AddCSSClass("caption")
 		label.AddCSSClass("dim-label")
 		label.SetVAlign(gtk.AlignStart)
+		label.SetEllipsize(pango.EllipsizeEnd)
 		box.Append(label)
 
 		label = gtk.NewLabel(prop.Value)
 		label.AddCSSClass("caption")
 		label.SetWrap(true)
-		label.SetMaxWidthChars(50)
 		label.SetEllipsize(pango.EllipsizeEnd)
 		box.Append(label)
 
