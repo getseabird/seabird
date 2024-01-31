@@ -109,6 +109,7 @@ func (d *DetailView) renderObjectProperty(level, index int, prop behavior.Object
 	case 2:
 		row := adw.NewActionRow()
 		row.SetTitle(prop.Name)
+		row.SetUseMarkup(false)
 		row.AddCSSClass("property")
 
 		if len(prop.Children) > 0 {
