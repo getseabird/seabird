@@ -216,7 +216,7 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level int, prop behavior.Ob
 			for _, cond := range object.Status.Conditions {
 				if cond.Type == corev1.ContainersReady {
 					row := widget.(*adw.ActionRow)
-					row.AddPrefix(createStatusIcon(cond.Status == corev1.ConditionTrue))
+					row.AddPrefix(createStatusIcon(cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"))
 					row.SetActivatable(true)
 					row.SetSubtitleSelectable(false)
 					row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))

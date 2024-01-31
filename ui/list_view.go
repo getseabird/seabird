@@ -151,7 +151,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				pod := object.(*corev1.Pod)
 				for _, cond := range pod.Status.Conditions {
 					if cond.Type == corev1.ContainersReady {
-						listitem.SetChild(createStatusIcon(cond.Status == corev1.ConditionTrue))
+						listitem.SetChild(createStatusIcon(cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"))
 					}
 				}
 			}),
