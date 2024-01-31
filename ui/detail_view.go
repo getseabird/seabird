@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/util"
 	appsv1 "k8s.io/api/apps/v1"
@@ -120,6 +121,10 @@ func (d *DetailView) renderObjectProperty(level, index int, prop behavior.Object
 				prop.Value += fmt.Sprintf("%s: %s\n", child.Name, child.Value)
 			}
 		} else {
+			// *Very* long labels cause a segfault in GTK. Limiting lines prevents it, but they're still
+			// slow and CPU-intensive to render. https://gitlab.gnome.org/GNOME/gtk/-/issues/1332
+			// TODO explore alternative rendering options such as TextView
+			row.SetSubtitleLines(5)
 			row.SetSubtitle(prop.Value)
 		}
 
@@ -136,17 +141,20 @@ func (d *DetailView) renderObjectProperty(level, index int, prop behavior.Object
 		d.extendRow(row, level, prop)
 		return row
 	case 3:
-		box := gtk.NewBox(gtk.OrientationHorizontal, 16)
+		box := gtk.NewBox(gtk.OrientationHorizontal, 4)
 		box.SetHAlign(gtk.AlignStart)
 
-		label := gtk.NewLabel(fmt.Sprintf("%s:", prop.Name))
+		label := gtk.NewLabel(prop.Name)
 		label.AddCSSClass("caption")
+		label.AddCSSClass("dim-label")
 		label.SetVAlign(gtk.AlignStart)
 		box.Append(label)
 
 		label = gtk.NewLabel(prop.Value)
 		label.AddCSSClass("caption")
 		label.SetWrap(true)
+		label.SetMaxWidthChars(50)
+		label.SetEllipsize(pango.EllipsizeEnd)
 		box.Append(label)
 
 		return box
