@@ -30,13 +30,15 @@ func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod *core
 	view := gtksource.NewViewWithBuffer(buffer)
 	view.SetMarginBottom(8)
 	view.SetMarginTop(8)
-	view.SetMarginStart(8)
 	view.SetMarginEnd(8)
 	view.SetEditable(false)
-	view.SetVExpand(true)
+	view.SetWrapMode(gtk.WrapWord)
+	view.SetShowLineNumbers(true)
 
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetChild(view)
+	scrolledWindow.SetVExpand(true)
+	scrolledWindow.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
 	box.Append(scrolledWindow)
 
 	logs, err := behavior.PodLogs(pod, container)

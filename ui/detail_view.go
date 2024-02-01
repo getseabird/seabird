@@ -206,7 +206,7 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level int, prop behavior.Ob
 			logs.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 			logs.SetTitle("Logs")
 			logs.ConnectActivated(func() {
-				d.Parent().(*adw.NavigationView).Push(NewLogPage(d.parent, d.behavior, object).NavigationPage)
+				d.Parent().(*adw.NavigationView).Push(NewLogPage(d.parent, d.behavior, selected, object.Name).NavigationPage)
 			})
 			widget.(*adw.ExpanderRow).AddRow(logs)
 		}
@@ -273,7 +273,9 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level int, prop behavior.Ob
 func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetVExpand(true)
-	// TODO collapse instead of remove
+	scrolledWindow.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
+
+	// TODO collapse managed fields
 	// https://gitlab.gnome.org/swilmet/tepl
 	// d.object.SetManagedFields([]metav1.ManagedFieldsEntry{})
 
@@ -283,9 +285,10 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	sourceView := gtksource.NewViewWithBuffer(d.sourceBuffer)
 	sourceView.SetMarginBottom(8)
 	sourceView.SetMarginTop(8)
-	sourceView.SetMarginStart(8)
 	sourceView.SetMarginEnd(8)
 	sourceView.SetEditable(false)
+	sourceView.SetWrapMode(gtk.WrapWord)
+	sourceView.SetShowLineNumbers(true)
 	scrolledWindow.SetChild(sourceView)
 
 	return scrolledWindow
