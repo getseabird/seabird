@@ -109,14 +109,21 @@ jobs:
           tag: ${{ github.ref }}
   darwin:
     needs: goreleaser
-    runs-on: macos-latest
+    strategy:
+      matrix:
+        include:
+          - arch: amd64
+            builder: macos-13
+          - arch: arm64
+            builder: macos-14
+    name: "darwin-${{ matrix.arch }}"
+    runs-on: ${{ matrix.builder }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Homebrew
-        id: set-up-homebrew
         uses: Homebrew/actions/setup-homebrew@master
-      - uses: actions/setup-go@v4
+      - uses: actions/setup-go@v5
         with:
           go-version: "1.21"
       - name: Install dependencies
@@ -126,7 +133,8 @@ jobs:
         run: |
           go run github.com/goreleaser/goreleaser@latest build -f build/darwin/.goreleaser.yaml --single-target --snapshot
 
-          dist=dist/seabird_darwin_amd64_v1
+          dist=dist/seabird_darwin_${{ matrix.arch }}
+          [[ "${{ matrix.arch }}" == "amd64" ]] && dist=${dist}_v1
           brew_prefix=$(brew --prefix)
           mkdir -p $dist/lib/gdk-pixbuf-2.0 $dist/share/glib-2.0/schemas $dist/share/icons
 
@@ -171,16 +179,16 @@ jobs:
           cp -r $brew_prefix/opt/gtk4/share/gtk-4.0 $dist/share
           cp -r $brew_prefix/share/icons/hicolor $brew_prefix/opt/adwaita-icon-theme/share/icons/Adwaita $dist/share/icons
 
-          tar cvzf seabird_darwin_amd64.tar.gz -C $dist .
+          tar cvzf seabird_darwin_${{ matrix.arch }}.tar.gz -C $dist .
       - uses: actions/upload-artifact@v4
         with:
-          name: darwin
-          path: seabird_darwin_amd64.tar.gz
+          name: seabird_darwin_${{ matrix.arch }}
+          path: seabird_darwin_${{ matrix.arch }}.tar.gz
           if-no-files-found: error
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: seabird_darwin_amd64.tar.gz
+          file: seabird_darwin_${{ matrix.arch }}.tar.gz
           tag: ${{ github.ref }}
