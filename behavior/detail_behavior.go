@@ -6,6 +6,7 @@ import (
 	"io"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/getseabird/seabird/util"
 	"github.com/imkira/go-observer/v2"
@@ -290,6 +291,21 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 			prop.Children = append(prop.Children, ObjectProperty{Value: pod.Name, Object: &pod})
 		}
 		properties = append(properties, prop)
+	}
+
+	events := ObjectProperty{Name: "Events"}
+	for _, ev := range b.events.For(object) {
+		eventTime := ev.EventTime.Time
+		if eventTime.IsZero() {
+			eventTime = ev.CreationTimestamp.Time
+		}
+		events.Children = append(events.Children, ObjectProperty{
+			Name:  eventTime.Format(time.RFC3339),
+			Value: ev.Note,
+		})
+	}
+	if len(events.Children) > 0 {
+		properties = append(properties, events)
 	}
 
 	b.Properties.Update(properties)

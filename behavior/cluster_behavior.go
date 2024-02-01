@@ -36,6 +36,7 @@ type ClusterBehavior struct {
 	ClusterPreferences observer.Property[ClusterPreferences]
 
 	metrics *Metrics
+	events  *Events
 
 	Resources  []metav1.APIResource
 	Namespaces observer.Property[[]corev1.Namespace]
@@ -104,6 +105,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		SelectedResource:   observer.NewProperty[*metav1.APIResource](nil),
 		SearchText:         observer.NewProperty(""),
 		SearchFilter:       observer.NewProperty(SearchFilter{}),
+		events:             NewEvents(clientset),
 	}
 
 	resources, err := discovery.ServerPreferredResources()
