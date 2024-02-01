@@ -20,7 +20,6 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
-	"k8s.io/client-go/tools/clientcmd/api"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -57,12 +56,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		Host:            clusterPrefs.Value().Host,
 		BearerToken:     clusterPrefs.Value().BearerToken,
 		TLSClientConfig: clusterPrefs.Value().TLS,
-		ExecProvider: &api.ExecConfig{
-			Command:            "gke-gcloud-auth-plugin",
-			APIVersion:         "client.authentication.k8s.io/v1beta1",
-			ProvideClusterInfo: true,
-			InteractiveMode:    api.IfAvailableExecInteractiveMode,
-		},
+		ExecProvider:    clusterPrefs.Value().ExecProvider,
 	}
 
 	discovery, err := discovery.NewDiscoveryClientForConfig(config)
