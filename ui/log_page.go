@@ -15,13 +15,13 @@ type LogPage struct {
 	container *corev1.Container
 }
 
-func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, container *corev1.Container) *LogPage {
+func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod *corev1.Pod, container string) *LogPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
-	p := LogPage{NavigationPage: adw.NewNavigationPage(box, container.Name)}
+	p := LogPage{NavigationPage: adw.NewNavigationPage(box, container)}
 	p.SetSizeRequest(350, 350)
 
 	header := adw.NewHeaderBar()
-	header.SetTitleWidget(gtk.NewLabel(container.Name))
+	header.SetTitleWidget(gtk.NewLabel(container))
 	header.AddCSSClass("flat")
 	box.Append(header)
 
@@ -39,7 +39,7 @@ func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, container
 	scrolledWindow.SetChild(view)
 	box.Append(scrolledWindow)
 
-	logs, err := behavior.PodLogs()
+	logs, err := behavior.PodLogs(pod, container)
 	if err != nil {
 		ShowErrorDialog(parent, "Could not load logs", err)
 	} else {

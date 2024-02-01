@@ -117,7 +117,7 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 
 		var podMetrics *metricsv1beta1.PodMetrics
 		if b.metrics != nil {
-			podMetrics = b.metrics.PodValue(types.NamespacedName{Name: object.Name, Namespace: object.Namespace})
+			podMetrics = b.metrics.pod(types.NamespacedName{Name: object.Name, Namespace: object.Namespace})
 		}
 
 		for _, c := range object.Spec.Containers {
@@ -319,9 +319,8 @@ type ObjectProperty struct {
 	Children []ObjectProperty
 }
 
-func (b *DetailBehavior) PodLogs() ([]byte, error) {
-	pod := b.SelectedObject.Value().(*corev1.Pod)
-	req := b.clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{})
+func (b *DetailBehavior) PodLogs(pod *corev1.Pod, container string) ([]byte, error) {
+	req := b.clientset.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container})
 	r, err := req.Stream(context.TODO())
 	if err != nil {
 		return nil, err

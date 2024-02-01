@@ -10,7 +10,7 @@ import (
 )
 
 type Metrics struct {
-	PodMetrics observer.Property[[]metricsv1beta1.PodMetrics]
+	podMetrics observer.Property[[]metricsv1beta1.PodMetrics]
 }
 
 func (b *ClusterBehavior) newMetrics(cluster *ClusterBehavior) (*Metrics, error) {
@@ -24,14 +24,14 @@ func (b *ClusterBehavior) newMetrics(cluster *ClusterBehavior) (*Metrics, error)
 	}
 
 	m := Metrics{
-		PodMetrics: observer.NewProperty(list.Items),
+		podMetrics: observer.NewProperty(list.Items),
 	}
 
 	return &m, nil
 }
 
-func (m *Metrics) PodValue(name types.NamespacedName) *metricsv1beta1.PodMetrics {
-	for _, v := range m.PodMetrics.Value() {
+func (m *Metrics) pod(name types.NamespacedName) *metricsv1beta1.PodMetrics {
+	for _, v := range m.podMetrics.Value() {
 		if v.Name == name.Name && v.Namespace == name.Namespace {
 			return &v
 		}

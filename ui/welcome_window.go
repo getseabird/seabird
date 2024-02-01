@@ -30,6 +30,7 @@ func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *Welcom
 	w.SetContent(w.content)
 	w.content.SetChild(w.createContent())
 	w.SetTitle(ApplicationName)
+
 	return &w
 }
 
@@ -107,6 +108,14 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		status.SetChild(btn)
 		box.Append(status)
 	}
+
+	// term := vte.NewTerminal()
+	// pty, err := term.PtyNewSync(context.TODO(), vte.PtyDefault)
+	// if err != nil {
+	// 	panic(err)
+	// }
+
+	// 	box.Append(term)
 
 	return view
 }
