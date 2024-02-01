@@ -15,6 +15,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type DetailView struct {
@@ -57,6 +58,13 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 	content.Append(header)
 	content.Append(stack)
 
+	onChange(d.behavior.SelectedObject, func(_ client.Object) {
+		for {
+			if !d.Parent().(*adw.NavigationView).Pop() {
+				break
+			}
+		}
+	})
 	onChange(d.behavior.Yaml, func(yaml string) {
 		d.sourceBuffer.SetText(string(yaml))
 	})
