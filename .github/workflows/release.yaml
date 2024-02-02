@@ -42,7 +42,8 @@ jobs:
         run: |
           git archive -o source.zip ${{ github.ref }}
           go mod vendor
-          zip -r source.zip vendor
+          sed -i 's/"dev"/"${{ github.ref }}"/g' main.go
+          zip -r source.zip vendor main.go
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload source to release
         uses: svenstaro/upload-release-action@v2
