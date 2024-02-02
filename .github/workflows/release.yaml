@@ -101,14 +101,14 @@ jobs:
           aip-path: build/windows/installer.aip
           aip-build-name: DefaultBuild
           # aip-package-name: '<output_package_name>'
-          aip-output-dir: .
-          # aip-package-name: seabird_windows_amd64.msi
+          aip-output-dir: ${{ github.workspace }}\dist
+          aip-package-name: seabird_windows_amd64.msi
           aip-commands: |
             SetVersion 0.0.1
       - uses: actions/upload-artifact@v4
         with:
           name: msys2
-          path: seabird_windows_amd64.msi
+          path: dist\seabird_windows_amd64.msi
           if-no-files-found: error
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload binaries to release
@@ -193,11 +193,14 @@ jobs:
           otool -L $dist/seabird
 
           tar cvzf seabird_darwin_${{ matrix.arch }}.tar.gz -C $dist .
+
+          zip -r dist.zip $dist
       - uses: actions/upload-artifact@v4
         with:
           name: seabird_darwin_${{ matrix.arch }}
-          path: seabird_darwin_${{ matrix.arch }}.tar.gz
-          if-no-files-found: error
+          path: |
+            seabird_darwin_${{ matrix.arch }}.tar.gz
+            dist.zip
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
