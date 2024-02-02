@@ -147,7 +147,7 @@ jobs:
           mkdir -p $dist/lib/gdk-pixbuf-2.0 $dist/share/glib-2.0/schemas $dist/share/icons
           cp README.md LICENSE build/darwin/seabird.sh $dist
 
-          dylibbundler -b -d lib -x seabird
+          dylibbundler -b -d $dist/lib -x $dist/seabird
  
           cp -r $brew_prefix/lib/gdk-pixbuf-2.0 $dist/lib
           sed -i '' "s|$brew_prefix/||" $dist/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
