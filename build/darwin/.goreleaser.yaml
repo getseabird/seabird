@@ -9,8 +9,6 @@ builds:
       -trimpath
     goos:
       - darwin
-    # goarch:
-    #   - amd64
 
 archives:
   - format: tar.gz
