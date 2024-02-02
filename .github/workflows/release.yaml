@@ -114,7 +114,7 @@ jobs:
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: seabird_windows_amd64.msi
+          file: dist\seabird_windows_amd64.msi
           tag: ${{ github.ref }}
   darwin:
     needs: goreleaser
