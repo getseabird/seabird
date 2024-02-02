@@ -175,7 +175,7 @@ jobs:
           cp -r $dist/. dist/dmg/Seabird.app/Contents/MacOS
 
           set +e
-
+          false
           while [ $? -ne 0 ]; do
             create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-size 600 400 --icon-size 100 --icon "Seabird.app" 200 150 --hide-extension "Seabird.app" --app-drop-link 400 150 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
           done
