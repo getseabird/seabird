@@ -37,7 +37,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOS: linux
-      - name: Vendor dependencies
+      - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        name: Vendor dependencies
         run: |
           git archive -o source.zip ${{ github.ref }}
           go mod vendor
@@ -127,6 +128,18 @@ jobs:
     name: "darwin-${{ matrix.arch }}"
     runs-on: ${{ matrix.builder }}
     steps:
+      - name: Disable XProtect and MDS
+        run: |
+          # https://github.com/actions/runner-images/issues/7522
+          SERVICES=(
+            "com.apple.XProtect.daemon.scan"
+            "com.apple.metadata.mds"
+            "com.apple.metadata.mds.index"
+          )
+          for SERVICE in "${SERVICES[@]}"; do
+            sudo launchctl stop "${SERVICE}"
+            sudo launchctl disable "system/${SERVICE}"
+          done
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Homebrew
@@ -136,7 +149,7 @@ jobs:
           go-version: "1.21"
       - name: Install dependencies
         run: |
-          brew install gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme create-dmg
+          brew install gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme create-dmg dylibbundler
       - name: Build
         run: |
           go run github.com/goreleaser/goreleaser@latest build -f build/darwin/.goreleaser.yaml --single-target --snapshot
@@ -145,41 +158,11 @@ jobs:
           [[ "${{ matrix.arch }}" == "amd64" ]] && dist=${dist}_v1
           brew_prefix=$(brew --prefix)
           mkdir -p $dist/lib/gdk-pixbuf-2.0 $dist/share/glib-2.0/schemas $dist/share/icons
-
           cp README.md LICENSE build/darwin/seabird.sh $dist
-          otool -L $dist/seabird | awk -v pat="$brew_prefix" '$0~pat {print $1}' | xargs -I '{}' cp '{}' $dist/lib
 
-          for lib in \
-            libfribidi.0.dylib \
-            libgmodule-2.0.0.dylib \
-            libpangoft2-1.0.0.dylib \
-            libfreetype.6.dylib \
-            libpng16.16.dylib \
-            libappstream.5.dylib \
-            libepoxy.0.dylib \
-            libfontconfig.1.dylib \
-            libgraphite2.3.dylib \
-            libjpeg.8.dylib \
-            libtiff.6.dylib \
-            libharfbuzz-gobject.0.dylib \
-            libX11.6.dylib \
-            libxmlb.2.dylib \
-            libcairo-script-interpreter.2.dylib \
-            libXext.6.dylib \
-            libyaml-0.2.dylib \
-            libXrender.1.dylib \
-            libxcb.1.dylib \
-            libxcb-render.0.dylib \
-            libxcb-shm.0.dylib \
-            libpixman-1.0.dylib \
-            libXau.6.dylib \
-            liblzo2.2.dylib \
-            libXdmcp.6.dylib \
-            librsvg-2.2.dylib \
-          ; do
-            cp -f $brew_prefix/lib/$lib $dist/lib
-          done
-
+          dylibbundler -b -d $dist/lib -x $dist/seabird
+          cp -f $brew_prefix/lib/librsvg*.dylib $dist/lib
+ 
           cp -r $brew_prefix/lib/gdk-pixbuf-2.0 $dist/lib
           sed -i '' "s|$brew_prefix/||" $dist/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
           cp -r $brew_prefix/share/glib-2.0/schemas $dist/share/glib-2.0
@@ -192,10 +175,11 @@ jobs:
           cp build/darwin/Info.plist dist/dmg/Seabird.app/Contents
           cp -r $dist/. dist/dmg/Seabird.app/Contents/MacOS
 
-          # https://github.com/actions/runner-images/issues/7522
-          sudo pkill -9 XProtect >/dev/null || true;
-
-          create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-pos 200 120 --window-size 400 400 --icon-size 100 --icon "Seabird.app" 100 190 --hide-extension "Seabird.app" --app-drop-link 300 185 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
+          set +e
+          false
+          while [ $? -ne 0 ]; do
+            create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-size 600 400 --icon-size 100 --icon "Seabird.app" 200 150 --hide-extension "Seabird.app" --app-drop-link 400 150 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
+          done
       - uses: actions/upload-artifact@v4
         with:
           name: darwin_${{ matrix.arch }}
