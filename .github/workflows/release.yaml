@@ -102,7 +102,7 @@ jobs:
           # aip-build-name: '<aip_project_build>'
           # aip-package-name: '<output_package_name>'
           aip-output-dir: .
-          aip-package-name: seabird_windows_amd64.msi
+          # aip-package-name: seabird_windows_amd64.msi
           aip-commands: |
             SetVersion 0.0.1
       - uses: actions/upload-artifact@v4
