@@ -192,6 +192,10 @@ jobs:
           cp build/darwin/icon.icns dist/dmg/Seabird.app/Contents/Resources
           cp build/darwin/Info.plist dist/dmg/Seabird.app/Contents
           cp -r $dist/. dist/dmg/Seabird.app/Contents/MacOS
+
+          # https://github.com/actions/runner-images/issues/7522
+          sudo pkill -9 XProtect >/dev/null || true;
+
           create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-pos 200 120 --window-size 400 400 --icon-size 100 --icon "Seabird.app" 100 190 --hide-extension "Seabird.app" --app-drop-link 300 185 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
       - uses: actions/upload-artifact@v4
         with:
