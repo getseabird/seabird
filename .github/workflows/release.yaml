@@ -100,7 +100,6 @@ jobs:
         with:
           aip-path: build/windows/installer.aip
           aip-build-name: DefaultBuild
-          # aip-package-name: '<output_package_name>'
           aip-output-dir: ${{ github.workspace }}\dist
           aip-package-name: seabird_windows_amd64.msi
           aip-commands: |
@@ -189,26 +188,19 @@ jobs:
           cp -r $brew_prefix/opt/gtk4/share/gtk-4.0 $dist/share
           cp -r $brew_prefix/share/icons/hicolor $brew_prefix/opt/adwaita-icon-theme/share/icons/Adwaita $dist/share/icons
 
-          # gtar because of https://github.com/actions/runner-images/issues/2619
-          gtar czf seabird_darwin_${{ matrix.arch }}.tar.gz -C $dist .
-
           mkdir -p dist/dmg/Seabird.app/Contents/MacOS dist/dmg/Seabird.app/Contents/Resources
           cp build/darwin/icon.icns dist/dmg/Seabird.app/Contents/Resources
           cp build/darwin/Info.plist dist/dmg/Seabird.app/Contents
           cp -r $dist/. dist/dmg/Seabird.app/Contents/MacOS
-          zip -r app.zip dist/dmg/Seabird.app
-
-          create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-pos 200 120 --window-size 800 400 --icon-size 100 --icon "Seabird.app" 200 190 --hide-extension "Seabird.app" --app-drop-link 600 185 Seabird.dmg dist/dmg
+          create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-pos 200 120 --window-size 400 400 --icon-size 100 --icon "Seabird.app" 100 190 --hide-extension "Seabird.app" --app-drop-link 300 185 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
       - uses: actions/upload-artifact@v4
         with:
-          name: seabird_darwin_${{ matrix.arch }}
-          path: |
-            seabird_darwin_${{ matrix.arch }}.tar.gz
-            Seabird.dmg
+          name: darwin
+          path: seabird_darwin_${{ matrix.arch }}.dmg
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload binaries to release
         uses: svenstaro/upload-release-action@v2
         with:
           repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: seabird_darwin_${{ matrix.arch }}.tar.gz
+          file: seabird_darwin_${{ matrix.arch }}.dmg
           tag: ${{ github.ref }}
