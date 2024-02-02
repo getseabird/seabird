@@ -276,12 +276,10 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
-
 				active := p.active.Value()
 				active.Name = config.ServerName
 				active.Host = config.Host
 				active.ExecProvider = config.ExecProvider
-
 				if config.CertFile != "" {
 					data, err := os.ReadFile(config.CertFile)
 					if err != nil {
