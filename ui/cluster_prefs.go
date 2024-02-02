@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -16,18 +17,29 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 )
 
+var AuthInteractiveModes = []string{"Never", "IfAvailable", "Always"}
+
 type ClusterPrefPage struct {
 	*adw.NavigationPage
-	parent     *gtk.Window
-	content    *adw.Bin
-	behavior   *behavior.Behavior
-	active     observer.Property[behavior.ClusterPreferences]
-	name       *adw.EntryRow
-	host       *adw.EntryRow
-	cert       *adw.EntryRow
-	key        *adw.EntryRow
-	ca         *adw.EntryRow
-	bearer     *adw.EntryRow
+	parent   *gtk.Window
+	content  *adw.Bin
+	behavior *behavior.Behavior
+	active   observer.Property[behavior.ClusterPreferences]
+	name     *adw.EntryRow
+	host     *adw.EntryRow
+	cert     *adw.EntryRow
+	key      *adw.EntryRow
+	ca       *adw.EntryRow
+	bearer   *adw.EntryRow
+	//ExecProvider:api.ExecConfig{Command: "gke-gcloud-auth-plugin", Args: []string(nil), Env: []ExecEnvVar(nil), APIVersion: "client.authentication.k8s.io/v1beta1", ProvideClusterInfo: true, Config: runtime.Object(nil), StdinUnavailable: false}
+	executeProvider struct {
+		command            *adw.EntryRow
+		apiversion         *adw.EntryRow
+		args               *adw.EntryRow
+		env                *adw.EntryRow
+		interactiveMode    *adw.ComboRow
+		provideClusterInfo *adw.SwitchRow
+	}
 	favourites *adw.Bin
 	actions    *adw.Bin
 }
@@ -57,6 +69,18 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observe
 		p.key.SetText(string(prefs.TLS.KeyData))
 		p.ca.SetText(string(prefs.TLS.CAData))
 		p.bearer.SetText(string(prefs.BearerToken))
+
+		p.executeProvider.apiversion.SetText(string(prefs.ExecProvider.APIVersion))
+		p.executeProvider.command.SetText(string(prefs.ExecProvider.Command))
+		p.executeProvider.args.SetText(strings.Join(prefs.ExecProvider.Args, " "))
+		p.executeProvider.provideClusterInfo.SetActive(prefs.ExecProvider.ProvideClusterInfo)
+		fmt.Print(prefs.ExecProvider.Env)
+		for idx, val := range AuthInteractiveModes {
+			if val == string(prefs.ExecProvider.InteractiveMode) {
+				p.executeProvider.interactiveMode.SetSelected(uint(idx))
+				break
+			}
+		}
 
 		p.favourites.SetChild(p.createFavourites())
 		p.actions.SetChild(p.createActions())
@@ -95,12 +119,51 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.bearer.SetTitle("Bearer token")
 	auth.AddRow(p.bearer)
 
+	auth_executeprovider := adw.NewExpanderRow()
+	general.Add(auth_executeprovider)
+	auth_executeprovider.SetTitle("Provider authentication")
+
+	p.executeProvider.apiversion = adw.NewEntryRow()
+	p.executeProvider.apiversion.SetTitle("ExecuteProvider APIVersion")
+	auth_executeprovider.AddRow(p.executeProvider.apiversion)
+
+	p.executeProvider.command = adw.NewEntryRow()
+	p.executeProvider.command.SetTitle("ExecuteProvider Command")
+	auth_executeprovider.AddRow(p.executeProvider.command)
+
+	p.executeProvider.args = adw.NewEntryRow()
+	p.executeProvider.args.SetTitle("ExecuteProvider Arguments")
+	auth_executeprovider.AddRow(p.executeProvider.args)
+
+	p.executeProvider.interactiveMode = adw.NewComboRow()
+	p.executeProvider.interactiveMode.SetTitle("InteractiveMode")
+	interactiveModes := gtk.NewStringList(AuthInteractiveModes)
+	p.executeProvider.interactiveMode.SetModel(interactiveModes)
+	auth_executeprovider.AddRow(p.executeProvider.interactiveMode)
+
+	p.executeProvider.provideClusterInfo = adw.NewSwitchRow()
+	p.executeProvider.provideClusterInfo.SetTitle("providerClusterInfo")
+	auth_executeprovider.AddRow(p.executeProvider.provideClusterInfo)
+
 	p.name.SetText(p.active.Value().Name)
 	p.host.SetText(p.active.Value().Host)
 	p.cert.SetText(string(p.active.Value().TLS.CertData))
 	p.key.SetText(string(p.active.Value().TLS.KeyData))
 	p.ca.SetText(string(p.active.Value().TLS.CAData))
 	p.bearer.SetText(string(p.active.Value().BearerToken))
+
+	if p.active.Value().ExecProvider != nil {
+		p.executeProvider.apiversion.SetText(string(p.active.Value().ExecProvider.APIVersion))
+		p.executeProvider.command.SetText(string(p.active.Value().ExecProvider.Command))
+		p.executeProvider.args.SetText(strings.Join(p.active.Value().ExecProvider.Args, " "))
+		p.executeProvider.provideClusterInfo.SetActive(p.active.Value().ExecProvider.ProvideClusterInfo)
+		for idx, val := range AuthInteractiveModes {
+			if val == string(p.active.Value().ExecProvider.InteractiveMode) {
+				p.executeProvider.interactiveMode.SetSelected(uint(idx))
+				break
+			}
+		}
+	}
 
 	p.favourites = adw.NewBin()
 	p.favourites.SetChild(p.createFavourites())
@@ -222,6 +285,7 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		cluster.TLS.KeyData = []byte(p.key.Text())
 		cluster.TLS.CAData = []byte(p.ca.Text())
 		cluster.BearerToken = p.bearer.Text()
+		cluster.ExecProvider.APIVersion = p.executeProvider.apiversion.Text()
 		cluster.Defaults()
 
 		if err := p.validate(cluster); err != nil {
