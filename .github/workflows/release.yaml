@@ -99,7 +99,7 @@ jobs:
       - uses: caphyon/advinst-github-action@main
         with:
           aip-path: build/windows/installer.aip.xml
-          # aip-build-name: '<aip_project_build>'
+          aip-build-name: DefaultBuild
           # aip-package-name: '<output_package_name>'
           aip-output-dir: .
           # aip-package-name: seabird_windows_amd64.msi
