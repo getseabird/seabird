@@ -127,6 +127,18 @@ jobs:
     name: "darwin-${{ matrix.arch }}"
     runs-on: ${{ matrix.builder }}
     steps:
+      - name: Disable XProtect and MDS
+        run: |
+          # https://github.com/actions/runner-images/issues/7522
+          SERVICES=(
+            "com.apple.XProtect.daemon.scan"
+            "com.apple.metadata.mds"
+            "com.apple.metadata.mds.index"
+          )
+          for SERVICE in "${SERVICES[@]}"; do
+            sudo launchctl stop "${SERVICE}"
+            sudo launchctl disable "system/${SERVICE}"
+          done
       - name: Checkout
         uses: actions/checkout@v4
       - name: Set up Homebrew
@@ -162,13 +174,7 @@ jobs:
           cp build/darwin/Info.plist dist/dmg/Seabird.app/Contents
           cp -r $dist/. dist/dmg/Seabird.app/Contents/MacOS
 
-          # https://github.com/actions/runner-images/issues/7522
-          sudo pkill -9 XProtect >/dev/null || true;
-          while pgrep XProtect; do sleep 3; done;
-
           create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-pos 200 120 --window-size 600 400 --icon-size 100 --icon "Seabird.app" 200 200 --hide-extension "Seabird.app" --app-drop-link 400 200 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
-
-          while [ $? -ne 0 ]; do !!; done
       - uses: actions/upload-artifact@v4
         with:
           name: darwin_${{ matrix.arch }}
