@@ -195,7 +195,7 @@ jobs:
           create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-pos 200 120 --window-size 400 400 --icon-size 100 --icon "Seabird.app" 100 190 --hide-extension "Seabird.app" --app-drop-link 300 185 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
       - uses: actions/upload-artifact@v4
         with:
-          name: darwin
+          name: darwin_${{ matrix.arch }}
           path: seabird_darwin_${{ matrix.arch }}.dmg
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload binaries to release
