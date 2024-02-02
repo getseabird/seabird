@@ -189,6 +189,9 @@ jobs:
           cp -r $brew_prefix/opt/gtk4/share/gtk-4.0 $dist/share
           cp -r $brew_prefix/share/icons/hicolor $brew_prefix/opt/adwaita-icon-theme/share/icons/Adwaita $dist/share/icons
 
+          file $dist/seabird
+          otool -L $dist/seabird
+
           tar cvzf seabird_darwin_${{ matrix.arch }}.tar.gz -C $dist .
       - uses: actions/upload-artifact@v4
         with:
