@@ -1,0 +1,1338 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<DOCUMENT Type="Advanced Installer" CreateVersion="21.4" version="21.4" Modules="simple"
+  RootPath="." Language="en" Id="{2BC81378-A2AB-42C7-97B7-4A4C748C730C}">
+<COMPONENT cid="caphyon.advinst.msicomp.ProjectOptionsComponent">
+  <ROW Name="HiddenItems"
+    Value="AppXProductDetailsComponent;AppXDependenciesComponent;AppXAppDetailsComponent;AppXVisualAssetsComponent;AppXCapabilitiesComponent;AppXAppDeclarationsComponent;AppXUriRulesComponent;FixupComponent;MsiXDiffComponent;MsixManifestEditorComponent" />
+</COMPONENT>
+<COMPONENT cid="caphyon.advinst.msicomp.MsiPropsComponent">
+  <ROW Property="AI_BITMAP_DISPLAY_MODE" Value="0" />
+  <ROW Property="AI_PREDEF_LCONDS_PROPS" Value="AI_DETECTED_ADMIN_USER" />
+  <ROW Property="ALLUSERS" Value="1" MultiBuildValue="DefaultBuild:2" />
+  <ROW Property="ARPCOMMENTS"
+    Value="This installer database contains the logic and data required to install [|ProductName]."
+    ValueLocId="*" />
+  <ROW Property="Manufacturer" Value="Seabird Project" />
+  <ROW Property="ProductCode" Value="1033:{D0F644BA-E39E-490C-8827-1791E42FB611} " Type="16" />
+  <ROW Property="ProductLanguage" Value="1033" />
+  <ROW Property="ProductName" Value="Seabird" />
+  <ROW Property="ProductVersion" Value="0.0.1" Options="8" />
+  <ROW Property="SecureCustomProperties" Value="OLDPRODUCTS;AI_NEWERPRODUCTFOUND" />
+  <ROW Property="UpgradeCode" Value="{80DE9871-7A36-468F-B9F3-DEE41FE1C8F3}" />
+  <ROW Property="WindowsType9X" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-" />
+  <ROW Property="WindowsType9XDisplay" MultiBuildValue="DefaultBuild:Windows 9x/ME" ValueLocId="-" />
+  <ROW Property="WindowsTypeNT"
+    MultiBuildValue="DefaultBuild:Windows 9x/ME/NT/2000/XP/Vista/Windows 7/Windows 8 x86/Windows 8.1 x86/Windows 10 x86"
+    ValueLocId="-" />
+  <ROW Property="WindowsTypeNT40" MultiBuildValue="DefaultBuild:Windows NT 4.0" ValueLocId="-" />
+  <ROW Property="WindowsTypeNT40Display" MultiBuildValue="DefaultBuild:Windows NT 4.0"
+    ValueLocId="-" />
+  <ROW Property="WindowsTypeNT50" MultiBuildValue="DefaultBuild:Windows 2000" ValueLocId="-" />
+  <ROW Property="WindowsTypeNT50Display" MultiBuildValue="DefaultBuild:Windows 2000" ValueLocId="-" />
+  <ROW Property="WindowsTypeNT5X" MultiBuildValue="DefaultBuild:Windows XP/2003" ValueLocId="-" />
+  <ROW Property="WindowsTypeNT5XDisplay" MultiBuildValue="DefaultBuild:Windows XP/2003"
+    ValueLocId="-" />
+  <ROW Property="WindowsTypeNT60" MultiBuildValue="DefaultBuild:Windows Vista/Server 2008"
+    ValueLocId="-" />
+  <ROW Property="WindowsTypeNT60Display" MultiBuildValue="DefaultBuild:Windows Vista/Server 2008"
+    ValueLocId="-" />
+  <ROW Property="WindowsTypeNT64"
+    MultiBuildValue="DefaultBuild:Windows 7 x64, Windows Server 2008 R2 x64, Windows 8 x64, Windows Server 2012 x64, Windows 8.1 x64, Windows Server 2012 R2 x64"
+    ValueLocId="-" />
+  <ROW Property="WindowsTypeNT64Display"
+    MultiBuildValue="DefaultBuild:Windows 7 x64, Windows Server 2008 R2 x64, Windows 8 x64, Windows Server 2012 x64, Windows 8.1 x64, Windows Server 2012 R2 x64"
+    ValueLocId="-" />
+  <ROW Property="WindowsTypeNTDisplay" MultiBuildValue="DefaultBuild:32-bit Windows versions"
+    ValueLocId="-" />
+</COMPONENT>
+<COMPONENT cid="caphyon.advinst.msicomp.MsiDirsComponent">
+  <ROW Directory="APPDIR" Directory_Parent="TARGETDIR" DefaultDir="APPDIR:." IsPseudoRoot="1" />
+  <ROW Directory="Adwaita_1_Dir" Directory_Parent="icons_1_Dir" DefaultDir="Adwaita" />
+  <ROW Directory="Adwaita_Dir" Directory_Parent="icons_Dir" DefaultDir="Adwaita" />
+  <ROW Directory="SHORTCUTDIR" Directory_Parent="TARGETDIR" DefaultDir="SHORTC~1|SHORTCUTDIR"
+    IsPseudoRoot="1" />
+  <ROW Directory="TARGETDIR" DefaultDir="SourceDir" />
+  <ROW Directory="__Dir" Directory_Parent="gdkpixbuf2.0_Dir" DefaultDir="210~1.0|2.10.0" />
+  <ROW Directory="actions_1_Dir" Directory_Parent="x32_Dir" DefaultDir="actions" />
+  <ROW Directory="actions_2_Dir" Directory_Parent="symbolic_Dir" DefaultDir="actions" />
+  <ROW Directory="actions_3_Dir" Directory_Parent="scalable_1_Dir" DefaultDir="actions" />
+  <ROW Directory="actions_4_Dir" Directory_Parent="x16_1_Dir" DefaultDir="actions" />
+  <ROW Directory="actions_5_Dir" Directory_Parent="x32_1_Dir" DefaultDir="actions" />
+  <ROW Directory="actions_6_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="actions" />
+  <ROW Directory="actions_7_Dir" Directory_Parent="scalable_3_Dir" DefaultDir="actions" />
+  <ROW Directory="actions_Dir" Directory_Parent="x16_Dir" DefaultDir="actions" />
+  <ROW Directory="apps_1_Dir" Directory_Parent="x32_Dir" DefaultDir="apps" />
+  <ROW Directory="apps_2_Dir" Directory_Parent="symbolic_Dir" DefaultDir="apps" />
+  <ROW Directory="apps_3_Dir" Directory_Parent="scalable_1_Dir" DefaultDir="apps" />
+  <ROW Directory="apps_4_Dir" Directory_Parent="symbolic_1_Dir" DefaultDir="apps" />
+  <ROW Directory="apps_5_Dir" Directory_Parent="x16_1_Dir" DefaultDir="apps" />
+  <ROW Directory="apps_6_Dir" Directory_Parent="x32_1_Dir" DefaultDir="apps" />
+  <ROW Directory="apps_7_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="apps" />
+  <ROW Directory="apps_8_Dir" Directory_Parent="scalable_3_Dir" DefaultDir="apps" />
+  <ROW Directory="apps_9_Dir" Directory_Parent="symbolic_3_Dir" DefaultDir="apps" />
+  <ROW Directory="apps_Dir" Directory_Parent="x16_Dir" DefaultDir="apps" />
+  <ROW Directory="categories_1_Dir" Directory_Parent="x32_Dir" DefaultDir="CATEGO~1|categories" />
+  <ROW Directory="categories_2_Dir" Directory_Parent="symbolic_Dir" DefaultDir="CATEGO~1|categories" />
+  <ROW Directory="categories_3_Dir" Directory_Parent="x16_1_Dir" DefaultDir="CATEGO~1|categories" />
+  <ROW Directory="categories_4_Dir" Directory_Parent="x32_1_Dir" DefaultDir="CATEGO~1|categories" />
+  <ROW Directory="categories_5_Dir" Directory_Parent="symbolic_2_Dir"
+    DefaultDir="CATEGO~1|categories" />
+  <ROW Directory="categories_Dir" Directory_Parent="x16_Dir" DefaultDir="CATEGO~1|categories" />
+  <ROW Directory="cursors_1_Dir" Directory_Parent="Adwaita_1_Dir" DefaultDir="cursors" />
+  <ROW Directory="cursors_Dir" Directory_Parent="Adwaita_Dir" DefaultDir="cursors" />
+  <ROW Directory="devices_1_Dir" Directory_Parent="x32_Dir" DefaultDir="devices" />
+  <ROW Directory="devices_2_Dir" Directory_Parent="scalable_Dir" DefaultDir="devices" />
+  <ROW Directory="devices_3_Dir" Directory_Parent="symbolic_Dir" DefaultDir="devices" />
+  <ROW Directory="devices_4_Dir" Directory_Parent="x16_1_Dir" DefaultDir="devices" />
+  <ROW Directory="devices_5_Dir" Directory_Parent="x32_1_Dir" DefaultDir="devices" />
+  <ROW Directory="devices_6_Dir" Directory_Parent="scalable_2_Dir" DefaultDir="devices" />
+  <ROW Directory="devices_7_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="devices" />
+  <ROW Directory="devices_Dir" Directory_Parent="x16_Dir" DefaultDir="devices" />
+  <ROW Directory="emblems_1_Dir" Directory_Parent="x32_Dir" DefaultDir="emblems" />
+  <ROW Directory="emblems_2_Dir" Directory_Parent="symbolic_Dir" DefaultDir="emblems" />
+  <ROW Directory="emblems_3_Dir" Directory_Parent="x16_1_Dir" DefaultDir="emblems" />
+  <ROW Directory="emblems_4_Dir" Directory_Parent="x32_1_Dir" DefaultDir="emblems" />
+  <ROW Directory="emblems_5_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="emblems" />
+  <ROW Directory="emblems_Dir" Directory_Parent="x16_Dir" DefaultDir="emblems" />
+  <ROW Directory="emoji_1_Dir" Directory_Parent="gtk4.0_1_Dir" DefaultDir="emoji" />
+  <ROW Directory="emoji_Dir" Directory_Parent="gtk4.0_Dir" DefaultDir="emoji" />
+  <ROW Directory="emotes_1_Dir" Directory_Parent="x32_Dir" DefaultDir="emotes" />
+  <ROW Directory="emotes_2_Dir" Directory_Parent="symbolic_Dir" DefaultDir="emotes" />
+  <ROW Directory="emotes_3_Dir" Directory_Parent="x16_1_Dir" DefaultDir="emotes" />
+  <ROW Directory="emotes_4_Dir" Directory_Parent="x32_1_Dir" DefaultDir="emotes" />
+  <ROW Directory="emotes_5_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="emotes" />
+  <ROW Directory="emotes_Dir" Directory_Parent="x16_Dir" DefaultDir="emotes" />
+  <ROW Directory="fonts_1_Dir" Directory_Parent="gtksourceview5_1_Dir" DefaultDir="fonts" />
+  <ROW Directory="fonts_Dir" Directory_Parent="gtksourceview5_Dir" DefaultDir="fonts" />
+  <ROW Directory="gdkpixbuf2.0_Dir" Directory_Parent="lib_Dir"
+    DefaultDir="GDK-PI~1.0|gdk-pixbuf-2.0" />
+  <ROW Directory="glib2.0_1_Dir" Directory_Parent="share_1_Dir" DefaultDir="glib-2.0" />
+  <ROW Directory="glib2.0_Dir" Directory_Parent="share_Dir" DefaultDir="glib-2.0" />
+  <ROW Directory="gtk4.0_1_Dir" Directory_Parent="share_1_Dir" DefaultDir="gtk-4.0" />
+  <ROW Directory="gtk4.0_Dir" Directory_Parent="share_Dir" DefaultDir="gtk-4.0" />
+  <ROW Directory="gtksourceview5_1_Dir" Directory_Parent="share_1_Dir"
+    DefaultDir="GTKSOU~1|gtksourceview-5" />
+  <ROW Directory="gtksourceview5_Dir" Directory_Parent="share_Dir"
+    DefaultDir="GTKSOU~1|gtksourceview-5" />
+  <ROW Directory="hicolor_1_Dir" Directory_Parent="icons_1_Dir" DefaultDir="hicolor" />
+  <ROW Directory="hicolor_Dir" Directory_Parent="icons_Dir" DefaultDir="hicolor" />
+  <ROW Directory="icons_1_Dir" Directory_Parent="share_1_Dir" DefaultDir="icons" />
+  <ROW Directory="icons_Dir" Directory_Parent="share_Dir" DefaultDir="icons" />
+  <ROW Directory="languagespecs_1_Dir" Directory_Parent="gtksourceview5_1_Dir"
+    DefaultDir="LANGUA~1|language-specs" />
+  <ROW Directory="languagespecs_Dir" Directory_Parent="gtksourceview5_Dir"
+    DefaultDir="LANGUA~1|language-specs" />
+  <ROW Directory="legacy_1_Dir" Directory_Parent="x32_Dir" DefaultDir="legacy" />
+  <ROW Directory="legacy_2_Dir" Directory_Parent="symbolic_Dir" DefaultDir="legacy" />
+  <ROW Directory="legacy_3_Dir" Directory_Parent="x16_1_Dir" DefaultDir="legacy" />
+  <ROW Directory="legacy_4_Dir" Directory_Parent="x32_1_Dir" DefaultDir="legacy" />
+  <ROW Directory="legacy_5_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="legacy" />
+  <ROW Directory="legacy_Dir" Directory_Parent="x16_Dir" DefaultDir="legacy" />
+  <ROW Directory="lib_Dir" Directory_Parent="APPDIR" DefaultDir="lib" />
+  <ROW Directory="loaders_Dir" Directory_Parent="__Dir" DefaultDir="loaders" />
+  <ROW Directory="mimetypes_1_Dir" Directory_Parent="x32_Dir" DefaultDir="MIMETY~1|mimetypes" />
+  <ROW Directory="mimetypes_2_Dir" Directory_Parent="scalable_Dir" DefaultDir="MIMETY~1|mimetypes" />
+  <ROW Directory="mimetypes_3_Dir" Directory_Parent="symbolic_Dir" DefaultDir="MIMETY~1|mimetypes" />
+  <ROW Directory="mimetypes_4_Dir" Directory_Parent="x16_1_Dir" DefaultDir="MIMETY~1|mimetypes" />
+  <ROW Directory="mimetypes_5_Dir" Directory_Parent="x32_1_Dir" DefaultDir="MIMETY~1|mimetypes" />
+  <ROW Directory="mimetypes_6_Dir" Directory_Parent="scalable_2_Dir" DefaultDir="MIMETY~1|mimetypes" />
+  <ROW Directory="mimetypes_7_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="MIMETY~1|mimetypes" />
+  <ROW Directory="mimetypes_Dir" Directory_Parent="x16_Dir" DefaultDir="MIMETY~1|mimetypes" />
+  <ROW Directory="places_1_Dir" Directory_Parent="x32_Dir" DefaultDir="places" />
+  <ROW Directory="places_2_Dir" Directory_Parent="scalable_Dir" DefaultDir="places" />
+  <ROW Directory="places_3_Dir" Directory_Parent="symbolic_Dir" DefaultDir="places" />
+  <ROW Directory="places_4_Dir" Directory_Parent="x16_1_Dir" DefaultDir="places" />
+  <ROW Directory="places_5_Dir" Directory_Parent="x32_1_Dir" DefaultDir="places" />
+  <ROW Directory="places_6_Dir" Directory_Parent="scalable_2_Dir" DefaultDir="places" />
+  <ROW Directory="places_7_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="places" />
+  <ROW Directory="places_Dir" Directory_Parent="x16_Dir" DefaultDir="places" />
+  <ROW Directory="scalable_1_Dir" Directory_Parent="hicolor_Dir" DefaultDir="scalable" />
+  <ROW Directory="scalable_2_Dir" Directory_Parent="Adwaita_1_Dir" DefaultDir="scalable" />
+  <ROW Directory="scalable_3_Dir" Directory_Parent="hicolor_1_Dir" DefaultDir="scalable" />
+  <ROW Directory="scalable_Dir" Directory_Parent="Adwaita_Dir" DefaultDir="scalable" />
+  <ROW Directory="schemas_1_Dir" Directory_Parent="glib2.0_1_Dir" DefaultDir="schemas" />
+  <ROW Directory="schemas_Dir" Directory_Parent="glib2.0_Dir" DefaultDir="schemas" />
+  <ROW Directory="share_1_Dir" Directory_Parent="APPDIR" DefaultDir="share" />
+  <ROW Directory="share_Dir" Directory_Parent="gdkpixbuf2.0_Dir" DefaultDir="share" />
+  <ROW Directory="snippets_1_Dir" Directory_Parent="gtksourceview5_1_Dir" DefaultDir="snippets" />
+  <ROW Directory="snippets_Dir" Directory_Parent="gtksourceview5_Dir" DefaultDir="snippets" />
+  <ROW Directory="status_1_Dir" Directory_Parent="x32_Dir" DefaultDir="status" />
+  <ROW Directory="status_2_Dir" Directory_Parent="scalable_Dir" DefaultDir="status" />
+  <ROW Directory="status_3_Dir" Directory_Parent="symbolic_Dir" DefaultDir="status" />
+  <ROW Directory="status_4_Dir" Directory_Parent="symbolicupto32_Dir" DefaultDir="status" />
+  <ROW Directory="status_5_Dir" Directory_Parent="x16_1_Dir" DefaultDir="status" />
+  <ROW Directory="status_6_Dir" Directory_Parent="x32_1_Dir" DefaultDir="status" />
+  <ROW Directory="status_7_Dir" Directory_Parent="scalable_2_Dir" DefaultDir="status" />
+  <ROW Directory="status_8_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="status" />
+  <ROW Directory="status_9_Dir" Directory_Parent="symbolicupto32_1_Dir" DefaultDir="status" />
+  <ROW Directory="status_Dir" Directory_Parent="x16_Dir" DefaultDir="status" />
+  <ROW Directory="styles_1_Dir" Directory_Parent="gtksourceview5_1_Dir" DefaultDir="styles" />
+  <ROW Directory="styles_Dir" Directory_Parent="gtksourceview5_Dir" DefaultDir="styles" />
+  <ROW Directory="symbolic_1_Dir" Directory_Parent="hicolor_Dir" DefaultDir="symbolic" />
+  <ROW Directory="symbolic_2_Dir" Directory_Parent="Adwaita_1_Dir" DefaultDir="symbolic" />
+  <ROW Directory="symbolic_3_Dir" Directory_Parent="hicolor_1_Dir" DefaultDir="symbolic" />
+  <ROW Directory="symbolic_Dir" Directory_Parent="Adwaita_Dir" DefaultDir="symbolic" />
+  <ROW Directory="symbolicupto32_1_Dir" Directory_Parent="Adwaita_1_Dir"
+    DefaultDir="SYMBOL~1|symbolic-up-to-32" />
+  <ROW Directory="symbolicupto32_Dir" Directory_Parent="Adwaita_Dir"
+    DefaultDir="SYMBOL~1|symbolic-up-to-32" />
+  <ROW Directory="ui_1_Dir" Directory_Parent="x32_Dir" DefaultDir="ui" />
+  <ROW Directory="ui_2_Dir" Directory_Parent="symbolic_Dir" DefaultDir="ui" />
+  <ROW Directory="ui_3_Dir" Directory_Parent="x16_1_Dir" DefaultDir="ui" />
+  <ROW Directory="ui_4_Dir" Directory_Parent="x32_1_Dir" DefaultDir="ui" />
+  <ROW Directory="ui_5_Dir" Directory_Parent="symbolic_2_Dir" DefaultDir="ui" />
+  <ROW Directory="ui_Dir" Directory_Parent="x16_Dir" DefaultDir="ui" />
+  <ROW Directory="x16_1_Dir" Directory_Parent="Adwaita_1_Dir" DefaultDir="16x16" />
+  <ROW Directory="x16_Dir" Directory_Parent="Adwaita_Dir" DefaultDir="16x16" />
+  <ROW Directory="x32_1_Dir" Directory_Parent="Adwaita_1_Dir" DefaultDir="32x32" />
+  <ROW Directory="x32_Dir" Directory_Parent="Adwaita_Dir" DefaultDir="32x32" />
+</COMPONENT>
+<COMPONENT cid="caphyon.advinst.msicomp.MsiCompsComponent">
+  <ROW Component="AI_INSTALLPERUSER" ComponentId="{96BC0AA8-2998-4BF1-A8AB-9210F0C5DAF9}"
+    Directory_="APPDIR" Attributes="260" KeyPath="AI_INSTALLPERUSER" Options="1" />
+  <ROW Component="APPDIR" ComponentId="{45F65636-B4C2-409A-8FDD-2E13E26EF3DE}" Directory_="APPDIR"
+    Attributes="0" />
+  <ROW Component="Adwaitadark.xml" ComponentId="{13B0CA0F-75B0-41FE-8947-2DC08F2B4AD5}"
+    Directory_="styles_Dir" Attributes="0" KeyPath="Adwaitadark.xml" Type="0" />
+  <ROW Component="Adwaitadark.xml_1" ComponentId="{B3B832A1-C473-4A10-9C58-AB9C34C1F360}"
+    Directory_="styles_1_Dir" Attributes="0" KeyPath="Adwaitadark.xml_1" Type="0" />
+  <ROW Component="BuilderBlocks.ttf" ComponentId="{27001538-0E83-4618-94D3-5C15A9A03B5D}"
+    Directory_="fonts_Dir" Attributes="0" Type="0" />
+  <ROW Component="BuilderBlocks.ttf_1" ComponentId="{40271351-A29C-45C3-B48F-40FD6D4CBE8B}"
+    Directory_="fonts_1_Dir" Attributes="0" Type="0" />
+  <ROW Component="LICENSE" ComponentId="{04372183-3E7A-46D7-B6BF-98E0F68C5708}" Directory_="APPDIR"
+    Attributes="0" KeyPath="LICENSE" Type="0" />
+  <ROW Component="ProductInformation" ComponentId="{7B8CADC9-B844-43E5-A434-9E690C812E9C}"
+    Directory_="APPDIR" Attributes="260" KeyPath="Version" />
+  <ROW Component="SHORTCUTDIR" ComponentId="{E78BF398-1FC4-4867-9C70-C512C0631B23}"
+    Directory_="SHORTCUTDIR" Attributes="0" />
+  <ROW Component="abnf.lang" ComponentId="{A281310E-14BF-4C8F-B8DE-5C415FE04CFE}"
+    Directory_="languagespecs_Dir" Attributes="0" KeyPath="abnf.lang" Type="0" />
+  <ROW Component="abnf.lang_1" ComponentId="{765891A9-E4CF-412D-B37C-7613C120B3A3}"
+    Directory_="languagespecs_1_Dir" Attributes="0" KeyPath="abnf.lang_1" Type="0" />
+  <ROW Component="acadaptersymbolic.svg" ComponentId="{D21CDD74-F214-4A4A-8B42-86F527BE3FAF}"
+    Directory_="devices_3_Dir" Attributes="0" KeyPath="acadaptersymbolic.svg" Type="0" />
+  <ROW Component="acadaptersymbolic.svg_1" ComponentId="{A960594A-2C3B-4BD8-A0BF-63BFE2B434AC}"
+    Directory_="devices_7_Dir" Attributes="0" KeyPath="acadaptersymbolic.svg_1" Type="0" />
+  <ROW Component="acadaptersymbolic.symbolic.png"
+    ComponentId="{BECAA0A8-48BC-490C-8F61-30FCD565A6CE}" Directory_="devices_Dir" Attributes="0"
+    KeyPath="acadaptersymbolic.symbolic.png" Type="0" />
+  <ROW Component="acadaptersymbolic.symbolic.png_1"
+    ComponentId="{84A04D92-0412-46D6-B144-80E2354EA70D}" Directory_="devices_1_Dir" Attributes="0"
+    KeyPath="acadaptersymbolic.symbolic.png_1" Type="0" />
+  <ROW Component="acadaptersymbolic.symbolic.png_2"
+    ComponentId="{0BEDFD4B-53A9-4084-AC30-66248BD426F5}" Directory_="devices_4_Dir" Attributes="0"
+    KeyPath="acadaptersymbolic.symbolic.png_2" Type="0" />
+  <ROW Component="acadaptersymbolic.symbolic.png_3"
+    ComponentId="{08D580D3-F0E5-4B8B-A3BC-6DAA08BD35BB}" Directory_="devices_5_Dir" Attributes="0"
+    KeyPath="acadaptersymbolic.symbolic.png_3" Type="0" />
+  <ROW Component="accessoriescalculatorsymbolic.svg"
+    ComponentId="{DCB145FC-B49A-4C37-9729-34C0EE800516}" Directory_="legacy_2_Dir" Attributes="0"
+    KeyPath="accessoriescalculatorsymbolic.svg" Type="0" />
+  <ROW Component="accessoriescalculatorsymbolic.svg_1"
+    ComponentId="{480EAA9E-C413-4601-B1F3-6639EE3A6425}" Directory_="legacy_5_Dir" Attributes="0"
+    KeyPath="accessoriescalculatorsymbolic.svg_1" Type="0" />
+  <ROW Component="accessoriescalculatorsymbolic.symbol_1_ic.png"
+    ComponentId="{BED71B0B-95B3-45CB-9D32-197D49CA21A1}" Directory_="legacy_1_Dir" Attributes="0"
+    KeyPath="accessoriescalculatorsymbolic.symbol_1_ic.png" Type="0" />
+  <ROW Component="accessoriescalculatorsymbolic.symbol_2_ic.png"
+    ComponentId="{8C8A0D67-BACA-46F7-807D-DD8A5BAEF06E}" Directory_="legacy_3_Dir" Attributes="0"
+    KeyPath="accessoriescalculatorsymbolic.symbol_2_ic.png" Type="0" />
+  <ROW Component="accessoriescalculatorsymbolic.symbol_3_ic.png"
+    ComponentId="{5444E9C6-D341-45D9-8239-BDFBC91A619B}" Directory_="legacy_4_Dir" Attributes="0"
+    KeyPath="accessoriescalculatorsymbolic.symbol_3_ic.png" Type="0" />
+  <ROW Component="accessoriescalculatorsymbolic.symbolic.png"
+    ComponentId="{28E2FAE2-3A06-4DD6-86A6-7F69B93E76E0}" Directory_="legacy_Dir" Attributes="0"
+    KeyPath="accessoriescalculatorsymbolic.symbolic.png" Type="0" />
+  <ROW Component="actionunavailablesymbolic.svg"
+    ComponentId="{0A279F29-E543-496A-BEA3-5973635C3E22}" Directory_="actions_2_Dir" Attributes="0"
+    KeyPath="actionunavailablesymbolic.svg" Type="0" />
+  <ROW Component="actionunavailablesymbolic.svg_1"
+    ComponentId="{97550336-B522-47B6-957F-B29A4921EA32}" Directory_="actions_6_Dir" Attributes="0"
+    KeyPath="actionunavailablesymbolic.svg_1" Type="0" />
+  <ROW Component="actionunavailablesymbolic.symbolic.p_10_ng"
+    ComponentId="{B5200D8F-B85F-415B-AEF0-D26502C4E744}" Directory_="actions_4_Dir" Attributes="0"
+    KeyPath="actionunavailablesymbolic.symbolic.png_2" Type="0" />
+  <ROW Component="actionunavailablesymbolic.symbolic.p_11_ng"
+    ComponentId="{A7A05E2E-34D7-4B42-8CF3-F37D4044F979}" Directory_="actions_5_Dir" Attributes="0"
+    KeyPath="actionunavailablesymbolic.symbolic.png_3" Type="0" />
+  <ROW Component="actionunavailablesymbolic.symbolic.png"
+    ComponentId="{0477116A-7F12-4822-84FB-BC5F9C09F23A}" Directory_="actions_Dir" Attributes="0"
+    KeyPath="actionunavailablesymbolic.symbolic.png" Type="0" />
+  <ROW Component="actionunavailablesymbolic.symbolic.png_1"
+    ComponentId="{B8EC8C5C-5635-445E-8D1C-82004BCBEBF6}" Directory_="actions_1_Dir" Attributes="0"
+    KeyPath="actionunavailablesymbolic.symbolic.png_1" Type="0" />
+  <ROW Component="airplanemodesymbolic.svg" ComponentId="{53DA54BA-267F-4770-A9F0-07A5F9C91969}"
+    Directory_="status_3_Dir" Attributes="0" KeyPath="airplanemodesymbolic.svg" Type="0" />
+  <ROW Component="airplanemodesymbolic.svg_1" ComponentId="{B42445EB-2FD3-41A2-9AFB-4B07D23D7B7C}"
+    Directory_="status_8_Dir" Attributes="0" KeyPath="airplanemodesymbolic.svg_1" Type="0" />
+  <ROW Component="airplanemodesymbolic.symbolic.png"
+    ComponentId="{B80803EE-EBDB-410C-B5A8-D6E3701B3393}" Directory_="status_Dir" Attributes="0"
+    KeyPath="airplanemodesymbolic.symbolic.png" Type="0" />
+  <ROW Component="airplanemodesymbolic.symbolic.png_1"
+    ComponentId="{CBB92E52-4E45-4115-A60A-5BF9677FEB7C}" Directory_="status_1_Dir" Attributes="0"
+    KeyPath="airplanemodesymbolic.symbolic.png_1" Type="0" />
+  <ROW Component="airplanemodesymbolic.symbolic.png_2"
+    ComponentId="{041263C3-49FD-4939-BC7A-7EE7D4CEC5EF}" Directory_="status_5_Dir" Attributes="0"
+    KeyPath="airplanemodesymbolic.symbolic.png_2" Type="0" />
+  <ROW Component="airplanemodesymbolic.symbolic.png_3"
+    ComponentId="{4E12B17F-F86E-421B-A6B7-E22F03DE367F}" Directory_="status_6_Dir" Attributes="0"
+    KeyPath="airplanemodesymbolic.symbolic.png_3" Type="0" />
+  <ROW Component="applicationcertificatesymbolic.svg"
+    ComponentId="{2F88732F-1E4E-476E-B39C-14FB9285E350}" Directory_="mimetypes_3_Dir" Attributes="0"
+    KeyPath="applicationcertificatesymbolic.svg" Type="0" />
+  <ROW Component="applicationcertificatesymbolic.svg_1"
+    ComponentId="{78FD185C-C2D5-4330-8AD6-063E13BFB549}" Directory_="mimetypes_7_Dir" Attributes="0"
+    KeyPath="applicationcertificatesymbolic.svg_1" Type="0" />
+  <ROW Component="applicationcertificatesymbolic.symbo_1_lic.png"
+    ComponentId="{9DE0AE7E-7396-4503-A00A-07F6F1575115}" Directory_="mimetypes_1_Dir" Attributes="0"
+    KeyPath="applicationcertificatesymbolic.symbo_1_lic.png" Type="0" />
+  <ROW Component="applicationcertificatesymbolic.symbo_2_lic.png"
+    ComponentId="{80C45F05-653B-4256-892D-B4B3743FE3EC}" Directory_="mimetypes_4_Dir" Attributes="0"
+    KeyPath="applicationcertificatesymbolic.symbo_2_lic.png" Type="0" />
+  <ROW Component="applicationcertificatesymbolic.symbo_3_lic.png"
+    ComponentId="{816A06C6-C7CD-46CE-A3D3-B15C082800C4}" Directory_="mimetypes_5_Dir" Attributes="0"
+    KeyPath="applicationcertificatesymbolic.symbo_3_lic.png" Type="0" />
+  <ROW Component="applicationcertificatesymbolic.symbolic.png"
+    ComponentId="{49462650-10C4-4746-816D-1166D5EBCCD9}" Directory_="mimetypes_Dir" Attributes="0"
+    KeyPath="applicationcertificatesymbolic.symbolic.png" Type="0" />
+  <ROW Component="applicationsengineeringsymbolic.svg"
+    ComponentId="{33976A47-CA44-4578-90F7-2D5FC31C7A15}" Directory_="categories_2_Dir"
+    Attributes="0" KeyPath="applicationsengineeringsymbolic.svg" Type="0" />
+  <ROW Component="applicationsengineeringsymbolic.svg_1"
+    ComponentId="{2AD28236-5A2F-4E72-A9EE-6449B1F9389C}" Directory_="categories_5_Dir"
+    Attributes="0" KeyPath="applicationsengineeringsymbolic.svg_1" Type="0" />
+  <ROW Component="applicationsengineeringsymbolic.symb_1_olic.png"
+    ComponentId="{8FD8182C-6A76-4BBE-8740-4A76249E8350}" Directory_="categories_1_Dir"
+    Attributes="0" KeyPath="applicationsengineeringsymbolic.symb_1_olic.png" Type="0" />
+  <ROW Component="applicationsengineeringsymbolic.symb_2_olic.png"
+    ComponentId="{BC367CCB-42DF-4632-9BCA-F9902F091AFE}" Directory_="categories_3_Dir"
+    Attributes="0" KeyPath="applicationsengineeringsymbolic.symb_2_olic.png" Type="0" />
+  <ROW Component="applicationsengineeringsymbolic.symb_3_olic.png"
+    ComponentId="{837A9181-9788-4CD6-BA8C-8CF5C7699D60}" Directory_="categories_4_Dir"
+    Attributes="0" KeyPath="applicationsengineeringsymbolic.symb_3_olic.png" Type="0" />
+  <ROW Component="applicationsengineeringsymbolic.symbolic.png"
+    ComponentId="{645B2035-9A5B-4E3D-8DA9-0E8CD7FAC3A8}" Directory_="categories_Dir" Attributes="0"
+    KeyPath="applicationsengineeringsymbolic.symbolic.png" Type="0" />
+  <ROW Component="applicationxaddon.svg" ComponentId="{F0240C6D-91C3-49A0-9A81-FE7465C5E4F4}"
+    Directory_="mimetypes_2_Dir" Attributes="0" KeyPath="applicationxaddon.svg" Type="0" />
+  <ROW Component="applicationxaddon.svg_1" ComponentId="{768FBF19-6BCF-4DBB-BD48-DD27FC87959F}"
+    Directory_="mimetypes_6_Dir" Attributes="0" KeyPath="applicationxaddon.svg_1" Type="0" />
+  <ROW Component="audioheadphones.svg" ComponentId="{643C2759-01AB-49C0-ADCB-B99C109F8126}"
+    Directory_="devices_2_Dir" Attributes="0" KeyPath="audioheadphones.svg" Type="0" />
+  <ROW Component="audioheadphones.svg_1" ComponentId="{6E3D0F79-9221-4DE0-9FA7-0C45036FF408}"
+    Directory_="devices_6_Dir" Attributes="0" KeyPath="audioheadphones.svg_1" Type="0" />
+  <ROW Component="avatardefault.svg" ComponentId="{3BFCB1AD-27AC-4E57-BD27-784C7846EECC}"
+    Directory_="status_2_Dir" Attributes="0" KeyPath="avatardefault.svg" Type="0" />
+  <ROW Component="avatardefault.svg_1" ComponentId="{24FD2BAF-8BAE-4374-9E9E-5CD9D1C97F58}"
+    Directory_="status_7_Dir" Attributes="0" KeyPath="avatardefault.svg_1" Type="0" />
+  <ROW Component="bn.gresource" ComponentId="{F4BE0541-6DBF-42B1-A453-5E49E56065FD}"
+    Directory_="emoji_Dir" Attributes="0" KeyPath="bn.gresource" Type="0" />
+  <ROW Component="bn.gresource_1" ComponentId="{EDC7487C-1897-45EC-AE77-DF92C3F67B90}"
+    Directory_="emoji_1_Dir" Attributes="0" KeyPath="bn.gresource_1" Type="0" />
+  <ROW Component="checkboxcheckedsymbolic.svg" ComponentId="{67A6B800-B5EE-453F-82D8-460386698F9A}"
+    Directory_="ui_2_Dir" Attributes="0" KeyPath="checkboxcheckedsymbolic.svg" Type="0" />
+  <ROW Component="checkboxcheckedsymbolic.svg_1"
+    ComponentId="{A460A43D-6266-4A4A-9E40-0C89D1A8267F}" Directory_="ui_5_Dir" Attributes="0"
+    KeyPath="checkboxcheckedsymbolic.svg_1" Type="0" />
+  <ROW Component="checkboxcheckedsymbolic.symbolic.png"
+    ComponentId="{48B68F50-3772-4FC3-BB75-492E567163B3}" Directory_="ui_Dir" Attributes="0"
+    KeyPath="checkboxcheckedsymbolic.symbolic.png" Type="0" />
+  <ROW Component="checkboxcheckedsymbolic.symbolic.png_1"
+    ComponentId="{C36850A0-7721-4FE6-8840-F1910C0C21A4}" Directory_="ui_1_Dir" Attributes="0"
+    KeyPath="checkboxcheckedsymbolic.symbolic.png_1" Type="0" />
+  <ROW Component="checkboxcheckedsymbolic.symbolic.png_2"
+    ComponentId="{06A542C4-EC0C-4080-8F4F-E0FE92F2D36A}" Directory_="ui_3_Dir" Attributes="0"
+    KeyPath="checkboxcheckedsymbolic.symbolic.png_2" Type="0" />
+  <ROW Component="checkboxcheckedsymbolic.symbolic.png_3"
+    ComponentId="{D17CCA53-1E69-4361-81B6-8D5D0058E096}" Directory_="ui_4_Dir" Attributes="0"
+    KeyPath="checkboxcheckedsymbolic.symbolic.png_3" Type="0" />
+  <ROW Component="completionsnippetsymbolic.svg"
+    ComponentId="{FAE8C20C-03A2-415A-A4D4-DEBE04DF1067}" Directory_="actions_3_Dir" Attributes="0"
+    KeyPath="completionsnippetsymbolic.svg" Type="0" />
+  <ROW Component="completionsnippetsymbolic.svg_1"
+    ComponentId="{EF385102-435A-40CD-96C1-34925FE2E16C}" Directory_="actions_7_Dir" Attributes="0"
+    KeyPath="completionsnippetsymbolic.svg_1" Type="0" />
+  <ROW Component="cur" ComponentId="{8CBAAA35-FBCD-42A8-956C-8F1E121B0E97}" Directory_="cursors_Dir"
+    Attributes="0" KeyPath="cur" Type="0" />
+  <ROW Component="cur_1" ComponentId="{0DF9DAF0-CABC-429B-B99C-17669BD018BB}"
+    Directory_="cursors_1_Dir" Attributes="0" KeyPath="cur_1" Type="0" />
+  <ROW Component="emblemdefaultsymbolic.svg" ComponentId="{E58284AD-3275-4E14-9A07-E2570E44E47F}"
+    Directory_="emblems_2_Dir" Attributes="0" KeyPath="emblemdefaultsymbolic.svg" Type="0" />
+  <ROW Component="emblemdefaultsymbolic.svg_1" ComponentId="{2EDC5FDC-CF26-430A-B16A-446845542E0E}"
+    Directory_="emblems_5_Dir" Attributes="0" KeyPath="emblemdefaultsymbolic.svg_1" Type="0" />
+  <ROW Component="emblemdefaultsymbolic.symbolic.png"
+    ComponentId="{D9787EDD-77A9-44E6-B788-212B3BE2AD1D}" Directory_="emblems_Dir" Attributes="0"
+    KeyPath="emblemdefaultsymbolic.symbolic.png" Type="0" />
+  <ROW Component="emblemdefaultsymbolic.symbolic.png_1"
+    ComponentId="{365C1C15-EC50-49F0-BEF0-7502E5CFAAE3}" Directory_="emblems_1_Dir" Attributes="0"
+    KeyPath="emblemdefaultsymbolic.symbolic.png_1" Type="0" />
+  <ROW Component="emblemdefaultsymbolic.symbolic.png_2"
+    ComponentId="{EFADEA89-CB2A-47C6-99E3-C68A868C83DE}" Directory_="emblems_3_Dir" Attributes="0"
+    KeyPath="emblemdefaultsymbolic.symbolic.png_2" Type="0" />
+  <ROW Component="emblemdefaultsymbolic.symbolic.png_3"
+    ComponentId="{F7AAF17B-7A5E-4E7F-B8A8-6B6229A5DEF3}" Directory_="emblems_4_Dir" Attributes="0"
+    KeyPath="emblemdefaultsymbolic.symbolic.png_3" Type="0" />
+  <ROW Component="emotelovesymbolic.svg" ComponentId="{47143705-3C58-4B0D-9406-378A25A27F4F}"
+    Directory_="emotes_2_Dir" Attributes="0" KeyPath="emotelovesymbolic.svg" Type="0" />
+  <ROW Component="emotelovesymbolic.svg_1" ComponentId="{F07F3C39-E96A-41B3-A44E-1D001EFFE74E}"
+    Directory_="emotes_5_Dir" Attributes="0" KeyPath="emotelovesymbolic.svg_1" Type="0" />
+  <ROW Component="emotelovesymbolic.symbolic.png"
+    ComponentId="{2589B3DE-340F-47D2-9375-14692878CAAA}" Directory_="emotes_Dir" Attributes="0"
+    KeyPath="emotelovesymbolic.symbolic.png" Type="0" />
+  <ROW Component="emotelovesymbolic.symbolic.png_1"
+    ComponentId="{197F8072-E2CF-4D18-9A29-CFC6963E6FD7}" Directory_="emotes_1_Dir" Attributes="0"
+    KeyPath="emotelovesymbolic.symbolic.png_1" Type="0" />
+  <ROW Component="emotelovesymbolic.symbolic.png_2"
+    ComponentId="{1D77EF7A-8F4E-452D-9F3B-EFD303B4FD30}" Directory_="emotes_3_Dir" Attributes="0"
+    KeyPath="emotelovesymbolic.symbolic.png_2" Type="0" />
+  <ROW Component="emotelovesymbolic.symbolic.png_3"
+    ComponentId="{4501F8CD-C031-4CDF-ADCF-4523C700B7BA}" Directory_="emotes_4_Dir" Attributes="0"
+    KeyPath="emotelovesymbolic.symbolic.png_3" Type="0" />
+  <ROW Component="folderbookmarks.png" ComponentId="{D7B06790-8C81-4C16-B33F-7205FE0A6B3E}"
+    Directory_="places_Dir" Attributes="0" KeyPath="folderbookmarks.png" Type="0" />
+  <ROW Component="folderbookmarks.png_1" ComponentId="{22AF7B0D-AD7A-46B6-82C2-066565401093}"
+    Directory_="places_4_Dir" Attributes="0" KeyPath="folderbookmarks.png_1" Type="0" />
+  <ROW Component="folderdocuments.svg" ComponentId="{09BCE84F-4479-4511-9278-7C6C7DCC4C71}"
+    Directory_="places_2_Dir" Attributes="0" KeyPath="folderdocuments.svg" Type="0" />
+  <ROW Component="folderdocuments.svg_1" ComponentId="{06636377-CFD6-498D-A1A9-495B901EEB93}"
+    Directory_="places_6_Dir" Attributes="0" KeyPath="folderdocuments.svg_1" Type="0" />
+  <ROW Component="folderdocumentssymbolic.svg" ComponentId="{DE5E4A43-F885-4A43-838D-79B487593786}"
+    Directory_="places_3_Dir" Attributes="0" KeyPath="folderdocumentssymbolic.svg" Type="0" />
+  <ROW Component="folderdocumentssymbolic.svg_1"
+    ComponentId="{EC9EF4BF-A2A8-439C-8527-9E17B8784FD2}" Directory_="places_7_Dir" Attributes="0"
+    KeyPath="folderdocumentssymbolic.svg_1" Type="0" />
+  <ROW Component="folderdocumentssymbolic.symbolic.png"
+    ComponentId="{1C2BB911-A480-49FD-A914-C6D750736F42}" Directory_="places_1_Dir" Attributes="0"
+    KeyPath="folderdocumentssymbolic.symbolic.png_1" Type="0" />
+  <ROW Component="folderdocumentssymbolic.symbolic.png_1"
+    ComponentId="{6815C450-86A4-48AE-B8F0-35513364F8B7}" Directory_="places_5_Dir" Attributes="0"
+    KeyPath="folderdocumentssymbolic.symbolic.png_3" Type="0" />
+  <ROW Component="gdbus.exe" ComponentId="{56CE6C0C-AC25-4D9D-9619-C4E00A558782}"
+    Directory_="APPDIR" Attributes="256" KeyPath="gdbus.exe" />
+  <ROW Component="gschemas.compiled" ComponentId="{B558001E-5B78-4A99-A892-CA285EC7C00A}"
+    Directory_="schemas_Dir" Attributes="0" KeyPath="gschemas.compiled" Type="0" />
+  <ROW Component="gschemas.compiled_1" ComponentId="{06017722-A8FB-4C52-9084-5EAB6E3809DB}"
+    Directory_="schemas_1_Dir" Attributes="0" KeyPath="gschemas.compiled_1" Type="0" />
+  <ROW Component="gtk4builder.rng" ComponentId="{B2095952-B974-46BC-9346-5F8C42ACF011}"
+    Directory_="gtk4.0_Dir" Attributes="0" KeyPath="gtk4builder.rng" Type="0" />
+  <ROW Component="gtk4builder.rng_1" ComponentId="{4D4EF95F-9E40-4419-A526-E7879E6ED303}"
+    Directory_="gtk4.0_1_Dir" Attributes="0" KeyPath="gtk4builder.rng_1" Type="0" />
+  <ROW Component="helpcontentssymbolic.svg" ComponentId="{51868B93-C268-4E00-A54F-156FEE33275C}"
+    Directory_="apps_2_Dir" Attributes="0" KeyPath="helpcontentssymbolic.svg" Type="0" />
+  <ROW Component="helpcontentssymbolic.svg_1" ComponentId="{81179BA8-A070-494F-BA56-05005128A7BA}"
+    Directory_="apps_7_Dir" Attributes="0" KeyPath="helpcontentssymbolic.svg_2" Type="0" />
+  <ROW Component="helpcontentssymbolic.symbolic.png"
+    ComponentId="{F01F5D39-AB7E-484C-BEAB-1C168E392D52}" Directory_="apps_Dir" Attributes="0"
+    KeyPath="helpcontentssymbolic.symbolic.png" Type="0" />
+  <ROW Component="helpcontentssymbolic.symbolic.png_1"
+    ComponentId="{52BA2752-2743-489E-954D-1AB619C50AEE}" Directory_="apps_1_Dir" Attributes="0"
+    KeyPath="helpcontentssymbolic.symbolic.png_2" Type="0" />
+  <ROW Component="helpcontentssymbolic.symbolic.png_2"
+    ComponentId="{25B497FC-7243-4468-9A02-1C9105150515}" Directory_="apps_5_Dir" Attributes="0"
+    KeyPath="helpcontentssymbolic.symbolic.png_4" Type="0" />
+  <ROW Component="helpcontentssymbolic.symbolic.png_3"
+    ComponentId="{4AD2BC2C-66DE-49E7-8CFA-9AB77886C2D4}" Directory_="apps_6_Dir" Attributes="0"
+    KeyPath="helpcontentssymbolic.symbolic.png_6" Type="0" />
+  <ROW Component="icontheme.cache" ComponentId="{52D7DF09-CB8A-4215-AC8A-3242D6E23A94}"
+    Directory_="Adwaita_Dir" Attributes="0" KeyPath="icontheme.cache" Type="0" />
+  <ROW Component="icontheme.cache_1" ComponentId="{E15B5929-8184-4772-9530-A56161A7EA97}"
+    Directory_="hicolor_Dir" Attributes="0" KeyPath="icontheme.cache_1" Type="0" />
+  <ROW Component="icontheme.cache_2" ComponentId="{2F71E958-840A-4470-9DFA-C0538439C5B1}"
+    Directory_="Adwaita_1_Dir" Attributes="0" KeyPath="icontheme.cache_2" Type="0" />
+  <ROW Component="icontheme.cache_3" ComponentId="{66EBD8D1-BD52-4955-8B5E-2CEF5FE64E98}"
+    Directory_="hicolor_1_Dir" Attributes="0" KeyPath="icontheme.cache_3" Type="0" />
+  <ROW Component="libLerc.dll" ComponentId="{F3625EDE-9DE5-4695-AD06-B4F8D1644EE3}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libLerc.dll" />
+  <ROW Component="libadwaita10.dll" ComponentId="{2DDF6B22-EA49-4F56-A085-763A229E0B49}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libadwaita10.dll" />
+  <ROW Component="libappstream5.dll" ComponentId="{AC4960C2-26D3-4F03-B766-7041923C8ED8}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libappstream5.dll" />
+  <ROW Component="libbrotlicommon.dll" ComponentId="{DF52E74E-D510-4231-936D-72180BD4F855}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libbrotlicommon.dll" />
+  <ROW Component="libbrotlidec.dll" ComponentId="{AC38959F-C356-4E15-A294-AC5F74F63759}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libbrotlidec.dll" />
+  <ROW Component="libbz21.dll" ComponentId="{A610EE49-7A57-49C1-8545-4FA14B1C8AE2}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libbz21.dll" />
+  <ROW Component="libcairo2.dll" ComponentId="{47C9629E-2C71-4C08-BBE4-33426079669A}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libcairo2.dll" />
+  <ROW Component="libcairogobject2.dll" ComponentId="{390776E9-A0B3-4797-908D-6A2EFEA3E9AF}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libcairogobject2.dll" />
+  <ROW Component="libcairoscriptinterpreter2.dll"
+    ComponentId="{01102E60-8F3F-4414-9E54-8ED1C03136BC}" Directory_="APPDIR" Attributes="256"
+    KeyPath="libcairoscriptinterpreter2.dll" />
+  <ROW Component="libcrypto3x64.dll" ComponentId="{F0DB4CF1-6CD6-4664-A6EB-158D0F7D91DE}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libcrypto3x64.dll" />
+  <ROW Component="libcurl4.dll" ComponentId="{3527E3F2-1E9B-40EB-9048-F59A55193A55}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libcurl4.dll" />
+  <ROW Component="libdatrie1.dll" ComponentId="{A1FDDA2A-4C6B-4C72-A470-CC60A37E3800}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libdatrie1.dll" />
+  <ROW Component="libdeflate.dll" ComponentId="{27C0E691-33E5-456E-B348-84286BC4DB53}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libdeflate.dll" />
+  <ROW Component="libepoxy0.dll" ComponentId="{9E02BB66-D49C-4A3E-86D7-911CA3BB70E1}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libepoxy0.dll" />
+  <ROW Component="libexpat1.dll" ComponentId="{C61AC67A-6B14-4F2C-AC5E-6C41FBCFBD8A}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libexpat1.dll" />
+  <ROW Component="libffi8.dll" ComponentId="{29318273-99AC-4A25-9B46-194BF6657863}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libffi8.dll" />
+  <ROW Component="libfontconfig1.dll" ComponentId="{B3BA7334-CFCA-4180-95EA-E09FC9C7DCE8}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libfontconfig1.dll" />
+  <ROW Component="libfreetype6.dll" ComponentId="{B8436A77-13B7-404A-91E1-42B285E25B10}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libfreetype6.dll" />
+  <ROW Component="libfribidi0.dll" ComponentId="{27CCB607-7274-47DC-B5D9-DE4A3476383E}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libfribidi0.dll" />
+  <ROW Component="libgcc_s_seh1.dll" ComponentId="{D06D5DF3-C627-49BA-8C20-56EBC5046F6C}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libgcc_s_seh1.dll" />
+  <ROW Component="libgdk_pixbuf2.00.dll" ComponentId="{958ED6BF-796D-4F2C-A6ED-48E2A5C9EB03}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libgdk_pixbuf2.00.dll" />
+  <ROW Component="libgio2.00.dll" ComponentId="{43EA6E61-F4CB-4C61-B573-DB0154D72BA5}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libgio2.00.dll" />
+  <ROW Component="libglib2.00.dll" ComponentId="{EC5BE159-D405-4E83-BEC6-F52E225814F7}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libglib2.00.dll" />
+  <ROW Component="libgmodule2.00.dll" ComponentId="{07764B54-94D2-4AA5-841F-3075845DF840}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libgmodule2.00.dll" />
+  <ROW Component="libgobject2.00.dll" ComponentId="{2DA2430C-2B29-4E89-941F-70FFD7FD5D50}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libgobject2.00.dll" />
+  <ROW Component="libgraphene1.00.dll" ComponentId="{65D3F14B-1F44-40C5-ABA8-EF7871CB2DA2}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libgraphene1.00.dll" />
+  <ROW Component="libgraphite2.dll" ComponentId="{C331BA59-7121-4ACA-A141-8B74474840B8}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libgraphite2.dll" />
+  <ROW Component="libgtk41.dll" ComponentId="{75B548A8-DEB5-440F-988A-8E00B97E9E83}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libgtk41.dll" />
+  <ROW Component="libgtksourceview50.dll" ComponentId="{34DED31D-8E5B-48D5-A910-6F1A1C547155}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libgtksourceview50.dll" />
+  <ROW Component="libharfbuzz0.dll" ComponentId="{DC63788F-B6F8-40AA-8D47-321C2870769B}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libharfbuzz0.dll" />
+  <ROW Component="libiconv2.dll" ComponentId="{C923497E-AFDF-41D7-BFB5-338C40DD75AE}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libiconv2.dll" />
+  <ROW Component="libidn20.dll" ComponentId="{16B6C231-BE64-4A02-8A20-0B87F3AAF9C0}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libidn20.dll" />
+  <ROW Component="libintl8.dll" ComponentId="{6E03E865-AC67-43A3-B029-FE5AF1E3A11E}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libintl8.dll" />
+  <ROW Component="libjbig0.dll" ComponentId="{C99BD687-81AF-464D-824A-819CF11F290D}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libjbig0.dll" />
+  <ROW Component="libjpeg8.dll" ComponentId="{F4094BAD-6355-4B80-BFAB-40FF5D9D3DF6}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libjpeg8.dll" />
+  <ROW Component="liblzma5.dll" ComponentId="{CAE7C32B-71A5-41BD-BC44-E501381BADFB}"
+    Directory_="APPDIR" Attributes="256" KeyPath="liblzma5.dll" />
+  <ROW Component="liblzo22.dll" ComponentId="{D932566F-6F3E-4298-9D74-9818B3FB4532}"
+    Directory_="APPDIR" Attributes="256" KeyPath="liblzo22.dll" />
+  <ROW Component="libnghttp214.dll" ComponentId="{72E595C4-D9E6-46BB-B5A9-F619F99E8ED3}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libnghttp214.dll" />
+  <ROW Component="libpango1.00.dll" ComponentId="{6213CEBB-0109-44B8-8C0A-541054168AE3}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libpango1.00.dll" />
+  <ROW Component="libpangocairo1.00.dll" ComponentId="{D8489227-BD23-49F9-80E3-23E980AF0F76}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libpangocairo1.00.dll" />
+  <ROW Component="libpangoft21.00.dll" ComponentId="{116C48C1-9EF9-40CB-AED0-533AE6702B9E}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libpangoft21.00.dll" />
+  <ROW Component="libpangowin321.00.dll" ComponentId="{A69ECBF8-52AB-4F2A-8CEF-0AC7B25DCF1F}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libpangowin321.00.dll" />
+  <ROW Component="libpcre280.dll" ComponentId="{00D95D11-A137-434E-856D-C5B740231815}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libpcre280.dll" />
+  <ROW Component="libpixbufloaderani.dll" ComponentId="{613C2B80-C96D-42B6-8CE8-0BF8AA4AC7E3}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloaderani.dll" />
+  <ROW Component="libpixbufloaderani.dll.a" ComponentId="{A588C983-48CA-4288-91DC-B6F808566A4D}"
+    Directory_="loaders_Dir" Attributes="0" KeyPath="libpixbufloaderani.dll.a" Type="0" />
+  <ROW Component="libpixbufloaderbmp.dll" ComponentId="{4FA1AF55-DD9E-406C-AC85-3912CB7A4B40}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloaderbmp.dll" />
+  <ROW Component="libpixbufloadergif.dll" ComponentId="{F35F3437-AA08-4593-AF9B-557BD3696B60}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloadergif.dll" />
+  <ROW Component="libpixbufloadericns.dll" ComponentId="{AB77CB95-5C1E-4AD0-B9FD-EF05D4835C5B}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloadericns.dll" />
+  <ROW Component="libpixbufloaderico.dll" ComponentId="{EAE7F679-5378-412B-9168-83A519BE2A0D}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloaderico.dll" />
+  <ROW Component="libpixbufloaderjpeg.dll" ComponentId="{D6BEF026-5830-48E2-BC74-C0C4878905C0}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloaderjpeg.dll" />
+  <ROW Component="libpixbufloaderpng.dll" ComponentId="{B312962E-D091-4C6D-AC67-8867C1B5ADA8}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloaderpng.dll" />
+  <ROW Component="libpixbufloaderpnm.dll" ComponentId="{52C6A98B-5678-4D2A-BF0A-D7803EA3D55B}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloaderpnm.dll" />
+  <ROW Component="libpixbufloaderqtif.dll" ComponentId="{9894C098-878C-41D3-9F8D-C63C20C36456}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloaderqtif.dll" />
+  <ROW Component="libpixbufloadersvg.dll" ComponentId="{DA9D707E-4B61-4F6F-97B9-587650D33664}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloadersvg.dll" />
+  <ROW Component="libpixbufloadertga.dll" ComponentId="{02B593F3-1543-4C27-B01E-FDC71569A844}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloadertga.dll" />
+  <ROW Component="libpixbufloadertiff.dll" ComponentId="{BB079EE7-5AF6-4197-A34F-F4124191373C}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloadertiff.dll" />
+  <ROW Component="libpixbufloaderxbm.dll" ComponentId="{D1DBDCBA-5BDE-496A-99E4-28B323846AEE}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloaderxbm.dll" />
+  <ROW Component="libpixbufloaderxpm.dll" ComponentId="{3EEEF810-8927-47E5-BDA6-A976CA4EB86C}"
+    Directory_="loaders_Dir" Attributes="256" KeyPath="libpixbufloaderxpm.dll" />
+  <ROW Component="libpixman10.dll" ComponentId="{DBFFC81B-B7E0-4E49-AEB8-0F9CA1BD50A9}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libpixman10.dll" />
+  <ROW Component="libpng1616.dll" ComponentId="{54287B67-6452-4DD7-B24B-46532A76A93B}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libpng1616.dll" />
+  <ROW Component="libpsl5.dll" ComponentId="{1FA2302D-7CBB-4073-8C8B-726F7D21A43E}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libpsl5.dll" />
+  <ROW Component="librsvg22.dll" ComponentId="{BA8210D3-DA91-41DD-9761-0111FF85E3E7}"
+    Directory_="APPDIR" Attributes="256" KeyPath="librsvg22.dll" />
+  <ROW Component="libsharpyuv0.dll" ComponentId="{C81CBC1B-64A1-494A-B6EC-C8D21BE33DD1}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libsharpyuv0.dll" />
+  <ROW Component="libssh21.dll" ComponentId="{DC4575F7-3D45-4FBE-A754-A47D9F6E3020}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libssh21.dll" />
+  <ROW Component="libssl3x64.dll" ComponentId="{1C0F461A-8422-4916-906F-E865FC6190DB}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libssl3x64.dll" />
+  <ROW Component="libstdc6.dll" ComponentId="{51408811-9590-4781-AFA6-625780999850}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libstdc6.dll" />
+  <ROW Component="libthai0.dll" ComponentId="{E3D113D6-CF3F-43B7-9027-21A840CE4354}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libthai0.dll" />
+  <ROW Component="libtiff6.dll" ComponentId="{5C99FC1E-8F47-48E1-A1BF-9D81B35E3D6E}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libtiff6.dll" />
+  <ROW Component="libunistring5.dll" ComponentId="{3DC31D34-3A11-4AA1-B54B-D9957BD653B3}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libunistring5.dll" />
+  <ROW Component="libwebp7.dll" ComponentId="{9685F048-958F-4424-8691-A85D70CDD244}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libwebp7.dll" />
+  <ROW Component="libwinpthread1.dll" ComponentId="{BA780F8E-F414-4172-A245-D1EFBE135053}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libwinpthread1.dll" />
+  <ROW Component="libxml22.dll" ComponentId="{C94C6BD4-42F2-478C-BB10-F8E733A02A04}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libxml22.dll" />
+  <ROW Component="libxmlb2.dll" ComponentId="{9C5365E0-C583-409B-9A0D-F18D529F768F}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libxmlb2.dll" />
+  <ROW Component="libyaml02.dll" ComponentId="{118005F4-922E-41CE-97D3-F8BDD2ACF4A7}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libyaml02.dll" />
+  <ROW Component="libzstd.dll" ComponentId="{533BD311-CCFA-4096-97D4-752AAE8FBA71}"
+    Directory_="APPDIR" Attributes="256" KeyPath="libzstd.dll" />
+  <ROW Component="licenses.snippets" ComponentId="{0025151B-9DEF-42AF-A0A7-3B71C84905CF}"
+    Directory_="snippets_Dir" Attributes="0" KeyPath="licenses.snippets" Type="0" />
+  <ROW Component="licenses.snippets_1" ComponentId="{166D5A1A-A4FA-4AB3-97B8-5071D29DEBD3}"
+    Directory_="snippets_1_Dir" Attributes="0" KeyPath="licenses.snippets_1" Type="0" />
+  <ROW Component="loaders.cache" ComponentId="{B6885FB4-F578-4035-8EC1-E67E04C890E1}"
+    Directory_="__Dir" Attributes="0" KeyPath="loaders.cache" Type="0" />
+  <ROW Component="org.gnome.Adwaita1.Demo.svg" ComponentId="{E95919F5-1F7A-48A8-8551-C3181A6BF46C}"
+    Directory_="apps_3_Dir" Attributes="0" KeyPath="org.gnome.Adwaita1.Demo.svg" Type="0" />
+  <ROW Component="org.gnome.Adwaita1.Demo.svg_1"
+    ComponentId="{2236947D-BB40-4C1D-ADA7-DA4263584336}" Directory_="apps_8_Dir" Attributes="0"
+    KeyPath="org.gnome.Adwaita1.Demo.svg_1" Type="0" />
+  <ROW Component="org.gnome.Adwaita1.Demosymbolic.svg"
+    ComponentId="{EB2D6652-3F36-4948-AB0A-B64FB31C72E1}" Directory_="apps_4_Dir" Attributes="0"
+    KeyPath="org.gnome.Adwaita1.Demosymbolic.svg" Type="0" />
+  <ROW Component="org.gnome.Adwaita1.Demosymbolic.svg_1"
+    ComponentId="{D81B9DAE-E222-49F6-8DC6-14A820F8F115}" Directory_="apps_9_Dir" Attributes="0"
+    KeyPath="org.gnome.Adwaita1.Demosymbolic.svg_1" Type="0" />
+  <ROW Component="processworkingsymbolic.svg" ComponentId="{D047E3E6-EF13-45DB-B340-A603DA646BEF}"
+    Directory_="status_4_Dir" Attributes="0" KeyPath="processworkingsymbolic.svg" Type="0" />
+  <ROW Component="processworkingsymbolic.svg_1" ComponentId="{0DAD16AD-7133-4EC3-AD47-E40BD5DA89C3}"
+    Directory_="status_9_Dir" Attributes="0" KeyPath="processworkingsymbolic.svg_1" Type="0" />
+  <ROW Component="seabird.exe" ComponentId="{189092EE-097F-464A-9F25-CBD518929E0A}"
+    Directory_="APPDIR" Attributes="256" KeyPath="seabird.exe" />
+  <ROW Component="zlib1.dll" ComponentId="{A5EC1777-C4C3-4F5E-AE0F-523B962A9267}"
+    Directory_="APPDIR" Attributes="256" KeyPath="zlib1.dll" />
+</COMPONENT>
+<COMPONENT cid="caphyon.advinst.msicomp.MsiFeatsComponent">
+  <ROW Feature="MainFeature" Title="MainFeature" Description="Description" Display="1" Level="1"
+    Directory_="APPDIR" Attributes="0" />
+  <ATTRIBUTE name="CurrentFeature" value="MainFeature" />
+</COMPONENT>
+<COMPONENT cid="caphyon.advinst.msicomp.MsiFilesComponent">
+<ROW File="gdbus.exe" Component_="gdbus.exe" FileName="gdbus.exe" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\gdbus.exe" SelfReg="false" DigSign="true" />
+<ROW File="librsvg22.dll" Component_="librsvg22.dll" FileName="LIBRSV~1.DLL|librsvg-2-2.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\librsvg-2-2.dll" SelfReg="false" />
+<ROW File="LICENSE" Component_="LICENSE" FileName="LICENSE" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\LICENSE" SelfReg="false" />
+<ROW File="README.md" Component_="LICENSE" FileName="README.md" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\README.md" SelfReg="false" />
+<ROW File="libbrotlicommon.dll" Component_="libbrotlicommon.dll"
+  FileName="LIBBRO~1.DLL|libbrotlicommon.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libbrotlicommon.dll" SelfReg="false" />
+<ROW File="libbrotlidec.dll" Component_="libbrotlidec.dll" FileName="LIBBRO~2.DLL|libbrotlidec.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libbrotlidec.dll" SelfReg="false" />
+<ROW File="libbz21.dll" Component_="libbz21.dll" FileName="libbz2-1.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libbz2-1.dll" SelfReg="false" />
+<ROW File="libcairoscriptinterpreter2.dll" Component_="libcairoscriptinterpreter2.dll"
+  FileName="LIBCAI~1.DLL|libcairo-script-interpreter-2.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libcairo-script-interpreter-2.dll" SelfReg="false" />
+<ROW File="libcrypto3x64.dll" Component_="libcrypto3x64.dll"
+  FileName="LIBCRY~1.DLL|libcrypto-3-x64.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libcrypto-3-x64.dll" SelfReg="false" />
+<ROW File="libcurl4.dll" Component_="libcurl4.dll" FileName="LIBCUR~1.DLL|libcurl-4.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libcurl-4.dll" SelfReg="false" />
+<ROW File="libdatrie1.dll" Component_="libdatrie1.dll" FileName="LIBDAT~1.DLL|libdatrie-1.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libdatrie-1.dll" SelfReg="false" />
+<ROW File="libdeflate.dll" Component_="libdeflate.dll" FileName="LIBDEF~1.DLL|libdeflate.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libdeflate.dll" SelfReg="false" />
+<ROW File="libepoxy0.dll" Component_="libepoxy0.dll" FileName="LIBEPO~1.DLL|libepoxy-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libepoxy-0.dll" SelfReg="false" />
+<ROW File="libexpat1.dll" Component_="libexpat1.dll" FileName="LIBEXP~1.DLL|libexpat-1.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libexpat-1.dll" SelfReg="false" />
+<ROW File="libgraphite2.dll" Component_="libgraphite2.dll" FileName="LIBGRA~1.DLL|libgraphite2.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libgraphite2.dll" SelfReg="false" />
+<ROW File="libgtk41.dll" Component_="libgtk41.dll" FileName="LIBGTK~1.DLL|libgtk-4-1.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libgtk-4-1.dll" SelfReg="false" />
+<ROW File="libharfbuzz0.dll" Component_="libharfbuzz0.dll" FileName="LIBHAR~1.DLL|libharfbuzz-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libharfbuzz-0.dll" SelfReg="false" />
+<ROW File="libiconv2.dll" Component_="libiconv2.dll" FileName="LIBICO~1.DLL|libiconv-2.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libiconv-2.dll" SelfReg="false" />
+<ROW File="libidn20.dll" Component_="libidn20.dll" FileName="LIBIDN~1.DLL|libidn2-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libidn2-0.dll" SelfReg="false" />
+<ROW File="libjbig0.dll" Component_="libjbig0.dll" FileName="LIBJBI~1.DLL|libjbig-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libjbig-0.dll" SelfReg="false" />
+<ROW File="libjpeg8.dll" Component_="libjpeg8.dll" FileName="LIBJPE~1.DLL|libjpeg-8.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libjpeg-8.dll" SelfReg="false" />
+<ROW File="libLerc.dll" Component_="libLerc.dll" FileName="libLerc.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libLerc.dll" SelfReg="false" />
+<ROW File="liblzma5.dll" Component_="liblzma5.dll" FileName="LIBLZM~1.DLL|liblzma-5.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\liblzma-5.dll" SelfReg="false" />
+<ROW File="liblzo22.dll" Component_="liblzo22.dll" FileName="LIBLZO~1.DLL|liblzo2-2.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\liblzo2-2.dll" SelfReg="false" />
+<ROW File="libnghttp214.dll" Component_="libnghttp214.dll" FileName="LIBNGH~1.DLL|libnghttp2-14.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libnghttp2-14.dll" SelfReg="false" />
+<ROW File="libpangocairo1.00.dll" Component_="libpangocairo1.00.dll"
+  FileName="LIBPAN~1.DLL|libpangocairo-1.0-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libpangocairo-1.0-0.dll" SelfReg="false" />
+<ROW File="libpangoft21.00.dll" Component_="libpangoft21.00.dll"
+  FileName="LIBPAN~2.DLL|libpangoft2-1.0-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libpangoft2-1.0-0.dll" SelfReg="false" />
+<ROW File="libpangowin321.00.dll" Component_="libpangowin321.00.dll"
+  FileName="LIBPAN~3.DLL|libpangowin32-1.0-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libpangowin32-1.0-0.dll" SelfReg="false" />
+<ROW File="libpcre280.dll" Component_="libpcre280.dll" FileName="LIBPCR~1.DLL|libpcre2-8-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libpcre2-8-0.dll" SelfReg="false" />
+<ROW File="libpsl5.dll" Component_="libpsl5.dll" FileName="libpsl-5.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libpsl-5.dll" SelfReg="false" />
+<ROW File="libsharpyuv0.dll" Component_="libsharpyuv0.dll" FileName="LIBSHA~1.DLL|libsharpyuv-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libsharpyuv-0.dll" SelfReg="false" />
+<ROW File="libssh21.dll" Component_="libssh21.dll" FileName="LIBSSH~1.DLL|libssh2-1.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libssh2-1.dll" SelfReg="false" />
+<ROW File="libssl3x64.dll" Component_="libssl3x64.dll" FileName="LIBSSL~1.DLL|libssl-3-x64.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libssl-3-x64.dll" SelfReg="false" />
+<ROW File="libthai0.dll" Component_="libthai0.dll" FileName="LIBTHA~1.DLL|libthai-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libthai-0.dll" SelfReg="false" />
+<ROW File="libtiff6.dll" Component_="libtiff6.dll" FileName="LIBTIF~1.DLL|libtiff-6.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libtiff-6.dll" SelfReg="false" />
+<ROW File="libunistring5.dll" Component_="libunistring5.dll"
+  FileName="LIBUNI~1.DLL|libunistring-5.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libunistring-5.dll" SelfReg="false" />
+<ROW File="libwebp7.dll" Component_="libwebp7.dll" FileName="LIBWEB~1.DLL|libwebp-7.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libwebp-7.dll" SelfReg="false" />
+<ROW File="libwinpthread1.dll" Component_="libwinpthread1.dll"
+  FileName="LIBWIN~1.DLL|libwinpthread-1.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libwinpthread-1.dll" SelfReg="false" />
+<ROW File="libxml22.dll" Component_="libxml22.dll" FileName="LIBXML~1.DLL|libxml2-2.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libxml2-2.dll" SelfReg="false" />
+<ROW File="libxmlb2.dll" Component_="libxmlb2.dll" FileName="LIBXML~2.DLL|libxmlb-2.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libxmlb-2.dll" SelfReg="false" />
+<ROW File="libyaml02.dll" Component_="libyaml02.dll" FileName="LIBYAM~1.DLL|libyaml-0-2.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libyaml-0-2.dll" SelfReg="false" />
+<ROW File="libzstd.dll" Component_="libzstd.dll" FileName="libzstd.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libzstd.dll" SelfReg="false" />
+<ROW File="libadwaita10.dll" Component_="libadwaita10.dll"
+  FileName="LIBADW~1.DLL|libadwaita-1-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libadwaita-1-0.dll" SelfReg="false" />
+<ROW File="libappstream5.dll" Component_="libappstream5.dll"
+  FileName="LIBAPP~1.DLL|libappstream-5.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libappstream-5.dll" SelfReg="false" />
+<ROW File="libcairo2.dll" Component_="libcairo2.dll" FileName="LIBCAI~2.DLL|libcairo-2.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libcairo-2.dll" SelfReg="false" />
+<ROW File="libcairogobject2.dll" Component_="libcairogobject2.dll"
+  FileName="LIBCAI~3.DLL|libcairo-gobject-2.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libcairo-gobject-2.dll" SelfReg="false" />
+<ROW File="libffi8.dll" Component_="libffi8.dll" FileName="libffi-8.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libffi-8.dll" SelfReg="false" />
+<ROW File="libfontconfig1.dll" Component_="libfontconfig1.dll"
+  FileName="LIBFON~1.DLL|libfontconfig-1.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libfontconfig-1.dll" SelfReg="false" />
+<ROW File="libfreetype6.dll" Component_="libfreetype6.dll" FileName="LIBFRE~1.DLL|libfreetype-6.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libfreetype-6.dll" SelfReg="false" />
+<ROW File="libfribidi0.dll" Component_="libfribidi0.dll" FileName="LIBFRI~1.DLL|libfribidi-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libfribidi-0.dll" SelfReg="false" />
+<ROW File="libgcc_s_seh1.dll" Component_="libgcc_s_seh1.dll"
+  FileName="LIBGCC~1.DLL|libgcc_s_seh-1.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libgcc_s_seh-1.dll" SelfReg="false" />
+<ROW File="libgdk_pixbuf2.00.dll" Component_="libgdk_pixbuf2.00.dll"
+  FileName="LIBGDK~1.DLL|libgdk_pixbuf-2.0-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libgdk_pixbuf-2.0-0.dll" SelfReg="false" />
+<ROW File="libgio2.00.dll" Component_="libgio2.00.dll" FileName="LIBGIO~1.DLL|libgio-2.0-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libgio-2.0-0.dll" SelfReg="false" />
+<ROW File="libglib2.00.dll" Component_="libglib2.00.dll" FileName="LIBGLI~1.DLL|libglib-2.0-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libglib-2.0-0.dll" SelfReg="false" />
+<ROW File="libgmodule2.00.dll" Component_="libgmodule2.00.dll"
+  FileName="LIBGMO~1.DLL|libgmodule-2.0-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libgmodule-2.0-0.dll" SelfReg="false" />
+<ROW File="libgobject2.00.dll" Component_="libgobject2.00.dll"
+  FileName="LIBGOB~1.DLL|libgobject-2.0-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libgobject-2.0-0.dll" SelfReg="false" />
+<ROW File="libgraphene1.00.dll" Component_="libgraphene1.00.dll"
+  FileName="LIBGRA~2.DLL|libgraphene-1.0-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libgraphene-1.0-0.dll" SelfReg="false" />
+<ROW File="libgtksourceview50.dll" Component_="libgtksourceview50.dll"
+  FileName="LIBGTK~2.DLL|libgtksourceview-5-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libgtksourceview-5-0.dll" SelfReg="false" />
+<ROW File="libintl8.dll" Component_="libintl8.dll" FileName="LIBINT~1.DLL|libintl-8.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libintl-8.dll" SelfReg="false" />
+<ROW File="libpango1.00.dll" Component_="libpango1.00.dll"
+  FileName="LIBPAN~4.DLL|libpango-1.0-0.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\libpango-1.0-0.dll" SelfReg="false" />
+<ROW File="libpixman10.dll" Component_="libpixman10.dll" FileName="LIBPIX~1.DLL|libpixman-1-0.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libpixman-1-0.dll" SelfReg="false" />
+<ROW File="libpng1616.dll" Component_="libpng1616.dll" FileName="LIBPNG~1.DLL|libpng16-16.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libpng16-16.dll" SelfReg="false" />
+<ROW File="libstdc6.dll" Component_="libstdc6.dll" FileName="LIBSTD~1.DLL|libstdc++-6.dll"
+  Attributes="0" SourcePath="..\..\dist\seabird_windows_amd64_v1\libstdc++-6.dll" SelfReg="false" />
+<ROW File="zlib1.dll" Component_="zlib1.dll" FileName="zlib1.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\zlib1.dll" SelfReg="false" />
+<ROW File="seabird.exe" Component_="seabird.exe" FileName="seabird.exe" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\seabird.exe" SelfReg="false" DigSign="true" />
+<ROW File="libpixbufloaderani.dll" Component_="libpixbufloaderani.dll"
+  FileName="LIBPIX~1.DLL|libpixbufloader-ani.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-ani.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloaderani.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPIX~1.A|libpixbufloader-ani.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-ani.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloaderbmp.dll" Component_="libpixbufloaderbmp.dll"
+  FileName="LIBPIX~2.DLL|libpixbufloader-bmp.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-bmp.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloaderbmp.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPIX~2.A|libpixbufloader-bmp.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-bmp.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloadergif.dll" Component_="libpixbufloadergif.dll"
+  FileName="LIBPIX~3.DLL|libpixbufloader-gif.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-gif.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloadergif.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPIX~3.A|libpixbufloader-gif.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-gif.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloadericns.dll" Component_="libpixbufloadericns.dll"
+  FileName="LIBPIX~4.DLL|libpixbufloader-icns.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-icns.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloadericns.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPIX~4.A|libpixbufloader-icns.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-icns.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloaderico.dll" Component_="libpixbufloaderico.dll"
+  FileName="LIBPIX~5.DLL|libpixbufloader-ico.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-ico.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloaderico.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPIX~5.A|libpixbufloader-ico.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-ico.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloaderjpeg.dll" Component_="libpixbufloaderjpeg.dll"
+  FileName="LIBPIX~6.DLL|libpixbufloader-jpeg.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-jpeg.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloaderjpeg.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPIX~6.A|libpixbufloader-jpeg.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-jpeg.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloaderpng.dll" Component_="libpixbufloaderpng.dll"
+  FileName="LIBPIX~7.DLL|libpixbufloader-png.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-png.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloaderpng.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPIX~7.A|libpixbufloader-png.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-png.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloaderpnm.dll" Component_="libpixbufloaderpnm.dll"
+  FileName="LIBPIX~8.DLL|libpixbufloader-pnm.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-pnm.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloaderpnm.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPIX~8.A|libpixbufloader-pnm.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-pnm.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloaderqtif.dll" Component_="libpixbufloaderqtif.dll"
+  FileName="LIBPIX~9.DLL|libpixbufloader-qtif.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-qtif.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloaderqtif.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPIX~9.A|libpixbufloader-qtif.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-qtif.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloadersvg.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPI~10.A|libpixbufloader-svg.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-svg.a"
+  SelfReg="false" />
+<ROW File="libpixbufloadersvg.dll" Component_="libpixbufloadersvg.dll"
+  FileName="LIBPI~10.DLL|libpixbufloader-svg.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-svg.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloadersvg.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPI~11.A|libpixbufloader-svg.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-svg.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloadertga.dll" Component_="libpixbufloadertga.dll"
+  FileName="LIBPI~11.DLL|libpixbufloader-tga.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-tga.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloadertga.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPI~12.A|libpixbufloader-tga.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-tga.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloadertiff.dll" Component_="libpixbufloadertiff.dll"
+  FileName="LIBPI~12.DLL|libpixbufloader-tiff.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-tiff.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloadertiff.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPI~13.A|libpixbufloader-tiff.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-tiff.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloaderxbm.dll" Component_="libpixbufloaderxbm.dll"
+  FileName="LIBPI~13.DLL|libpixbufloader-xbm.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-xbm.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloaderxbm.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPI~14.A|libpixbufloader-xbm.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-xbm.dll.a"
+  SelfReg="false" />
+<ROW File="libpixbufloaderxpm.dll" Component_="libpixbufloaderxpm.dll"
+  FileName="LIBPI~14.DLL|libpixbufloader-xpm.dll" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-xpm.dll"
+  SelfReg="false" />
+<ROW File="libpixbufloaderxpm.dll.a" Component_="libpixbufloaderani.dll.a"
+  FileName="LIBPI~15.A|libpixbufloader-xpm.dll.a" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders\libpixbufloader-xpm.dll.a"
+  SelfReg="false" />
+<ROW File="loaders.cache" Component_="loaders.cache" FileName="LOADER~1.CAC|loaders.cache"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\2.10.0\loaders.cache"
+  SelfReg="false" />
+<ROW File="gschemas.compiled" Component_="gschemas.compiled"
+  FileName="GSCHEM~1.COM|gschemas.compiled" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\glib-2.0\schemas\gschemas.compiled"
+  SelfReg="false" />
+<ROW File="bn.gresource" Component_="bn.gresource" FileName="BN~1.GRE|bn.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\bn.gresource"
+  SelfReg="false" />
+<ROW File="da.gresource" Component_="bn.gresource" FileName="DA~1.GRE|da.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\da.gresource"
+  SelfReg="false" />
+<ROW File="de.gresource" Component_="bn.gresource" FileName="DE~1.GRE|de.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\de.gresource"
+  SelfReg="false" />
+<ROW File="es.gresource" Component_="bn.gresource" FileName="ES~1.GRE|es.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\es.gresource"
+  SelfReg="false" />
+<ROW File="et.gresource" Component_="bn.gresource" FileName="ET~1.GRE|et.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\et.gresource"
+  SelfReg="false" />
+<ROW File="fi.gresource" Component_="bn.gresource" FileName="FI~1.GRE|fi.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\fi.gresource"
+  SelfReg="false" />
+<ROW File="fr.gresource" Component_="bn.gresource" FileName="FR~1.GRE|fr.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\fr.gresource"
+  SelfReg="false" />
+<ROW File="hi.gresource" Component_="bn.gresource" FileName="HI~1.GRE|hi.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\hi.gresource"
+  SelfReg="false" />
+<ROW File="hu.gresource" Component_="bn.gresource" FileName="HU~1.GRE|hu.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\hu.gresource"
+  SelfReg="false" />
+<ROW File="it.gresource" Component_="bn.gresource" FileName="IT~1.GRE|it.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\it.gresource"
+  SelfReg="false" />
+<ROW File="ja.gresource" Component_="bn.gresource" FileName="JA~1.GRE|ja.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\ja.gresource"
+  SelfReg="false" />
+<ROW File="ko.gresource" Component_="bn.gresource" FileName="KO~1.GRE|ko.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\ko.gresource"
+  SelfReg="false" />
+<ROW File="lt.gresource" Component_="bn.gresource" FileName="LT~1.GRE|lt.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\lt.gresource"
+  SelfReg="false" />
+<ROW File="ms.gresource" Component_="bn.gresource" FileName="MS~1.GRE|ms.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\ms.gresource"
+  SelfReg="false" />
+<ROW File="nb.gresource" Component_="bn.gresource" FileName="NB~1.GRE|nb.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\nb.gresource"
+  SelfReg="false" />
+<ROW File="nl.gresource" Component_="bn.gresource" FileName="NL~1.GRE|nl.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\nl.gresource"
+  SelfReg="false" />
+<ROW File="pl.gresource" Component_="bn.gresource" FileName="PL~1.GRE|pl.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\pl.gresource"
+  SelfReg="false" />
+<ROW File="pt.gresource" Component_="bn.gresource" FileName="PT~1.GRE|pt.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\pt.gresource"
+  SelfReg="false" />
+<ROW File="ru.gresource" Component_="bn.gresource" FileName="RU~1.GRE|ru.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\ru.gresource"
+  SelfReg="false" />
+<ROW File="sv.gresource" Component_="bn.gresource" FileName="SV~1.GRE|sv.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\sv.gresource"
+  SelfReg="false" />
+<ROW File="th.gresource" Component_="bn.gresource" FileName="TH~1.GRE|th.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\th.gresource"
+  SelfReg="false" />
+<ROW File="uk.gresource" Component_="bn.gresource" FileName="UK~1.GRE|uk.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\uk.gresource"
+  SelfReg="false" />
+<ROW File="zh.gresource" Component_="bn.gresource" FileName="ZH~1.GRE|zh.gresource" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\emoji\zh.gresource"
+  SelfReg="false" />
+<ROW File="gtk4builder.rng" Component_="gtk4builder.rng" FileName="GTK4BU~1.RNG|gtk4builder.rng"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtk-4.0\gtk4builder.rng"
+  SelfReg="false" />
+<ROW File="BuilderBlocks.ttf" Component_="BuilderBlocks.ttf"
+  FileName="BUILDE~1.TTF|BuilderBlocks.ttf" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\fonts\BuilderBlocks.ttf"
+  SelfReg="false" />
+<ROW File="abnf.lang" Component_="abnf.lang" FileName="ABNF~1.LAN|abnf.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\abnf.lang"
+  SelfReg="false" />
+<ROW File="actionscript.lang" Component_="abnf.lang" FileName="ACTION~1.LAN|actionscript.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\actionscript.lang"
+  SelfReg="false" />
+<ROW File="ada.lang" Component_="abnf.lang" FileName="ADA~1.LAN|ada.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\ada.lang"
+  SelfReg="false" />
+<ROW File="ansforth94.lang" Component_="abnf.lang" FileName="ANSFOR~1.LAN|ansforth94.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\ansforth94.lang"
+  SelfReg="false" />
+<ROW File="asciidoc.lang" Component_="abnf.lang" FileName="ASCIID~1.LAN|asciidoc.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\asciidoc.lang"
+  SelfReg="false" />
+<ROW File="asp.lang" Component_="abnf.lang" FileName="ASP~1.LAN|asp.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\asp.lang"
+  SelfReg="false" />
+<ROW File="automake.lang" Component_="abnf.lang" FileName="AUTOMA~1.LAN|automake.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\automake.lang"
+  SelfReg="false" />
+<ROW File="awk.lang" Component_="abnf.lang" FileName="AWK~1.LAN|awk.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\awk.lang"
+  SelfReg="false" />
+<ROW File="bennugd.lang" Component_="abnf.lang" FileName="BENNUG~1.LAN|bennugd.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\bennugd.lang"
+  SelfReg="false" />
+<ROW File="bibtex.lang" Component_="abnf.lang" FileName="BIBTEX~1.LAN|bibtex.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\bibtex.lang"
+  SelfReg="false" />
+<ROW File="blueprint.lang" Component_="abnf.lang" FileName="BLUEPR~1.LAN|blueprint.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\blueprint.lang"
+  SelfReg="false" />
+<ROW File="bluespec.lang" Component_="abnf.lang" FileName="BLUESP~1.LAN|bluespec.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\bluespec.lang"
+  SelfReg="false" />
+<ROW File="boo.lang" Component_="abnf.lang" FileName="BOO~1.LAN|boo.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\boo.lang"
+  SelfReg="false" />
+<ROW File="c.lang" Component_="abnf.lang" FileName="C~1.LAN|c.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\c.lang"
+  SelfReg="false" />
+<ROW File="cg.lang" Component_="abnf.lang" FileName="CG~1.LAN|cg.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\cg.lang"
+  SelfReg="false" />
+<ROW File="changelog.lang" Component_="abnf.lang" FileName="CHANGE~1.LAN|changelog.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\changelog.lang"
+  SelfReg="false" />
+<ROW File="chdr.lang" Component_="abnf.lang" FileName="CHDR~1.LAN|chdr.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\chdr.lang"
+  SelfReg="false" />
+<ROW File="cmake.lang" Component_="abnf.lang" FileName="CMAKE~1.LAN|cmake.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\cmake.lang"
+  SelfReg="false" />
+<ROW File="cobol.lang" Component_="abnf.lang" FileName="COBOL~1.LAN|cobol.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\cobol.lang"
+  SelfReg="false" />
+<ROW File="commonlisp.lang" Component_="abnf.lang" FileName="COMMON~1.LAN|commonlisp.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\commonlisp.lang"
+  SelfReg="false" />
+<ROW File="cpp.lang" Component_="abnf.lang" FileName="CPP~1.LAN|cpp.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\cpp.lang"
+  SelfReg="false" />
+<ROW File="cpphdr.lang" Component_="abnf.lang" FileName="CPPHDR~1.LAN|cpphdr.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\cpphdr.lang"
+  SelfReg="false" />
+<ROW File="csharp.lang" Component_="abnf.lang" FileName="CSHARP~1.LAN|csharp.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\csharp.lang"
+  SelfReg="false" />
+<ROW File="css.lang" Component_="abnf.lang" FileName="CSS~1.LAN|css.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\css.lang"
+  SelfReg="false" />
+<ROW File="csv.lang" Component_="abnf.lang" FileName="CSV~1.LAN|csv.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\csv.lang"
+  SelfReg="false" />
+<ROW File="cuda.lang" Component_="abnf.lang" FileName="CUDA~1.LAN|cuda.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\cuda.lang"
+  SelfReg="false" />
+<ROW File="d.lang" Component_="abnf.lang" FileName="D~1.LAN|d.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\d.lang"
+  SelfReg="false" />
+<ROW File="dart.lang" Component_="abnf.lang" FileName="DART~1.LAN|dart.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\dart.lang"
+  SelfReg="false" />
+<ROW File="def.lang" Component_="abnf.lang" FileName="DEF~1.LAN|def.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\def.lang"
+  SelfReg="false" />
+<ROW File="desktop.lang" Component_="abnf.lang" FileName="DESKTO~1.LAN|desktop.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\desktop.lang"
+  SelfReg="false" />
+<ROW File="diff.lang" Component_="abnf.lang" FileName="DIFF~1.LAN|diff.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\diff.lang"
+  SelfReg="false" />
+<ROW File="docbook.lang" Component_="abnf.lang" FileName="DOCBOO~1.LAN|docbook.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\docbook.lang"
+  SelfReg="false" />
+<ROW File="docker.lang" Component_="abnf.lang" FileName="DOCKER~1.LAN|docker.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\docker.lang"
+  SelfReg="false" />
+<ROW File="dosbatch.lang" Component_="abnf.lang" FileName="DOSBAT~1.LAN|dosbatch.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\dosbatch.lang"
+  SelfReg="false" />
+<ROW File="dot.lang" Component_="abnf.lang" FileName="DOT~1.LAN|dot.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\dot.lang"
+  SelfReg="false" />
+<ROW File="dpatch.lang" Component_="abnf.lang" FileName="DPATCH~1.LAN|dpatch.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\dpatch.lang"
+  SelfReg="false" />
+<ROW File="dtd.lang" Component_="abnf.lang" FileName="DTD~1.LAN|dtd.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\dtd.lang"
+  SelfReg="false" />
+<ROW File="dtl.lang" Component_="abnf.lang" FileName="DTL~1.LAN|dtl.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\dtl.lang"
+  SelfReg="false" />
+<ROW File="eiffel.lang" Component_="abnf.lang" FileName="EIFFEL~1.LAN|eiffel.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\eiffel.lang"
+  SelfReg="false" />
+<ROW File="erbhtml.lang" Component_="abnf.lang" FileName="ERB-HT~1.LAN|erb-html.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\erb-html.lang"
+  SelfReg="false" />
+<ROW File="erbjs.lang" Component_="abnf.lang" FileName="ERB-JS~1.LAN|erb-js.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\erb-js.lang"
+  SelfReg="false" />
+<ROW File="erb.lang" Component_="abnf.lang" FileName="ERB~1.LAN|erb.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\erb.lang"
+  SelfReg="false" />
+<ROW File="erlang.lang" Component_="abnf.lang" FileName="ERLANG~1.LAN|erlang.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\erlang.lang"
+  SelfReg="false" />
+<ROW File="fcl.lang" Component_="abnf.lang" FileName="FCL~1.LAN|fcl.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\fcl.lang"
+  SelfReg="false" />
+<ROW File="fish.lang" Component_="abnf.lang" FileName="FISH~1.LAN|fish.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\fish.lang"
+  SelfReg="false" />
+<ROW File="forth.lang" Component_="abnf.lang" FileName="FORTH~1.LAN|forth.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\forth.lang"
+  SelfReg="false" />
+<ROW File="fortran.lang" Component_="abnf.lang" FileName="FORTRA~1.LAN|fortran.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\fortran.lang"
+  SelfReg="false" />
+<ROW File="fsharp.lang" Component_="abnf.lang" FileName="FSHARP~1.LAN|fsharp.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\fsharp.lang"
+  SelfReg="false" />
+<ROW File="ftl.lang" Component_="abnf.lang" FileName="FTL~1.LAN|ftl.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\ftl.lang"
+  SelfReg="false" />
+<ROW File="gap.lang" Component_="abnf.lang" FileName="GAP~1.LAN|gap.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\gap.lang"
+  SelfReg="false" />
+<ROW File="gdblog.lang" Component_="abnf.lang" FileName="GDB-LO~1.LAN|gdb-log.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\gdb-log.lang"
+  SelfReg="false" />
+<ROW File="gdscript.lang" Component_="abnf.lang" FileName="GDSCRI~1.LAN|gdscript.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\gdscript.lang"
+  SelfReg="false" />
+<ROW File="genie.lang" Component_="abnf.lang" FileName="GENIE~1.LAN|genie.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\genie.lang"
+  SelfReg="false" />
+<ROW File="glsl.lang" Component_="abnf.lang" FileName="GLSL~1.LAN|glsl.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\glsl.lang"
+  SelfReg="false" />
+<ROW File="go.lang" Component_="abnf.lang" FileName="GO~1.LAN|go.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\go.lang"
+  SelfReg="false" />
+<ROW File="gradle.lang" Component_="abnf.lang" FileName="GRADLE~1.LAN|gradle.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\gradle.lang"
+  SelfReg="false" />
+<ROW File="groovy.lang" Component_="abnf.lang" FileName="GROOVY~1.LAN|groovy.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\groovy.lang"
+  SelfReg="false" />
+<ROW File="gtkdoc.lang" Component_="abnf.lang" FileName="GTK-DO~1.LAN|gtk-doc.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\gtk-doc.lang"
+  SelfReg="false" />
+<ROW File="gtkrc.lang" Component_="abnf.lang" FileName="GTKRC~1.LAN|gtkrc.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\gtkrc.lang"
+  SelfReg="false" />
+<ROW File="haddock.lang" Component_="abnf.lang" FileName="HADDOC~1.LAN|haddock.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\haddock.lang"
+  SelfReg="false" />
+<ROW File="haskellliterate.lang" Component_="abnf.lang"
+  FileName="HASKEL~1.LAN|haskell-literate.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\haskell-literate.lang"
+  SelfReg="false" />
+<ROW File="haskell.lang" Component_="abnf.lang" FileName="HASKEL~2.LAN|haskell.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\haskell.lang"
+  SelfReg="false" />
+<ROW File="haxe.lang" Component_="abnf.lang" FileName="HAXE~1.LAN|haxe.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\haxe.lang"
+  SelfReg="false" />
+<ROW File="html.lang" Component_="abnf.lang" FileName="HTML~1.LAN|html.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\html.lang"
+  SelfReg="false" />
+<ROW File="idlexelis.lang" Component_="abnf.lang" FileName="IDL-EX~1.LAN|idl-exelis.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\idl-exelis.lang"
+  SelfReg="false" />
+<ROW File="idl.lang" Component_="abnf.lang" FileName="IDL~1.LAN|idl.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\idl.lang"
+  SelfReg="false" />
+<ROW File="imagej.lang" Component_="abnf.lang" FileName="IMAGEJ~1.LAN|imagej.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\imagej.lang"
+  SelfReg="false" />
+<ROW File="ini.lang" Component_="abnf.lang" FileName="INI~1.LAN|ini.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\ini.lang"
+  SelfReg="false" />
+<ROW File="j.lang" Component_="abnf.lang" FileName="J~1.LAN|j.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\j.lang"
+  SelfReg="false" />
+<ROW File="jade.lang" Component_="abnf.lang" FileName="JADE~1.LAN|jade.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\jade.lang"
+  SelfReg="false" />
+<ROW File="java.lang" Component_="abnf.lang" FileName="JAVA~1.LAN|java.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\java.lang"
+  SelfReg="false" />
+<ROW File="javascriptexpressions.lang" Component_="abnf.lang"
+  FileName="JAVASC~1.LAN|javascript-expressions.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\javascript-expressions.lang"
+  SelfReg="false" />
+<ROW File="javascriptfunctionsclasses.lang" Component_="abnf.lang"
+  FileName="JAVASC~2.LAN|javascript-functions-classes.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\javascript-functions-classes.lang"
+  SelfReg="false" />
+<ROW File="javascriptliterals.lang" Component_="abnf.lang"
+  FileName="JAVASC~3.LAN|javascript-literals.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\javascript-literals.lang"
+  SelfReg="false" />
+<ROW File="javascriptmodules.lang" Component_="abnf.lang"
+  FileName="JAVASC~4.LAN|javascript-modules.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\javascript-modules.lang"
+  SelfReg="false" />
+<ROW File="javascriptstatements.lang" Component_="abnf.lang"
+  FileName="JAVASC~5.LAN|javascript-statements.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\javascript-statements.lang"
+  SelfReg="false" />
+<ROW File="javascriptvalues.lang" Component_="abnf.lang"
+  FileName="JAVASC~6.LAN|javascript-values.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\javascript-values.lang"
+  SelfReg="false" />
+<ROW File="javascript.lang" Component_="abnf.lang" FileName="JAVASC~7.LAN|javascript.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\javascript.lang"
+  SelfReg="false" />
+<ROW File="jsdoc.lang" Component_="abnf.lang" FileName="JSDOC~1.LAN|jsdoc.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\jsdoc.lang"
+  SelfReg="false" />
+<ROW File="json.lang" Component_="abnf.lang" FileName="JSON~1.LAN|json.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\json.lang"
+  SelfReg="false" />
+<ROW File="jsx.lang" Component_="abnf.lang" FileName="JSX~1.LAN|jsx.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\jsx.lang"
+  SelfReg="false" />
+<ROW File="julia.lang" Component_="abnf.lang" FileName="JULIA~1.LAN|julia.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\julia.lang"
+  SelfReg="false" />
+<ROW File="kotlin.lang" Component_="abnf.lang" FileName="KOTLIN~1.LAN|kotlin.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\kotlin.lang"
+  SelfReg="false" />
+<ROW File="language.dtd" Component_="abnf.lang" FileName="language.dtd" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\language.dtd"
+  SelfReg="false" />
+<ROW File="language.rng" Component_="abnf.lang" FileName="language.rng" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\language.rng"
+  SelfReg="false" />
+<ROW File="language2.rng" Component_="abnf.lang" FileName="LANGUA~1.RNG|language2.rng"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\language2.rng"
+  SelfReg="false" />
+<ROW File="latex.lang" Component_="abnf.lang" FileName="LATEX~1.LAN|latex.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\latex.lang"
+  SelfReg="false" />
+<ROW File="lean.lang" Component_="abnf.lang" FileName="LEAN~1.LAN|lean.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\lean.lang"
+  SelfReg="false" />
+<ROW File="less.lang" Component_="abnf.lang" FileName="LESS~1.LAN|less.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\less.lang"
+  SelfReg="false" />
+<ROW File="lex.lang" Component_="abnf.lang" FileName="LEX~1.LAN|lex.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\lex.lang"
+  SelfReg="false" />
+<ROW File="libtool.lang" Component_="abnf.lang" FileName="LIBTOO~1.LAN|libtool.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\libtool.lang"
+  SelfReg="false" />
+<ROW File="llvm.lang" Component_="abnf.lang" FileName="LLVM~1.LAN|llvm.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\llvm.lang"
+  SelfReg="false" />
+<ROW File="logcat.lang" Component_="abnf.lang" FileName="LOGCAT~1.LAN|logcat.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\logcat.lang"
+  SelfReg="false" />
+<ROW File="logtalk.lang" Component_="abnf.lang" FileName="LOGTAL~1.LAN|logtalk.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\logtalk.lang"
+  SelfReg="false" />
+<ROW File="lua.lang" Component_="abnf.lang" FileName="LUA~1.LAN|lua.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\lua.lang"
+  SelfReg="false" />
+<ROW File="m4.lang" Component_="abnf.lang" FileName="M4~1.LAN|m4.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\m4.lang"
+  SelfReg="false" />
+<ROW File="makefile.lang" Component_="abnf.lang" FileName="MAKEFI~1.LAN|makefile.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\makefile.lang"
+  SelfReg="false" />
+<ROW File="mallard.lang" Component_="abnf.lang" FileName="MALLAR~1.LAN|mallard.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\mallard.lang"
+  SelfReg="false" />
+<ROW File="markdown.lang" Component_="abnf.lang" FileName="MARKDO~1.LAN|markdown.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\markdown.lang"
+  SelfReg="false" />
+<ROW File="matlab.lang" Component_="abnf.lang" FileName="MATLAB~1.LAN|matlab.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\matlab.lang"
+  SelfReg="false" />
+<ROW File="maxima.lang" Component_="abnf.lang" FileName="MAXIMA~1.LAN|maxima.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\maxima.lang"
+  SelfReg="false" />
+<ROW File="mediawiki.lang" Component_="abnf.lang" FileName="MEDIAW~1.LAN|mediawiki.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\mediawiki.lang"
+  SelfReg="false" />
+<ROW File="meson.lang" Component_="abnf.lang" FileName="MESON~1.LAN|meson.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\meson.lang"
+  SelfReg="false" />
+<ROW File="modelica.lang" Component_="abnf.lang" FileName="MODELI~1.LAN|modelica.lang"
+  Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\modelica.lang"
+  SelfReg="false" />
+<ROW File="mxml.lang" Component_="abnf.lang" FileName="MXML~1.LAN|mxml.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\mxml.lang"
+  SelfReg="false" />
+<ROW File="nemerle.lang" Component_="abnf.lang" FileName="NEMERL~1.LAN|nemerle.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\nemerle.lang"
+  SelfReg="false" />
+<ROW File="netrexx.lang" Component_="abnf.lang" FileName="NETREX~1.LAN|netrexx.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\netrexx.lang"
+  SelfReg="false" />
+<ROW File="nix.lang" Component_="abnf.lang" FileName="NIX~1.LAN|nix.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\nix.lang"
+  SelfReg="false" />
+<ROW File="nsis.lang" Component_="abnf.lang" FileName="NSIS~1.LAN|nsis.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\nsis.lang"
+  SelfReg="false" />
+<ROW File="objc.lang" Component_="abnf.lang" FileName="OBJC~1.LAN|objc.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\objc.lang"
+  SelfReg="false" />
+<ROW File="objj.lang" Component_="abnf.lang" FileName="OBJJ~1.LAN|objj.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\objj.lang"
+  SelfReg="false" />
+<ROW File="ocaml.lang" Component_="abnf.lang" FileName="OCAML~1.LAN|ocaml.lang" Attributes="0"
+  SourcePath="..\..\dist\seabird_windows_amd64_v1\lib\gdk-pixbuf-2.0\share\gtksourceview-5\language-specs\ocaml.lang"
+  SelfReg="false" />
+<ROW File="ocl.lang" Component_="abnf.lan
