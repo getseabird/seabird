@@ -148,6 +148,7 @@ jobs:
           cp README.md LICENSE build/darwin/seabird.sh $dist
 
           dylibbundler -b -d $dist/lib -x $dist/seabird
+          cp -f $brew_prefix/lib/librsvg*.dylib $dist/lib
  
           cp -r $brew_prefix/lib/gdk-pixbuf-2.0 $dist/lib
           sed -i '' "s|$brew_prefix/||" $dist/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
@@ -165,7 +166,9 @@ jobs:
           sudo pkill -9 XProtect >/dev/null || true;
           while pgrep XProtect; do sleep 3; done;
 
-          create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-pos 200 120 --window-size 400 400 --icon-size 100 --icon "Seabird.app" 100 190 --hide-extension "Seabird.app" --app-drop-link 300 185 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
+          create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-pos 200 120 --window-size 600 400 --icon-size 100 --icon "Seabird.app" 200 200 --hide-extension "Seabird.app" --app-drop-link 400 200 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
+
+          while [ $? -ne 0 ]; do !!; done
       - uses: actions/upload-artifact@v4
         with:
           name: darwin_${{ matrix.arch }}
