@@ -174,7 +174,9 @@ jobs:
           cp build/darwin/Info.plist dist/dmg/Seabird.app/Contents
           cp -r $dist/. dist/dmg/Seabird.app/Contents/MacOS
 
+          set +e
           create-dmg --volname Seabird --volicon build/darwin/icon.icns --window-size 600 400 --icon-size 100 --icon "Seabird.app" 200 150 --hide-extension "Seabird.app" --app-drop-link 400 150 seabird_darwin_${{ matrix.arch }}.dmg dist/dmg
+          while [ $? -ne 0 ]; do !!; done
       - uses: actions/upload-artifact@v4
         with:
           name: darwin_${{ matrix.arch }}
