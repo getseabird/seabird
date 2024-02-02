@@ -98,7 +98,7 @@ jobs:
           pushd /mingw64 && cp --parents -r ./share/glib-2.0/schemas/gschemas.compiled ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons ./lib/gdk-pixbuf-2.0 $dist && popd
       - uses: caphyon/advinst-github-action@main
         with:
-          aip-path: build/windows/installer.aip.xml
+          aip-path: build/windows/installer.aip
           aip-build-name: DefaultBuild
           # aip-package-name: '<output_package_name>'
           aip-output-dir: .
