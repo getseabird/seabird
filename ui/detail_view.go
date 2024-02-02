@@ -281,7 +281,6 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level int, prop behavior.Ob
 func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetVExpand(true)
-	scrolledWindow.SetPolicy(gtk.PolicyNever, gtk.PolicyAutomatic)
 
 	// TODO collapse managed fields
 	// https://gitlab.gnome.org/swilmet/tepl
