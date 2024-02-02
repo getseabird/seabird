@@ -37,12 +37,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GOOS: linux
-      - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-        name: Vendor dependencies
+      - name: Vendor dependencies
         run: |
           git archive -o source.zip ${{ github.ref }}
           go mod vendor
-          sed -i 's/"dev"/"${{ github.ref }}"/g' main.go
+          sed -i 's/"dev"/"${{ github.ref_name }}"/g' main.go
           zip -r source.zip vendor main.go
       - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
         name: Upload source to release
