@@ -40,7 +40,6 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 	}
 
 	clamp := d.prefPage.FirstChild().(*gtk.ScrolledWindow).FirstChild().(*gtk.Viewport).FirstChild().(*adw.Clamp)
-	clamp.SetTighteningThreshold(300)
 	clamp.SetMaximumSize(10000)
 
 	stack := adw.NewViewStack()
@@ -327,6 +326,9 @@ func createMemoryBar(actual resource.Quantity, res corev1.ResourceRequirements) 
 	levelBar.SetVAlign(gtk.AlignCenter)
 	levelBar.SetValue(min(percent, 1))
 	// down from offset, not up
+	levelBar.RemoveOffsetValue(gtk.LEVEL_BAR_OFFSET_LOW)
+	levelBar.RemoveOffsetValue(gtk.LEVEL_BAR_OFFSET_HIGH)
+	levelBar.AddOffsetValue("lb-normal", .8)
 	levelBar.AddOffsetValue("lb-warning", .9)
 	levelBar.AddOffsetValue("lb-error", 1)
 	box.SetTooltipText(fmt.Sprintf("%.0f%% Memory", percent*100))

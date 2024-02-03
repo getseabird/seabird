@@ -23,3 +23,7 @@ levelbar block.lb-error {
 levelbar block.lb-warning {
   background-color: @warning_bg_color;
 }
+
+levelbar block.lb-normal {
+  background-color: @view_fg_color;
+}
