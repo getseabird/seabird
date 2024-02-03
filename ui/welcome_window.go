@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"os"
 	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -66,7 +67,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 
 		group.SetHeaderSuffix(add)
 
-		for _, c := range w.behavior.Preferences.Value().Clusters {
+		for i, c := range w.behavior.Preferences.Value().Clusters {
 			cluster := c
 			row := adw.NewActionRow()
 			row.SetTitle(cluster.Value().Name)
@@ -90,6 +91,9 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 				}()
 			})
 			group.Add(row)
+			if os.Getenv("SEABIRD_DEV") == "1" && i == 0 {
+				defer row.Activate()
+			}
 		}
 	} else {
 		status := adw.NewStatusPage()
