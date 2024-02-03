@@ -21,9 +21,10 @@ import (
 
 type Navigation struct {
 	*adw.ToolbarView
-	behavior *behavior.ClusterBehavior
-	list     *gtk.ListBox
-	rows     []*gtk.ListBoxRow
+	behavior       *behavior.ClusterBehavior
+	list           *gtk.ListBox
+	rows           []*gtk.ListBoxRow
+	terminalToggle *gtk.ToggleButton
 }
 
 func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
@@ -61,15 +62,30 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	n.AddTopBar(header)
 
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
-	sw := gtk.NewScrolledWindow()
-	sw.SetChild(content)
-	n.SetContent(sw)
+	n.SetContent(content)
 
 	favouritesBin := adw.NewBin()
-	favouritesBin.SetVExpand(false)
-	content.Append(favouritesBin)
+	sw := gtk.NewScrolledWindow()
+	sw.SetChild(favouritesBin)
+	sw.SetVExpand(true)
+	content.Append(sw)
 	addFavouriteBin := adw.NewBin()
 	content.Append(addFavouriteBin)
+
+	bottomBar := gtk.NewBox(gtk.OrientationVertical, 0)
+	bottomBar.Append(gtk.NewSeparator(gtk.OrientationVertical))
+	bottomBar.SetVAlign(gtk.AlignEnd)
+	bottomRow := gtk.NewBox(gtk.OrientationHorizontal, 0)
+	bottomBar.Append(bottomRow)
+
+	n.terminalToggle = gtk.NewToggleButton()
+	n.terminalToggle.SetIconName("utilities-terminal-symbolic")
+	n.terminalToggle.SetHAlign(gtk.AlignEnd)
+	n.terminalToggle.AddCSSClass("flat")
+	bottomRow.Append(n.terminalToggle)
+	bottomRow.Append(gtk.NewSeparator(gtk.OrientationHorizontal))
+
+	content.Append(bottomBar)
 
 	onChange(b.ClusterPreferences, func(prefs behavior.ClusterPreferences) {
 		favouritesBin.SetChild(n.createFavourites(prefs))

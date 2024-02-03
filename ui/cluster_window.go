@@ -20,6 +20,7 @@ type ClusterWindow struct {
 	navigation   *Navigation
 	listView     *ListView
 	detailView   *DetailView
+	terminal     *Terminal
 	toastOverlay *adw.ToastOverlay
 }
 
@@ -52,17 +53,39 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 	w.toastOverlay = adw.NewToastOverlay()
 	w.SetContent(w.toastOverlay)
 
-	grid := gtk.NewGrid()
-	w.toastOverlay.SetChild(grid)
+	lbox := gtk.NewBox(gtk.OrientationHorizontal, 0)
+	w.toastOverlay.SetChild(lbox)
+	w.navigation = NewNavigation(behavior)
+	lbox.Append(w.navigation)
+
+	bpaned := gtk.NewPaned(gtk.OrientationVertical)
+	lbox.Append(bpaned)
+
+	rbox := gtk.NewBox(gtk.OrientationHorizontal, 0)
+	w.listView = NewListView(&w.Window, behavior.NewListBehavior())
+	rbox.Append(w.listView)
+	bpaned.SetStartChild(rbox)
 
 	w.detailView = NewDetailView(&w.Window, behavior.NewRootDetailBehavior())
 	nav := adw.NewNavigationView()
 	nav.Add(w.detailView.NavigationPage)
-	grid.Attach(nav, 2, 0, 1, 1)
-	w.listView = NewListView(&w.Window, behavior.NewListBehavior())
-	grid.Attach(w.listView, 1, 0, 1, 1)
-	w.navigation = NewNavigation(behavior)
-	grid.Attach(w.navigation, 0, 0, 1, 1)
+	rbox.Append(nav)
+
+	w.terminal = NewTerminal()
+	bpaned.SetEndChild(w.terminal)
+	bpaned.SetShrinkEndChild(true)
+	bpaned.SetResizeEndChild(true)
+
+	w.navigation.terminalToggle.ConnectClicked(func() {
+		w.terminal.SetRevealChild(!w.terminal.ChildRevealed())
+	})
+	w.terminal.Connect("notify::child-revealed", func(r *gtk.Revealer) {
+		if r.ChildRevealed() {
+			w.terminal.Show()
+		} else {
+			w.terminal.Hide()
+		}
+	})
 
 	w.createActions()
 
