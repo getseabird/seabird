@@ -15,6 +15,7 @@ import (
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
 	"k8s.io/client-go/tools/clientcmd"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 var AuthInteractiveModes = []string{"Never", "IfAvailable", "Always"}
@@ -73,8 +74,14 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observe
 		p.executeProvider.apiversion.SetText(string(prefs.ExecProvider.APIVersion))
 		p.executeProvider.command.SetText(string(prefs.ExecProvider.Command))
 		p.executeProvider.args.SetText(strings.Join(prefs.ExecProvider.Args, " "))
+
+		// TODO: add option to manipulate key:value environmental settings
+		for idx, val := range prefs.ExecProvider.Env {
+			fmt.Println("idx:", idx, "val name:", val.Name, "val value:", val.Value)
+		}
+
 		p.executeProvider.provideClusterInfo.SetActive(prefs.ExecProvider.ProvideClusterInfo)
-		fmt.Print(prefs.ExecProvider.Env)
+
 		for idx, val := range AuthInteractiveModes {
 			if val == string(prefs.ExecProvider.InteractiveMode) {
 				p.executeProvider.interactiveMode.SetSelected(uint(idx))
@@ -121,19 +128,23 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 
 	auth_executeprovider := adw.NewExpanderRow()
 	general.Add(auth_executeprovider)
-	auth_executeprovider.SetTitle("Provider authentication")
+	auth_executeprovider.SetTitle("Provider Authentication")
 
 	p.executeProvider.apiversion = adw.NewEntryRow()
-	p.executeProvider.apiversion.SetTitle("ExecuteProvider APIVersion")
+	p.executeProvider.apiversion.SetTitle("APIVersion")
 	auth_executeprovider.AddRow(p.executeProvider.apiversion)
 
 	p.executeProvider.command = adw.NewEntryRow()
-	p.executeProvider.command.SetTitle("ExecuteProvider Command")
+	p.executeProvider.command.SetTitle("Command")
 	auth_executeprovider.AddRow(p.executeProvider.command)
 
 	p.executeProvider.args = adw.NewEntryRow()
-	p.executeProvider.args.SetTitle("ExecuteProvider Arguments")
+	p.executeProvider.args.SetTitle("Arguments")
 	auth_executeprovider.AddRow(p.executeProvider.args)
+
+	p.executeProvider.env = adw.NewEntryRow()
+	p.executeProvider.env.SetTitle("Environmental Variables")
+	auth_executeprovider.AddRow(p.executeProvider.env)
 
 	p.executeProvider.interactiveMode = adw.NewComboRow()
 	p.executeProvider.interactiveMode.SetTitle("InteractiveMode")
@@ -156,13 +167,15 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 		p.executeProvider.apiversion.SetText(string(p.active.Value().ExecProvider.APIVersion))
 		p.executeProvider.command.SetText(string(p.active.Value().ExecProvider.Command))
 		p.executeProvider.args.SetText(strings.Join(p.active.Value().ExecProvider.Args, " "))
-		p.executeProvider.provideClusterInfo.SetActive(p.active.Value().ExecProvider.ProvideClusterInfo)
+		// p.executeProvider.env.SetText()
+		fmt.Println(p.active.Value().ExecProvider.Env)
 		for idx, val := range AuthInteractiveModes {
 			if val == string(p.active.Value().ExecProvider.InteractiveMode) {
 				p.executeProvider.interactiveMode.SetSelected(uint(idx))
 				break
 			}
 		}
+		p.executeProvider.provideClusterInfo.SetActive(p.active.Value().ExecProvider.ProvideClusterInfo)
 	}
 
 	p.favourites = adw.NewBin()
@@ -285,7 +298,23 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		cluster.TLS.KeyData = []byte(p.key.Text())
 		cluster.TLS.CAData = []byte(p.ca.Text())
 		cluster.BearerToken = p.bearer.Text()
+		// ExecProvider, Provider Authentication
 		cluster.ExecProvider.APIVersion = p.executeProvider.apiversion.Text()
+		cluster.ExecProvider.Command = p.executeProvider.command.Text()
+		cluster.ExecProvider.Args = strings.Fields(p.executeProvider.args.Text())
+		switch p.executeProvider.interactiveMode.Selected() {
+		case 0:
+			cluster.ExecProvider.InteractiveMode = api.NeverExecInteractiveMode
+		case 1:
+			cluster.ExecProvider.InteractiveMode = api.IfAvailableExecInteractiveMode
+		case 2:
+			cluster.ExecProvider.InteractiveMode = api.AlwaysExecInteractiveMode
+		default:
+			cluster.ExecProvider.InteractiveMode = api.IfAvailableExecInteractiveMode
+		}
+
+		cluster.ExecProvider.ProvideClusterInfo = p.executeProvider.provideClusterInfo.IsSelected()
+
 		cluster.Defaults()
 
 		if err := p.validate(cluster); err != nil {
