@@ -312,8 +312,7 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		default:
 			cluster.ExecProvider.InteractiveMode = api.IfAvailableExecInteractiveMode
 		}
-
-		cluster.ExecProvider.ProvideClusterInfo = p.executeProvider.provideClusterInfo.IsSelected()
+		cluster.ExecProvider.ProvideClusterInfo = p.executeProvider.provideClusterInfo.Active()
 
 		cluster.Defaults()
 
