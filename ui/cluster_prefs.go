@@ -22,17 +22,16 @@ var AuthInteractiveModes = []string{"Never", "IfAvailable", "Always"}
 
 type ClusterPrefPage struct {
 	*adw.NavigationPage
-	parent   *gtk.Window
-	content  *adw.Bin
-	behavior *behavior.Behavior
-	active   observer.Property[behavior.ClusterPreferences]
-	name     *adw.EntryRow
-	host     *adw.EntryRow
-	cert     *adw.EntryRow
-	key      *adw.EntryRow
-	ca       *adw.EntryRow
-	bearer   *adw.EntryRow
-	//ExecProvider:api.ExecConfig{Command: "gke-gcloud-auth-plugin", Args: []string(nil), Env: []ExecEnvVar(nil), APIVersion: "client.authentication.k8s.io/v1beta1", ProvideClusterInfo: true, Config: runtime.Object(nil), StdinUnavailable: false}
+	parent          *gtk.Window
+	content         *adw.Bin
+	behavior        *behavior.Behavior
+	active          observer.Property[behavior.ClusterPreferences]
+	name            *adw.EntryRow
+	host            *adw.EntryRow
+	cert            *adw.EntryRow
+	key             *adw.EntryRow
+	ca              *adw.EntryRow
+	bearer          *adw.EntryRow
 	executeProvider struct {
 		command            *adw.EntryRow
 		apiversion         *adw.EntryRow
@@ -74,14 +73,7 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observe
 		p.executeProvider.apiversion.SetText(string(prefs.ExecProvider.APIVersion))
 		p.executeProvider.command.SetText(string(prefs.ExecProvider.Command))
 		p.executeProvider.args.SetText(strings.Join(prefs.ExecProvider.Args, " "))
-
-		// Building string from key-value of environmentals
-		var envString strings.Builder
-		for _, val := range prefs.ExecProvider.Env {
-			envString.WriteString(fmt.Sprintf("%s=%s ", val.Name, val.Value))
-		}
-		p.executeProvider.env.SetText(envString.String())
-
+		p.executeProvider.env.SetText(p.buildEnvString(prefs.ExecProvider.Env))
 		p.executeProvider.provideClusterInfo.SetActive(prefs.ExecProvider.ProvideClusterInfo)
 
 		for idx, val := range AuthInteractiveModes {
@@ -155,7 +147,7 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	auth_executeprovider.AddRow(p.executeProvider.interactiveMode)
 
 	p.executeProvider.provideClusterInfo = adw.NewSwitchRow()
-	p.executeProvider.provideClusterInfo.SetTitle("providerClusterInfo")
+	p.executeProvider.provideClusterInfo.SetTitle("provideClusterInfo")
 	auth_executeprovider.AddRow(p.executeProvider.provideClusterInfo)
 
 	p.name.SetText(p.active.Value().Name)
@@ -169,14 +161,7 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 		p.executeProvider.apiversion.SetText(string(p.active.Value().ExecProvider.APIVersion))
 		p.executeProvider.command.SetText(string(p.active.Value().ExecProvider.Command))
 		p.executeProvider.args.SetText(strings.Join(p.active.Value().ExecProvider.Args, " "))
-
-		// Building string from key-value of environmentals
-		var envString strings.Builder
-		for _, val := range p.active.Value().ExecProvider.Env {
-			envString.WriteString(fmt.Sprintf("%s=%s ", val.Name, val.Value))
-		}
-		p.executeProvider.env.SetText(envString.String())
-
+		p.executeProvider.env.SetText(p.buildEnvString(p.active.Value().ExecProvider.Env))
 		// Get and set selected interactiveMode
 		for idx, val := range AuthInteractiveModes {
 			if val == string(p.active.Value().ExecProvider.InteractiveMode) {
@@ -315,7 +300,8 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		if p.executeProvider.env != nil {
 			var execEnvVar []api.ExecEnvVar
 			if p.executeProvider.env.Text() != "" {
-				pairs := strings.Split(p.executeProvider.env.Text(), " ")
+				// Trim whitespaces + split pairs by spaces
+				pairs := strings.Split(strings.TrimSpace(p.executeProvider.env.Text()), " ")
 				for _, pair := range pairs {
 					// Split each pair by '='
 					keyValue := strings.Split(pair, "=")
@@ -482,4 +468,17 @@ func (p *ClusterPrefPage) validate(pref behavior.ClusterPreferences) error {
 	}
 
 	return nil
+}
+
+// Building string from key-value of environmentals
+func (p *ClusterPrefPage) buildEnvString(apiExecEnvVar []api.ExecEnvVar) string {
+	var envString strings.Builder
+	lastIndex := len(apiExecEnvVar) - 1
+	for idx, val := range apiExecEnvVar {
+		envString.WriteString(fmt.Sprintf("%s=%s", val.Name, val.Value))
+		if idx != lastIndex {
+			envString.WriteString(" ")
+		}
+	}
+	return envString.String()
 }
