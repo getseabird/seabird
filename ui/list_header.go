@@ -50,7 +50,7 @@ func NewListHeader(b *behavior.ListBehavior) *ListHeader {
 	})
 
 	button := gtk.NewMenuButton()
-	button.SetIconName("view-more-symbolic")
+	button.SetIconName("filter-symbolic")
 	box.Append(button)
 
 	namespace := gio.NewMenu()

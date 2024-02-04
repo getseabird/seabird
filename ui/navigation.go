@@ -24,7 +24,6 @@ type Navigation struct {
 	behavior *behavior.ClusterBehavior
 	list     *gtk.ListBox
 	rows     []*gtk.ListBoxRow
-	spinner  *gtk.Spinner
 }
 
 func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
@@ -77,11 +76,6 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	})
 
 	onChange(b.SelectedResource, func(res *metav1.APIResource) {
-		if n.spinner != nil {
-			n.spinner.Parent().(*gtk.Box).Remove(n.spinner)
-			n.spinner = nil
-		}
-
 		var idx *int
 		for i, r := range b.ClusterPreferences.Value().Navigation.Favourites {
 			if util.ResourceGVR(res).String() == r.String() {
@@ -122,13 +116,6 @@ func (n *Navigation) createFavourites(prefs behavior.ClusterPreferences) *gtk.Li
 
 		for _, res := range n.behavior.Resources {
 			if util.GVREquals(util.ResourceGVR(&res), gvr) && !util.ResourceEquals(n.behavior.SelectedResource.Value(), &res) {
-				if n.spinner == nil {
-					n.spinner = gtk.NewSpinner()
-					n.spinner.Start()
-					n.spinner.SetHExpand(true)
-					n.spinner.SetHAlign(gtk.AlignEnd)
-					row.FirstChild().(*gtk.Box).Append(n.spinner)
-				}
 				n.behavior.SelectedResource.Update(&res)
 				break
 			}

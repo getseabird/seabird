@@ -14,11 +14,13 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/dynamic"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -326,4 +328,21 @@ func (b *DetailBehavior) PodLogs(pod *corev1.Pod, container string) ([]byte, err
 		return nil, err
 	}
 	return io.ReadAll(r)
+}
+
+func (b *DetailBehavior) UpdateObject(obj *unstructured.Unstructured) error {
+	m, err := b.mapper.RESTMapping(obj.GetObjectKind().GroupVersionKind().GroupKind(), obj.GetObjectKind().GroupVersionKind().Version)
+	if err != nil {
+		return err
+	}
+	var iface dynamic.ResourceInterface = b.dynamic.Resource(m.Resource)
+	if len(obj.GetNamespace()) > 0 {
+		iface = iface.(dynamic.NamespaceableResourceInterface).Namespace(obj.GetNamespace())
+	}
+	_, err = iface.Update(context.TODO(), obj, metav1.UpdateOptions{})
+	return err
+}
+
+func (b *DetailBehavior) DeleteObject(obj client.Object) error {
+	return b.client.Delete(context.TODO(), obj)
 }

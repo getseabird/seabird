@@ -103,7 +103,8 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 			l.selection.SetSelected(0)
 			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[0])
 		} else {
-			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[selected])
+			i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
+			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[i])
 		}
 	} else {
 		l.behavior.RootDetailBehavior.SelectedObject.Update(nil)
@@ -231,7 +232,12 @@ func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, o
 func (l *ListView) createModel() *gtk.SingleSelection {
 	selection := gtk.NewSingleSelection(gtk.NewStringList([]string{}))
 	selection.ConnectSelectionChanged(func(_, _ uint) {
-		obj := l.objects[l.selection.Selected()]
+		selected := l.selection.Selected()
+		if selected == GtkInvalidListPosition {
+			return
+		}
+		i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
+		obj := l.objects[i]
 		l.selected = obj.GetUID()
 		l.behavior.RootDetailBehavior.SelectedObject.Update(obj)
 	})

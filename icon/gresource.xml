@@ -25,5 +25,9 @@
     <file alias="radio-tower-symbolic.svg" preprocess="xml-stripblanks">lucide/radio-tower.svg</file>
     <file alias="memory-stick-symbolic.svg" preprocess="xml-stripblanks">lucide/memory-stick.svg</file>
     <file alias="cpu-symbolic.svg" preprocess="xml-stripblanks">lucide/cpu.svg</file>
+    <file alias="filter-symbolic.svg" preprocess="xml-stripblanks">lucide/filter.svg</file>
+
+    <file alias="code-symbolic.svg" preprocess="xml-stripblanks">icon-development-kit/code-symbolic.svg</file>
+    <file alias="info-outline-symbolic.svg" preprocess="xml-stripblanks">icon-development-kit/info-outline-symbolic.svg</file>
   </gresource>
 </gresources>
