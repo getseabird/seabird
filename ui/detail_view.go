@@ -353,6 +353,7 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	d.sourceView.SetEditable(false)
 	d.sourceView.SetWrapMode(gtk.WrapWord)
 	d.sourceView.SetShowLineNumbers(true)
+	d.sourceView.SetMonospace(true)
 	scrolledWindow.SetChild(d.sourceView)
 
 	windowSection := gio.NewMenu()
@@ -398,6 +399,7 @@ func (d *DetailView) showSaveDialog(parent *gtk.Window, object client.Object, cu
 	view.SetEditable(false)
 	view.SetWrapMode(gtk.WrapWord)
 	view.SetShowLineNumbers(false)
+	view.SetMonospace(true)
 
 	sw := gtk.NewScrolledWindow()
 	sw.SetChild(view)
