@@ -32,6 +32,7 @@ type DetailView struct {
 	prefPage     *adw.PreferencesPage
 	groups       []*adw.PreferencesGroup
 	sourceBuffer *gtksource.Buffer
+	sourceView   *gtksource.View
 	expanded     map[string]bool
 }
 
@@ -49,8 +50,8 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 	clamp.SetMaximumSize(5000)
 
 	stack := adw.NewViewStack()
-	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "document-properties-symbolic")
-	stack.AddTitledWithIcon(d.createSource(), "source", "Source", "accessories-text-editor-symbolic")
+	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "info-outline-symbolic")
+	stack.AddTitledWithIcon(d.createSource(), "source", "Yaml", "code-symbolic")
 
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
@@ -62,6 +63,46 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 
 	toolbarView.AddTopBar(header)
 	toolbarView.SetContent(stack)
+
+	editable := gio.NewSimpleActionStateful("editable", nil, glib.NewVariantBoolean(false))
+	save := gio.NewSimpleAction("save", nil)
+	save.SetEnabled(false)
+	editable.ConnectActivate(func(parameter *glib.Variant) {
+		isEditable := !d.sourceView.Editable()
+		d.sourceView.SetEditable(isEditable)
+		editable.SetState(glib.NewVariantBoolean(isEditable))
+		save.SetEnabled(isEditable)
+	})
+	save.ConnectActivate(func(parameter *glib.Variant) {
+		text := d.sourceBuffer.Text(d.sourceBuffer.StartIter(), d.sourceBuffer.EndIter(), true)
+		d.showSaveDialog(d.parent, d.behavior.SelectedObject.Value(), d.behavior.Yaml.Value(), text)
+	})
+
+	// TODO should be local shortcuts, not global. how?
+	d.parent.Application().SetAccelsForAction("detail.editable", []string{"<Ctrl>E"})
+	d.parent.Application().SetAccelsForAction("detail.save", []string{"<Ctrl>S"})
+
+	delete := gio.NewSimpleAction("delete", nil)
+	delete.ConnectActivate(func(parameter *glib.Variant) {
+		selected := d.behavior.SelectedObject.Value()
+		dialog := adw.NewMessageDialog(d.parent, "Delete object?", selected.GetName())
+		defer dialog.Show()
+		dialog.AddResponse("cancel", "Cancel")
+		dialog.AddResponse("delete", "Delete")
+		dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
+		dialog.ConnectResponse(func(response string) {
+			if response == "delete" {
+				if err := behavior.DeleteObject(selected); err != nil {
+					ShowErrorDialog(d.parent, "Failed to delete object", err)
+				}
+			}
+		})
+	})
+	actionGroup := gio.NewSimpleActionGroup()
+	actionGroup.AddAction(editable)
+	actionGroup.AddAction(save)
+	actionGroup.AddAction(delete)
+	d.parent.InsertActionGroup("detail", actionGroup)
 
 	onChange(d.behavior.SelectedObject, func(_ client.Object) {
 		for {
@@ -101,6 +142,7 @@ func (d *DetailView) renderObjectProperty(level, index int, prop behavior.Object
 		for i, child := range prop.Children {
 			g.Add(d.renderObjectProperty(level+1, i, child))
 		}
+		d.extendRow(g, level, prop)
 		return g
 	case 1:
 		if len(prop.Children) > 0 {
@@ -180,6 +222,16 @@ func (d *DetailView) renderObjectProperty(level, index int, prop behavior.Object
 
 // This is a bit of a hack, should probably extend ObjectProperty with this stuff...
 func (d *DetailView) extendRow(widget gtk.Widgetter, level int, prop behavior.ObjectProperty) {
+	if level == 0 && prop.Name == "Metadata" {
+		button := gtk.NewMenuButton()
+		button.SetIconName("view-more-symbolic")
+		button.AddCSSClass("flat")
+		model := gio.NewMenu()
+		model.Append("Delete", "detail.delete")
+		button.SetPopover(gtk.NewPopoverMenuFromModel(model))
+		widget.(*adw.PreferencesGroup).SetHeaderSuffix(button)
+	}
+
 	switch selected := d.behavior.SelectedObject.Value().(type) {
 	case *corev1.Pod:
 		switch object := prop.Object.(type) {
@@ -294,39 +346,20 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	d.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
 	d.setSourceColorScheme()
 	gtk.SettingsGetDefault().NotifyProperty("gtk-application-prefer-dark-theme", d.setSourceColorScheme)
-	sourceView := gtksource.NewViewWithBuffer(d.sourceBuffer)
-	sourceView.SetMarginBottom(8)
-	sourceView.SetMarginTop(8)
-	sourceView.SetMarginEnd(8)
-	sourceView.SetEditable(false)
-	sourceView.SetWrapMode(gtk.WrapWord)
-	sourceView.SetShowLineNumbers(true)
-	scrolledWindow.SetChild(sourceView)
+	d.sourceView = gtksource.NewViewWithBuffer(d.sourceBuffer)
+	d.sourceView.SetMarginBottom(8)
+	d.sourceView.SetMarginTop(8)
+	d.sourceView.SetMarginEnd(8)
+	d.sourceView.SetEditable(false)
+	d.sourceView.SetWrapMode(gtk.WrapWord)
+	d.sourceView.SetShowLineNumbers(true)
+	scrolledWindow.SetChild(d.sourceView)
 
 	windowSection := gio.NewMenu()
-	windowSection.Append("Editable", "source.editable")
-	windowSection.Append("Save", "source.save")
-	sourceView.SetExtraMenu(windowSection)
-	editable := gio.NewSimpleActionStateful("editable", nil, glib.NewVariantBoolean(false))
-	save := gio.NewSimpleActionStateful("save", nil, glib.NewVariantBoolean(false))
-	save.SetEnabled(false)
-	editable.ConnectActivate(func(parameter *glib.Variant) {
-		isEditable := !sourceView.Editable()
-		sourceView.SetEditable(isEditable)
-		editable.SetState(glib.NewVariantBoolean(isEditable))
-		save.SetEnabled(isEditable)
-	})
-	save.ConnectActivate(func(parameter *glib.Variant) {
-		text := d.sourceBuffer.Text(d.sourceBuffer.StartIter(), d.sourceBuffer.EndIter(), true)
-		d.showSaveDialog(d.parent, d.behavior.SelectedObject.Value(), d.behavior.Yaml.Value(), text)
-	})
-	actionGroup := gio.NewSimpleActionGroup()
-	actionGroup.AddAction(editable)
-	actionGroup.AddAction(save)
-	d.parent.InsertActionGroup("source", actionGroup)
-	// TODO should be local shortcuts, not global. how?
-	d.parent.Application().SetAccelsForAction("source.editable", []string{"<Ctrl>E"})
-	d.parent.Application().SetAccelsForAction("source.save", []string{"<Ctrl>S"})
+	windowSection.Append("Editable", "detail.editable")
+	windowSection.Append("Save", "detail.save")
+	d.sourceView.SetExtraMenu(windowSection)
+
 	return scrolledWindow
 }
 

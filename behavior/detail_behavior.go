@@ -342,3 +342,7 @@ func (b *DetailBehavior) UpdateObject(obj *unstructured.Unstructured) error {
 	_, err = iface.Update(context.TODO(), obj, metav1.UpdateOptions{})
 	return err
 }
+
+func (b *DetailBehavior) DeleteObject(obj client.Object) error {
+	return b.client.Delete(context.TODO(), obj)
+}

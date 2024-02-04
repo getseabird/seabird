@@ -103,7 +103,8 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 			l.selection.SetSelected(0)
 			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[0])
 		} else {
-			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[selected])
+			i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
+			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[i])
 		}
 	} else {
 		l.behavior.RootDetailBehavior.SelectedObject.Update(nil)
