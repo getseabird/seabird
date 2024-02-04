@@ -4,17 +4,24 @@ import (
 	"fmt"
 	"log"
 	"runtime"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/util"
+	"github.com/hexops/gotextdiff"
+	"github.com/hexops/gotextdiff/myers"
+	"github.com/hexops/gotextdiff/span"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -29,10 +36,9 @@ type DetailView struct {
 }
 
 func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *DetailView {
-	content := gtk.NewBox(gtk.OrientationVertical, 0)
-
+	toolbarView := adw.NewToolbarView()
 	d := DetailView{
-		NavigationPage: adw.NewNavigationPage(content, "main"),
+		NavigationPage: adw.NewNavigationPage(toolbarView, "main"),
 		prefPage:       adw.NewPreferencesPage(),
 		behavior:       behavior,
 		parent:         parent,
@@ -40,7 +46,7 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 	}
 
 	clamp := d.prefPage.FirstChild().(*gtk.ScrolledWindow).FirstChild().(*gtk.Viewport).FirstChild().(*adw.Clamp)
-	clamp.SetMaximumSize(10000)
+	clamp.SetMaximumSize(5000)
 
 	stack := adw.NewViewStack()
 	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "document-properties-symbolic")
@@ -54,8 +60,8 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 	switcher.SetStack(stack)
 	header.SetTitleWidget(switcher)
 
-	content.Append(header)
-	content.Append(stack)
+	toolbarView.AddTopBar(header)
+	toolbarView.SetContent(stack)
 
 	onChange(d.behavior.SelectedObject, func(_ client.Object) {
 		for {
@@ -297,15 +303,84 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	sourceView.SetShowLineNumbers(true)
 	scrolledWindow.SetChild(sourceView)
 
+	windowSection := gio.NewMenu()
+	windowSection.Append("Editable", "source.editable")
+	windowSection.Append("Save", "source.save")
+	sourceView.SetExtraMenu(windowSection)
+	editable := gio.NewSimpleActionStateful("editable", nil, glib.NewVariantBoolean(false))
+	save := gio.NewSimpleActionStateful("save", nil, glib.NewVariantBoolean(false))
+	save.SetEnabled(false)
+	editable.ConnectActivate(func(parameter *glib.Variant) {
+		isEditable := !sourceView.Editable()
+		sourceView.SetEditable(isEditable)
+		editable.SetState(glib.NewVariantBoolean(isEditable))
+		save.SetEnabled(isEditable)
+	})
+	save.ConnectActivate(func(parameter *glib.Variant) {
+		text := d.sourceBuffer.Text(d.sourceBuffer.StartIter(), d.sourceBuffer.EndIter(), true)
+		d.showSaveDialog(d.parent, d.behavior.SelectedObject.Value(), d.behavior.Yaml.Value(), text)
+	})
+	actionGroup := gio.NewSimpleActionGroup()
+	actionGroup.AddAction(editable)
+	actionGroup.AddAction(save)
+	d.parent.InsertActionGroup("source", actionGroup)
+	// TODO should be local shortcuts, not global. how?
+	d.parent.Application().SetAccelsForAction("source.editable", []string{"<Ctrl>E"})
+	d.parent.Application().SetAccelsForAction("source.save", []string{"<Ctrl>S"})
 	return scrolledWindow
 }
 
 func (d *DetailView) setSourceColorScheme() {
-	if gtk.SettingsGetDefault().ObjectProperty("gtk-application-prefer-dark-theme").(bool) {
-		d.sourceBuffer.SetStyleScheme(gtksource.StyleSchemeManagerGetDefault().Scheme("Adwaita-dark"))
-	} else {
-		d.sourceBuffer.SetStyleScheme(gtksource.StyleSchemeManagerGetDefault().Scheme("Adwaita"))
+	setSourceColorScheme(d.sourceBuffer)
+}
+
+func (d *DetailView) showSaveDialog(parent *gtk.Window, object client.Object, current, next string) *adw.MessageDialog {
+	json, err := util.YamlToJson([]byte(next))
+	if err != nil {
+		return ShowErrorDialog(parent, "Error decoding object", err)
 	}
+	var obj unstructured.Unstructured
+	_, _, err = unstructured.UnstructuredJSONScheme.Decode(json, nil, &obj)
+	if err != nil {
+		return ShowErrorDialog(parent, "Error decoding object", err)
+	}
+
+	dialog := adw.NewMessageDialog(parent, fmt.Sprintf("Saving %s", object.GetName()), "The following changes will be made")
+	dialog.AddResponse("cancel", "Cancel")
+	dialog.AddResponse("save", "Save")
+	dialog.SetResponseAppearance("save", adw.ResponseSuggested)
+	dialog.SetSizeRequest(600, 500)
+	defer dialog.Show()
+
+	box := dialog.Child().(*gtk.WindowHandle).Child().(*gtk.Box).FirstChild().(*gtk.Box)
+
+	box.FirstChild().(*gtk.Label).NextSibling().(*gtk.Label).SetVExpand(false)
+
+	edits := myers.ComputeEdits(span.URIFromPath(object.GetName()), current, next)
+
+	buf := gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("diff"))
+	buf.SetText(strings.TrimPrefix(fmt.Sprint(gotextdiff.ToUnified("", "", current, edits)), "--- \n+++ \n"))
+	setSourceColorScheme(buf)
+	view := gtksource.NewViewWithBuffer(buf)
+	view.SetEditable(false)
+	view.SetWrapMode(gtk.WrapWord)
+	view.SetShowLineNumbers(false)
+
+	sw := gtk.NewScrolledWindow()
+	sw.SetChild(view)
+	sw.SetVExpand(true)
+
+	box.Append(sw)
+
+	dialog.ConnectResponse(func(response string) {
+		if response == "save" {
+			if err := d.behavior.UpdateObject(&obj); err != nil {
+				ShowErrorDialog(parent, "Error updating object", err)
+			}
+		}
+	})
+
+	return dialog
 }
 
 func createMemoryBar(actual resource.Quantity, res corev1.ResourceRequirements) *gtk.Box {

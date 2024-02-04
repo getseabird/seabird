@@ -8,6 +8,7 @@ require (
 	github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240109205950-92962b56dd0f
 	github.com/diamondburned/gotk4/pkg v0.1.0
 	github.com/go-logr/logr v1.4.1
+	github.com/hexops/gotextdiff v1.0.3
 	github.com/imkira/go-observer/v2 v2.0.0-20230629064422-8e0b61f11f1b
 	github.com/zmwangx/debounce v1.0.0
 	gopkg.in/yaml.v2 v2.4.0

@@ -13,6 +13,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -20,6 +21,7 @@ import (
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/restmapper"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
@@ -30,6 +32,7 @@ type ClusterBehavior struct {
 
 	client    client.Client
 	clientset *kubernetes.Clientset
+	mapper    meta.RESTMapper
 	dynamic   *dynamic.DynamicClient
 	scheme    *runtime.Scheme
 
@@ -94,10 +97,17 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		return nil, err
 	}
 
+	res, err := restmapper.GetAPIGroupResources(discovery)
+	if err != nil {
+		return nil, err
+	}
+	mapper := restmapper.NewDiscoveryRESTMapper(res)
+
 	cluster := ClusterBehavior{
 		Behavior:           b,
 		client:             rclient,
 		clientset:          clientset,
+		mapper:             mapper,
 		scheme:             scheme,
 		ClusterPreferences: clusterPrefs,
 		dynamic:            dynamicClient,

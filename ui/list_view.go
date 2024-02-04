@@ -231,7 +231,11 @@ func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, o
 func (l *ListView) createModel() *gtk.SingleSelection {
 	selection := gtk.NewSingleSelection(gtk.NewStringList([]string{}))
 	selection.ConnectSelectionChanged(func(_, _ uint) {
-		obj := l.objects[l.selection.Selected()]
+		selected := l.selection.Selected()
+		if selected == GtkInvalidListPosition {
+			return
+		}
+		obj := l.objects[selected]
 		l.selected = obj.GetUID()
 		l.behavior.RootDetailBehavior.SelectedObject.Update(obj)
 	})

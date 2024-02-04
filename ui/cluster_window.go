@@ -30,7 +30,7 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 	}
 	w.SetIconName("seabird")
 	w.SetTitle(fmt.Sprintf("%s - %s", behavior.ClusterPreferences.Value().Name, ApplicationName))
-	w.SetDefaultSize(1000, 700)
+	w.SetDefaultSize(1300, 700)
 	if runtime.GOOS == "windows" {
 		w.SetDecorated(true) // https://gitlab.gnome.org/GNOME/gtk/-/issues/3749
 	}
