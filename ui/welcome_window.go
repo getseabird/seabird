@@ -6,6 +6,7 @@ import (
 	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/behavior"
@@ -48,6 +49,14 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		header := gtk.NewHeaderBar()
 		box.Append(header)
 	}
+
+	banner := adw.NewBanner("Your free trial expires in ∞ days")
+	// banner.SetRevealed(true)
+	banner.SetButtonLabel("Purchase")
+	banner.ConnectButtonClicked(func() {
+		view.Push(w.createPurchasePage())
+	})
+	box.Append(banner)
 
 	page := adw.NewPreferencesPage()
 	box.Append(page)
@@ -122,4 +131,36 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	// 	box.Append(term)
 
 	return view
+}
+
+func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
+	content := gtk.NewBox(gtk.OrientationVertical, 0)
+	navPage := adw.NewNavigationPage(content, "Purchase")
+
+	header := adw.NewHeaderBar()
+	content.Append(header)
+
+	prefPage := adw.NewPreferencesPage()
+	content.Append(prefPage)
+
+	group := adw.NewPreferencesGroup()
+	group.SetTitle("Purchase Seabird")
+	group.SetDescription("There is no time limit for testing Seabird. When you buy a license, you not only get priority support but also help secure the future development of Seabird.")
+	prefPage.Add(group)
+
+	action := adw.NewActionRow()
+	action.SetTitle("Purchase now")
+	action.SetActivatable(true)
+	action.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+	action.ConnectActivated(func() {
+		gtk.ShowURI(&w.Window, "https://seabird.lemonsqueezy.com/checkout/buy/7f6c107c-b8e8-4a28-b99e-35d18669ad37", gdk.CURRENT_TIME)
+	})
+	group.Add(action)
+
+	entry := adw.NewEntryRow()
+	entry.SetTitle("License key")
+	entry.SetShowApplyButton(true)
+	group.Add(entry)
+
+	return navPage
 }
