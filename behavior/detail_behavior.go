@@ -59,8 +59,10 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 		return
 	}
 
+	copy := object.DeepCopyObject().(client.Object)
+	copy.SetManagedFields(nil) // hide managed fields until we implement folding
 	codec := unstructured.NewJSONFallbackEncoder(serializer.NewCodecFactory(b.scheme).LegacyCodec(b.scheme.PreferredVersionAllGroups()...))
-	encoded, err := runtime.Encode(codec, object)
+	encoded, err := runtime.Encode(codec, copy)
 	if err != nil {
 		b.Yaml.Update(fmt.Sprintf("error: %v", err))
 	} else {
