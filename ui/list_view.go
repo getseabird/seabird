@@ -235,7 +235,8 @@ func (l *ListView) createModel() *gtk.SingleSelection {
 		if selected == GtkInvalidListPosition {
 			return
 		}
-		obj := l.objects[selected]
+		i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
+		obj := l.objects[i]
 		l.selected = obj.GetUID()
 		l.behavior.RootDetailBehavior.SelectedObject.Update(obj)
 	})
