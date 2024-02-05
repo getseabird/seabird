@@ -6,41 +6,27 @@ resource types in a simple, bloat-free user interface.
 
 ![Screenshot](https://getseabird.github.io/images/screenshot.png)
 
-Builds are currently available for Linux and Windows. Note that this is
-**alpha** quality software with missing features and bugs.
+## Download
 
-## Requirements
+Downloads for all platforms are available under [releases](https://github.com/getseabird/seabird/releases). On Linux, we recommend using the Flatpak package.
 
-Seabird requires libadwaita (>1.4) and gtksourceview 5 to run. The Windows
-builds include all dependencies.
+<a href='https://flathub.org/apps/dev.skynomads.Seabird'>
+  <img width='180' alt='Download on Flathub' src='https://flathub.org/api/badge?locale=en'/>
+</a>
 
-#### Fedora
-
-```bash
-sudo dnf install libadwaita gtksourceview5
-```
-
-#### Debian
-
-```bash
-sudo apt install libadwaita-1 libgtksourceview-5
-```
-
-Note: Releases older than Debian Trixie or Ubuntu Mantic are not supported.
-Please use the Flatpak instead.
 
 ## Building From Source
 
 Build dependencies
 
-#### Debian
-```bash
-sudo apt install libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev libglib2.0-dev-bin golang-go
-```
-
 #### Fedora
 ```bash
 sudo dnf install gtk4-devel gtksourceview5-devel libadwaita-devel gobject-introspection-devel glib2-devel golang
+```
+
+#### Debian
+```bash
+sudo apt install libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev libglib2.0-dev-bin golang-go
 ```
 
 Run go generate to create the embedded resource file:
@@ -72,5 +58,4 @@ instead.
 Seabird is available under the terms of the Mozilla Public License v2, a copy of
 the license is distributed in the LICENSE file.
 
-Disclosure: We plan to distribute this application with an semi-optional yearly
-subscription price to support development.
+Note: This is paid software with an unlimited free trial.
