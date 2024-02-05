@@ -2,6 +2,7 @@ package behavior
 
 import (
 	"context"
+	"errors"
 	"log"
 	"sort"
 
@@ -61,7 +62,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		TLSClientConfig: clusterPrefs.Value().TLS,
 	}
 
-	discovery, err := discovery.NewDiscoveryClientForConfig(config)
+	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		return nil, err
 	}
 
-	res, err := restmapper.GetAPIGroupResources(discovery)
+	res, err := restmapper.GetAPIGroupResources(discoveryClient)
 	if err != nil {
 		return nil, err
 	}
@@ -118,9 +119,17 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		events:             NewEvents(clientset),
 	}
 
-	resources, err := discovery.ServerPreferredResources()
+	resources, err := discoveryClient.ServerPreferredResources()
 	if err != nil {
-		return nil, err
+		var groupDiscoveryFailed discovery.ErrGroupDiscoveryFailed
+		if errors.As(err, &groupDiscoveryFailed) {
+			for api, err := range groupDiscoveryFailed.Groups {
+				// TODO display as toast
+				log.Printf("group discovery failed for '%s': %s", api.String(), err.Error())
+			}
+		} else {
+			return nil, err
+		}
 	}
 	for _, list := range resources {
 		gv, err := schema.ParseGroupVersion(list.GroupVersion)
