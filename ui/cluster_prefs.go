@@ -70,19 +70,20 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observe
 		p.ca.SetText(string(prefs.TLS.CAData))
 		p.bearer.SetText(string(prefs.BearerToken))
 
-		p.executeProvider.apiversion.SetText(string(prefs.ExecProvider.APIVersion))
-		p.executeProvider.command.SetText(string(prefs.ExecProvider.Command))
-		p.executeProvider.args.SetText(strings.Join(prefs.ExecProvider.Args, " "))
-		p.executeProvider.env.SetText(p.buildEnvString(prefs.ExecProvider.Env))
-		p.executeProvider.provideClusterInfo.SetActive(prefs.ExecProvider.ProvideClusterInfo)
+		if prefs.ExecProvider != nil {
+			p.executeProvider.apiversion.SetText(string(prefs.ExecProvider.APIVersion))
+			p.executeProvider.command.SetText(string(prefs.ExecProvider.Command))
+			p.executeProvider.args.SetText(strings.Join(prefs.ExecProvider.Args, " "))
+			p.executeProvider.env.SetText(p.buildEnvString(prefs.ExecProvider.Env))
+			p.executeProvider.provideClusterInfo.SetActive(prefs.ExecProvider.ProvideClusterInfo)
 
-		for idx, val := range AuthInteractiveModes {
-			if val == string(prefs.ExecProvider.InteractiveMode) {
-				p.executeProvider.interactiveMode.SetSelected(uint(idx))
-				break
+			for idx, val := range AuthInteractiveModes {
+				if val == string(prefs.ExecProvider.InteractiveMode) {
+					p.executeProvider.interactiveMode.SetSelected(uint(idx))
+					break
+				}
 			}
 		}
-
 		p.favourites.SetChild(p.createFavourites())
 		p.actions.SetChild(p.createActions())
 	})
