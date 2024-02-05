@@ -1,0 +1,25 @@
+name: Feature Proposal
+description: Propose a feature
+body:
+
+- type: textarea
+  attributes:
+    label: Summary
+    description: Short explanation of the feature.
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Motivation
+    description: Why are we doing this? What use cases does it support? What is the expected outcome?
+  validations:
+    required: true
+
+- type: textarea
+  attributes:
+    label: Proposal
+    description: |
+      Explain the proposed solution in detail. If significant UI changes are required for this feature, please include mockups.
+  validations:
+    required: true
