@@ -110,6 +110,10 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 				break
 			}
 		}
+
+		if editable.State().Boolean() {
+			editable.Activate(nil)
+		}
 	})
 	onChange(d.behavior.Yaml, func(yaml string) {
 		d.sourceBuffer.SetText(string(yaml))
