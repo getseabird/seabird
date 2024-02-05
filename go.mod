@@ -11,6 +11,7 @@ require (
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/imkira/go-observer/v2 v2.0.0-20230629064422-8e0b61f11f1b
 	github.com/zmwangx/debounce v1.0.0
+	golang.org/x/exp v0.0.0-20220722155223-a9213eeb770e
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.29.1
 	k8s.io/apiextensions-apiserver v0.29.1

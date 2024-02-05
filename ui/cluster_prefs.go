@@ -13,6 +13,7 @@ import (
 	"github.com/getseabird/seabird/util"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
+	"golang.org/x/exp/maps"
 	"k8s.io/client-go/tools/clientcmd"
 )
 
@@ -262,6 +263,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 
 	load.ConnectActivated(func() {
 		fileChooser := gtk.NewFileChooserNative("Select kubeconfig", p.parent, gtk.FileChooserActionOpen, "Open", "Cancel")
+		defer fileChooser.Show()
 		filter := gtk.NewFileFilter()
 		filter.AddMIMEType("text/plain")
 		filter.AddMIMEType("application/yaml")
@@ -270,59 +272,9 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 		fileChooser.AddFilter(filter)
 		fileChooser.ConnectResponse(func(responseId int) {
 			if responseId == int(gtk.ResponseAccept) {
-				path := fileChooser.File().Path()
-				config, err := clientcmd.BuildConfigFromFlags("", path)
-				if err != nil {
-					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
-					return
-				}
-				active := p.active.Value()
-				active.Name = config.ServerName
-				active.Host = config.Host
-				if config.CertFile != "" {
-					data, err := os.ReadFile(config.CertFile)
-					if err != nil {
-						ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
-						return
-					}
-					active.TLS.CertData = data
-				} else {
-					active.TLS.CertData = config.CertData
-				}
-				if config.KeyFile != "" {
-					data, err := os.ReadFile(config.KeyFile)
-					if err != nil {
-						ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
-						return
-					}
-					active.TLS.KeyData = data
-				} else {
-					active.TLS.KeyData = config.KeyData
-				}
-				if config.CAFile != "" {
-					data, err := os.ReadFile(config.CAFile)
-					if err != nil {
-						ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
-						return
-					}
-					active.TLS.CAData = data
-				} else {
-					active.TLS.CAData = config.CAData
-				}
-				if config.BearerTokenFile != "" {
-					data, err := os.ReadFile(config.BearerTokenFile)
-					if err != nil {
-						ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
-						return
-					}
-					active.BearerToken = string(data)
-				} else {
-					active.BearerToken = config.BearerToken
-				}
-				p.active.Update(active)
+				p.showContextSelection(fileChooser.File().Path())
 			}
 		})
-		fileChooser.Show()
 	})
 	group.Add(load)
 
@@ -353,6 +305,104 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 	}
 
 	return group
+}
+
+func (p *ClusterPrefPage) showContextSelection(path string) {
+	rules := &clientcmd.ClientConfigLoadingRules{ExplicitPath: path}
+	apiConfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, nil).
+		ConfigAccess().GetStartingConfig()
+	if err != nil {
+		ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+		return
+	}
+
+	if len(apiConfig.Contexts) == 0 {
+		ShowErrorDialog(p.parent, "Error loading kubeconfig", errors.New("No contexts found."))
+		return
+	}
+
+	dialog := adw.NewMessageDialog(p.parent, "Select Context", "")
+	defer dialog.Show()
+	dialog.AddResponse("cancel", "Cancel")
+	dialog.AddResponse("confirm", "Confirm")
+	dialog.SetResponseAppearance("confirm", adw.ResponseSuggested)
+	box := dialog.Child().(*gtk.WindowHandle).Child().(*gtk.Box).FirstChild().(*gtk.Box)
+
+	var group *gtk.CheckButton
+	for i, context := range maps.Keys(apiConfig.Contexts) {
+		radio := gtk.NewCheckButtonWithLabel(context)
+		if i == 0 {
+			group = radio
+			radio.SetActive(true)
+		} else {
+			radio.SetGroup(group)
+		}
+		box.Append(radio)
+	}
+
+	dialog.ConnectResponse(func(response string) {
+		if response == "confirm" {
+			var context string
+			for {
+				w := group
+				if w.Active() {
+					context = w.Label()
+					break
+				}
+				w = w.NextSibling().(*gtk.CheckButton)
+			}
+
+			config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, &clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
+			if err != nil {
+				ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+				return
+			}
+			active := p.active.Value()
+			active.Name = context
+			active.Host = config.Host
+			if config.CertFile != "" {
+				data, err := os.ReadFile(config.CertFile)
+				if err != nil {
+					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					return
+				}
+				active.TLS.CertData = data
+			} else {
+				active.TLS.CertData = config.CertData
+			}
+			if config.KeyFile != "" {
+				data, err := os.ReadFile(config.KeyFile)
+				if err != nil {
+					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					return
+				}
+				active.TLS.KeyData = data
+			} else {
+				active.TLS.KeyData = config.KeyData
+			}
+			if config.CAFile != "" {
+				data, err := os.ReadFile(config.CAFile)
+				if err != nil {
+					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					return
+				}
+				active.TLS.CAData = data
+			} else {
+				active.TLS.CAData = config.CAData
+			}
+			if config.BearerTokenFile != "" {
+				data, err := os.ReadFile(config.BearerTokenFile)
+				if err != nil {
+					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					return
+				}
+				active.BearerToken = string(data)
+			} else {
+				active.BearerToken = config.BearerToken
+			}
+			p.active.Update(active)
+		}
+	})
 }
 
 func (p *ClusterPrefPage) validate(pref behavior.ClusterPreferences) error {
