@@ -33,12 +33,10 @@ type ClusterPrefPage struct {
 	ca              *adw.EntryRow
 	bearer          *adw.EntryRow
 	executeProvider struct {
-		command            *adw.EntryRow
-		apiversion         *adw.EntryRow
-		args               *adw.EntryRow
-		env                *adw.EntryRow
-		interactiveMode    *adw.ComboRow
-		provideClusterInfo *adw.SwitchRow
+		command         *adw.EntryRow
+		args            *adw.EntryRow
+		env             *adw.EntryRow
+		interactiveMode *adw.ComboRow
 	}
 	favourites *adw.Bin
 	actions    *adw.Bin
@@ -71,11 +69,9 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observe
 		p.bearer.SetText(string(prefs.BearerToken))
 
 		if prefs.ExecProvider != nil {
-			p.executeProvider.apiversion.SetText(string(prefs.ExecProvider.APIVersion))
 			p.executeProvider.command.SetText(string(prefs.ExecProvider.Command))
 			p.executeProvider.args.SetText(strings.Join(prefs.ExecProvider.Args, " "))
 			p.executeProvider.env.SetText(p.buildEnvString(prefs.ExecProvider.Env))
-			p.executeProvider.provideClusterInfo.SetActive(prefs.ExecProvider.ProvideClusterInfo)
 
 			for idx, val := range AuthInteractiveModes {
 				if val == string(prefs.ExecProvider.InteractiveMode) {
@@ -121,35 +117,23 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.bearer.SetTitle("Bearer token")
 	auth.AddRow(p.bearer)
 
-	auth_executeprovider := adw.NewExpanderRow()
-	general.Add(auth_executeprovider)
-	auth_executeprovider.SetTitle("Provider Authentication")
-
-	p.executeProvider.apiversion = adw.NewEntryRow()
-	p.executeProvider.apiversion.SetTitle("APIVersion")
-	auth_executeprovider.AddRow(p.executeProvider.apiversion)
-
 	p.executeProvider.command = adw.NewEntryRow()
-	p.executeProvider.command.SetTitle("Command")
-	auth_executeprovider.AddRow(p.executeProvider.command)
+	p.executeProvider.command.SetTitle("ExecProvider Command")
+	auth.AddRow(p.executeProvider.command)
 
 	p.executeProvider.args = adw.NewEntryRow()
-	p.executeProvider.args.SetTitle("Arguments")
-	auth_executeprovider.AddRow(p.executeProvider.args)
+	p.executeProvider.args.SetTitle("ExecProvider Arguments")
+	auth.AddRow(p.executeProvider.args)
 
 	p.executeProvider.env = adw.NewEntryRow()
-	p.executeProvider.env.SetTitle("Environmental Variables")
-	auth_executeprovider.AddRow(p.executeProvider.env)
+	p.executeProvider.env.SetTitle("ExecProvider Environmental Variables")
+	auth.AddRow(p.executeProvider.env)
 
 	p.executeProvider.interactiveMode = adw.NewComboRow()
-	p.executeProvider.interactiveMode.SetTitle("InteractiveMode")
+	p.executeProvider.interactiveMode.SetTitle("ExecProvider InteractiveMode")
 	interactiveModes := gtk.NewStringList(AuthInteractiveModes)
 	p.executeProvider.interactiveMode.SetModel(interactiveModes)
-	auth_executeprovider.AddRow(p.executeProvider.interactiveMode)
-
-	p.executeProvider.provideClusterInfo = adw.NewSwitchRow()
-	p.executeProvider.provideClusterInfo.SetTitle("provideClusterInfo")
-	auth_executeprovider.AddRow(p.executeProvider.provideClusterInfo)
+	auth.AddRow(p.executeProvider.interactiveMode)
 
 	p.name.SetText(p.active.Value().Name)
 	p.host.SetText(p.active.Value().Host)
@@ -159,7 +143,6 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.bearer.SetText(string(p.active.Value().BearerToken))
 
 	if p.active.Value().ExecProvider != nil {
-		p.executeProvider.apiversion.SetText(string(p.active.Value().ExecProvider.APIVersion))
 		p.executeProvider.command.SetText(string(p.active.Value().ExecProvider.Command))
 		p.executeProvider.args.SetText(strings.Join(p.active.Value().ExecProvider.Args, " "))
 		p.executeProvider.env.SetText(p.buildEnvString(p.active.Value().ExecProvider.Env))
@@ -170,7 +153,6 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 				break
 			}
 		}
-		p.executeProvider.provideClusterInfo.SetActive(p.active.Value().ExecProvider.ProvideClusterInfo)
 	}
 
 	p.favourites = adw.NewBin()
@@ -294,7 +276,6 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		cluster.TLS.CAData = []byte(p.ca.Text())
 		cluster.BearerToken = p.bearer.Text()
 		// ExecProvider, Provider Authentication
-		cluster.ExecProvider.APIVersion = p.executeProvider.apiversion.Text()
 		cluster.ExecProvider.Command = p.executeProvider.command.Text()
 		cluster.ExecProvider.Args = strings.Fields(p.executeProvider.args.Text())
 		// Not all ExecuteProvider require environemntal variables
@@ -327,7 +308,6 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		default:
 			cluster.ExecProvider.InteractiveMode = api.IfAvailableExecInteractiveMode
 		}
-		cluster.ExecProvider.ProvideClusterInfo = p.executeProvider.provideClusterInfo.Active()
 
 		cluster.Defaults()
 
