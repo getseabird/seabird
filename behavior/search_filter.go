@@ -41,24 +41,26 @@ func (f *SearchFilter) Test(object client.Object) bool {
 		}
 	}
 
-	for _, term := range f.Name {
+	{
 		var ok bool
-		trimmed := strings.Trim(term, "\"")
-		if strings.Contains(object.GetName(), trimmed) {
-			ok = true
-			continue
-		}
-		if term != trimmed {
-			continue
-		}
-		for _, term := range strings.Split(term, "-") {
-			for _, name := range strings.Split(object.GetName(), "-") {
-				if strutil.Similarity(name, term, metrics.NewHamming()) > 0.5 {
-					ok = true
+		for _, term := range f.Name {
+			trimmed := strings.Trim(term, "\"")
+			if strings.Contains(object.GetName(), trimmed) {
+				ok = true
+				continue
+			}
+			if term != trimmed {
+				continue
+			}
+			for _, term := range strings.Split(term, "-") {
+				for _, name := range strings.Split(object.GetName(), "-") {
+					if strutil.Similarity(name, term, metrics.NewHamming()) > 0.5 {
+						ok = true
+					}
 				}
 			}
 		}
-		if !ok {
+		if !ok && len(f.Name) > 0 {
 			return false
 		}
 	}
