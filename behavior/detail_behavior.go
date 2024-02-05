@@ -60,7 +60,9 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 	}
 
 	codec := unstructured.NewJSONFallbackEncoder(serializer.NewCodecFactory(b.scheme).LegacyCodec(b.scheme.PreferredVersionAllGroups()...))
-	encoded, err := runtime.Encode(codec, object)
+	objWithoutManagedFields := object.DeepCopyObject().(client.Object)
+	objWithoutManagedFields.SetManagedFields(nil)
+	encoded, err := runtime.Encode(codec, objWithoutManagedFields)
 	if err != nil {
 		b.Yaml.Update(fmt.Sprintf("error: %v", err))
 	} else {

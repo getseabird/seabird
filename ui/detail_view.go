@@ -343,10 +343,6 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetVExpand(true)
 
-	// TODO collapse managed fields
-	// https://gitlab.gnome.org/swilmet/tepl
-	// d.object.SetManagedFields([]metav1.ManagedFieldsEntry{})
-
 	d.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
 	d.setSourceColorScheme()
 	gtk.SettingsGetDefault().NotifyProperty("gtk-application-prefer-dark-theme", d.setSourceColorScheme)
