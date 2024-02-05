@@ -16,13 +16,13 @@ builds include all dependencies.
 
 #### Fedora
 
-```
+```bash
 sudo dnf install libadwaita gtksourceview5
 ```
 
 #### Debian
 
-```
+```bash
 sudo apt install libadwaita-1 libgtksourceview-5
 ```
 
@@ -31,21 +31,27 @@ Please use the Flatpak instead.
 
 ## Building From Source
 
-Build dependencies for Debian, adapt to your platform:
+Build dependencies
 
-```
+#### Debian
+```bash
 sudo apt install libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev libglib2.0-dev-bin golang-go
+```
+
+#### Fedora
+```bash
+sudo dnf install gtk4-devel gtksourceview5-devel libadwaita-devel gobject-introspection-devel glib2-devel golang
 ```
 
 Run go generate to create the embedded resource file:
 
-```
+```bash
 go generate ./...
 ```
 
 Then build with:
 
-```
+```bash
 go build
 ```
 

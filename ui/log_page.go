@@ -34,6 +34,7 @@ func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod *core
 	view.SetEditable(false)
 	view.SetWrapMode(gtk.WrapWord)
 	view.SetShowLineNumbers(true)
+	view.SetMonospace(true)
 
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetChild(view)

@@ -110,6 +110,10 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 				break
 			}
 		}
+
+		if editable.State().Boolean() {
+			editable.Activate(nil)
+		}
 	})
 	onChange(d.behavior.Yaml, func(yaml string) {
 		d.sourceBuffer.SetText(string(yaml))
@@ -339,10 +343,6 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetVExpand(true)
 
-	// TODO collapse managed fields
-	// https://gitlab.gnome.org/swilmet/tepl
-	// d.object.SetManagedFields([]metav1.ManagedFieldsEntry{})
-
 	d.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
 	d.setSourceColorScheme()
 	gtk.SettingsGetDefault().NotifyProperty("gtk-application-prefer-dark-theme", d.setSourceColorScheme)
@@ -353,6 +353,7 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	d.sourceView.SetEditable(false)
 	d.sourceView.SetWrapMode(gtk.WrapWord)
 	d.sourceView.SetShowLineNumbers(true)
+	d.sourceView.SetMonospace(true)
 	scrolledWindow.SetChild(d.sourceView)
 
 	windowSection := gio.NewMenu()
@@ -398,6 +399,7 @@ func (d *DetailView) showSaveDialog(parent *gtk.Window, object client.Object, cu
 	view.SetEditable(false)
 	view.SetWrapMode(gtk.WrapWord)
 	view.SetShowLineNumbers(false)
+	view.SetMonospace(true)
 
 	sw := gtk.NewScrolledWindow()
 	sw.SetChild(view)
