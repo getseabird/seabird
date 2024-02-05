@@ -112,12 +112,25 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 }
 
 func (l *ListView) onSearchFilterChange(filter behavior.SearchFilter) {
-	l.selection = l.createModel()
-	l.columnView.SetModel(l.selection)
+	list := l.selection.Model().Cast().(*gtk.StringList)
+	list.Splice(0, list.NItems(), nil)
+	l.selection.SetSelected(GtkInvalidListPosition)
 	for i, object := range l.behavior.Objects.Value() {
 		if filter.Test(object) {
-			l.selection.Model().Cast().(*gtk.StringList).Append(strconv.Itoa(i))
+			list.Append(strconv.Itoa(i))
 		}
+		if object.GetUID() == l.selected {
+			l.selection.SetSelected(uint(i))
+		}
+	}
+	if list.NItems() > 0 && l.selection.Selected() == GtkInvalidListPosition {
+		l.selection.SetSelected(0)
+	}
+	if l.selection.Selected() != GtkInvalidListPosition {
+		// SelectionChanged isn't triggered when calling SetSelected
+		l.selection.SelectionChanged(uint(l.selection.Selected()), 1)
+	} else {
+		l.behavior.RootDetailBehavior.SelectedObject.Update(nil)
 	}
 }
 
