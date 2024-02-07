@@ -31,11 +31,12 @@ import (
 type ClusterBehavior struct {
 	*Behavior
 
-	client    client.Client
-	clientset *kubernetes.Clientset
-	mapper    meta.RESTMapper
-	dynamic   *dynamic.DynamicClient
-	scheme    *runtime.Scheme
+	restconfig *rest.Config
+	client     client.Client
+	clientset  *kubernetes.Clientset
+	mapper     meta.RESTMapper
+	dynamic    *dynamic.DynamicClient
+	scheme     *runtime.Scheme
 
 	ClusterPreferences observer.Property[ClusterPreferences]
 
@@ -107,6 +108,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 
 	cluster := ClusterBehavior{
 		Behavior:           b,
+		restconfig:         config,
 		client:             rclient,
 		clientset:          clientset,
 		mapper:             mapper,

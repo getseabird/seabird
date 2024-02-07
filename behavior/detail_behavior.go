@@ -20,7 +20,10 @@ import (
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/apimachinery/pkg/util/httpstream"
 	"k8s.io/client-go/dynamic"
+	"k8s.io/client-go/kubernetes/scheme"
+	"k8s.io/client-go/tools/remotecommand"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -330,6 +333,43 @@ func (b *DetailBehavior) PodLogs(pod *corev1.Pod, container string) ([]byte, err
 		return nil, err
 	}
 	return io.ReadAll(r)
+}
+
+func (b *DetailBehavior) PodExec(ctx context.Context, pod *corev1.Pod, container string, command []string, stdin io.Reader, stdout io.Writer, stderr io.Writer, sizeQueue remotecommand.TerminalSizeQueue) error {
+	req := b.clientset.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace(pod.Namespace).SubResource("exec")
+	option := &corev1.PodExecOptions{
+		Container: container,
+		Command:   command,
+		Stdin:     true,
+		Stdout:    true,
+		Stderr:    true,
+		TTY:       true,
+	}
+	req.VersionedParams(
+		option,
+		scheme.ParameterCodec,
+	)
+
+	spdy, err := remotecommand.NewSPDYExecutor(b.restconfig, "POST", req.URL())
+	if err != nil {
+		return err
+	}
+	ws, err := remotecommand.NewWebSocketExecutor(b.restconfig, "GET", req.URL().String())
+	if err != nil {
+		return err
+	}
+	exec, err := remotecommand.NewFallbackExecutor(ws, spdy, httpstream.IsUpgradeFailure)
+	if err != nil {
+		return err
+	}
+
+	return exec.StreamWithContext(ctx, remotecommand.StreamOptions{
+		Stdin:             stdin,
+		Stdout:            stdout,
+		Stderr:            stderr,
+		Tty:               true,
+		TerminalSizeQueue: sizeQueue,
+	})
 }
 
 func (b *DetailBehavior) UpdateObject(obj *unstructured.Unstructured) error {

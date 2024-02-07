@@ -278,6 +278,17 @@ func (d *DetailView) extendRow(widget gtk.Widgetter, level int, prop behavior.Ob
 				d.Parent().(*adw.NavigationView).Push(NewLogPage(d.parent, d.behavior, selected, object.Name).NavigationPage)
 			})
 			widget.(*adw.ExpanderRow).AddRow(logs)
+
+			if runtime.GOOS != "windows" {
+				exec := adw.NewActionRow()
+				exec.SetActivatable(true)
+				exec.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+				exec.SetTitle("Exec")
+				exec.ConnectActivated(func() {
+					d.Parent().(*adw.NavigationView).Push(NewTerminalPage(d.parent, d.behavior, selected, object.Name).NavigationPage)
+				})
+				widget.(*adw.ExpanderRow).AddRow(exec)
+			}
 		}
 
 	case *appsv1.Deployment:
