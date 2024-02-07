@@ -21,7 +21,7 @@ jobs:
         run: |
           # dpkg --add-architecture arm64
           apt update
-          apt install -yq libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev git zip golang-go libglib2.0-dev-bin
+          apt install -yq libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev git zip golang-go libglib2.0-dev-bin libvte-2.91-gtk4-dev
           # apt install -yq gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgtk-4-dev:arm64 libgtksourceview-5-dev:arm64 libadwaita-1-dev:arm64 libgirepository1.0-dev:arm64
           git config --global --add safe.directory '*'
       - name: Checkout
@@ -149,7 +149,7 @@ jobs:
           go-version: "1.21"
       - name: Install dependencies
         run: |
-          brew install gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme create-dmg dylibbundler
+          brew install gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme create-dmg dylibbundler vte3
       - name: Build
         run: |
           go run github.com/goreleaser/goreleaser@latest build -f build/darwin/.goreleaser.yaml --single-target --snapshot

@@ -122,14 +122,6 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		box.Append(status)
 	}
 
-	// term := vte.NewTerminal()
-	// pty, err := term.PtyNewSync(context.TODO(), vte.PtyDefault)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// 	box.Append(term)
-
 	return view
 }
 
