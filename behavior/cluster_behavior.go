@@ -121,7 +121,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 
 	resources, err := discoveryClient.ServerPreferredResources()
 	if err != nil {
-		var groupDiscoveryFailed discovery.ErrGroupDiscoveryFailed
+		var groupDiscoveryFailed *discovery.ErrGroupDiscoveryFailed
 		if errors.As(err, &groupDiscoveryFailed) {
 			for api, err := range groupDiscoveryFailed.Groups {
 				// TODO display as toast
