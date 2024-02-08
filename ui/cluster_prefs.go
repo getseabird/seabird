@@ -22,18 +22,20 @@ type ClusterPrefPage struct {
 	parent     *gtk.Window
 	content    *adw.Bin
 	behavior   *behavior.Behavior
-	active     observer.Property[behavior.ClusterPreferences]
+	prefs      observer.Property[behavior.ClusterPreferences]
 	name       *adw.EntryRow
 	host       *adw.EntryRow
 	cert       *adw.EntryRow
 	key        *adw.EntryRow
 	ca         *adw.EntryRow
 	bearer     *adw.EntryRow
+	exec       *adw.ActionRow
+	execDelete *gtk.Button
 	favourites *adw.Bin
 	actions    *adw.Bin
 }
 
-func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observer.Property[behavior.ClusterPreferences]) *ClusterPrefPage {
+func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, prefs observer.Property[behavior.ClusterPreferences]) *ClusterPrefPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	content := adw.NewBin()
 	p := ClusterPrefPage{
@@ -41,7 +43,7 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observe
 		content:        content,
 		behavior:       b,
 		parent:         parent,
-		active:         active,
+		prefs:          prefs,
 	}
 
 	header := adw.NewHeaderBar()
@@ -51,13 +53,20 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, active observe
 	box.Append(content)
 	content.SetChild(p.createContent())
 
-	onChange(p.active, func(prefs behavior.ClusterPreferences) {
+	onChange(p.prefs, func(prefs behavior.ClusterPreferences) {
 		p.name.SetText(prefs.Name)
 		p.host.SetText(prefs.Host)
 		p.cert.SetText(string(prefs.TLS.CertData))
 		p.key.SetText(string(prefs.TLS.KeyData))
 		p.ca.SetText(string(prefs.TLS.CAData))
 		p.bearer.SetText(string(prefs.BearerToken))
+		if prefs.Exec != nil {
+			p.exec.SetSubtitle(prefs.Exec.Command)
+			p.execDelete.SetSensitive(true)
+		} else {
+			p.exec.SetSubtitle("")
+			p.execDelete.SetSensitive(false)
+		}
 
 		p.favourites.SetChild(p.createFavourites())
 		p.actions.SetChild(p.createActions())
@@ -95,19 +104,36 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.bearer = adw.NewEntryRow()
 	p.bearer.SetTitle("Bearer token")
 	auth.AddRow(p.bearer)
+	p.exec = adw.NewActionRow()
+	p.exec.SetTitle("Exec")
+	p.exec.AddCSSClass("property")
+	p.execDelete = gtk.NewButton()
+	p.execDelete.SetIconName("edit-delete-symbolic")
+	p.execDelete.AddCSSClass("flat")
+	p.execDelete.ConnectClicked(func() {
+		p.exec.SetSubtitle("")
+		p.execDelete.SetSensitive(false)
+	})
+	p.exec.AddSuffix(p.execDelete)
+	auth.AddRow(p.exec)
 
-	p.name.SetText(p.active.Value().Name)
-	p.host.SetText(p.active.Value().Host)
-	p.cert.SetText(string(p.active.Value().TLS.CertData))
-	p.key.SetText(string(p.active.Value().TLS.KeyData))
-	p.ca.SetText(string(p.active.Value().TLS.CAData))
-	p.bearer.SetText(string(p.active.Value().BearerToken))
+	p.name.SetText(p.prefs.Value().Name)
+	p.host.SetText(p.prefs.Value().Host)
+	p.cert.SetText(string(p.prefs.Value().TLS.CertData))
+	p.key.SetText(string(p.prefs.Value().TLS.KeyData))
+	p.ca.SetText(string(p.prefs.Value().TLS.CAData))
+	p.bearer.SetText(string(p.prefs.Value().BearerToken))
+	if exec := p.prefs.Value().Exec; exec != nil {
+		p.exec.SetSubtitle(exec.Command)
+	} else {
+		p.execDelete.SetSensitive(false)
+	}
 
 	p.favourites = adw.NewBin()
 	p.favourites.SetChild(p.createFavourites())
 	group := adw.NewPreferencesGroup()
 	group.Add(p.favourites)
-	if util.Index(p.behavior.Preferences.Value().Clusters, p.active) >= 0 {
+	if util.Index(p.behavior.Preferences.Value().Clusters, p.prefs) >= 0 {
 		page.Add(group)
 	}
 
@@ -125,7 +151,7 @@ func (p *ClusterPrefPage) createFavourites() *adw.PreferencesGroup {
 	group.SetTitle("Favourites")
 	group.SetHeaderSuffix(p.createFavouritesAddButton())
 
-	for i, fav := range p.active.Value().Navigation.Favourites {
+	for i, fav := range p.prefs.Value().Navigation.Favourites {
 		idx := i
 		row := adw.NewActionRow()
 		row.AddCSSClass("property")
@@ -140,9 +166,9 @@ func (p *ClusterPrefPage) createFavourites() *adw.PreferencesGroup {
 		remove.AddCSSClass("flat")
 		remove.SetIconName("user-trash-symbolic")
 		remove.ConnectClicked(func() {
-			v := p.active.Value()
-			v.Navigation.Favourites = append(p.active.Value().Navigation.Favourites[:idx], p.active.Value().Navigation.Favourites[idx+1:]...)
-			p.active.Update(v)
+			v := p.prefs.Value()
+			v.Navigation.Favourites = append(p.prefs.Value().Navigation.Favourites[:idx], p.prefs.Value().Navigation.Favourites[idx+1:]...)
+			p.prefs.Update(v)
 		})
 		row.AddSuffix(remove)
 		group.Add(row)
@@ -173,11 +199,11 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 		sw.SetChild(pp)
 		content.Append(sw)
 
-		cluster, _ := p.behavior.WithCluster(context.TODO(), p.active)
+		cluster, _ := p.behavior.WithCluster(context.TODO(), p.prefs)
 		for _, r := range cluster.Resources {
 			res := r
 			exists := false
-			for _, fav := range p.active.Value().Navigation.Favourites {
+			for _, fav := range p.prefs.Value().Navigation.Favourites {
 				if util.ResourceGVR(&res).String() == fav.String() {
 					exists = true
 				}
@@ -197,9 +223,9 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 			row.SetActivatable(true)
 			row.ConnectActivated(func() {
-				v := p.active.Value()
-				v.Navigation.Favourites = append(p.active.Value().Navigation.Favourites, util.ResourceGVR(&res))
-				p.active.Update(v)
+				v := p.prefs.Value()
+				v.Navigation.Favourites = append(p.prefs.Value().Navigation.Favourites, util.ResourceGVR(&res))
+				p.prefs.Update(v)
 				p.Parent().(*adw.NavigationView).Pop()
 			})
 			group.Add(row)
@@ -216,13 +242,16 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 	button.AddCSSClass("suggested-action")
 	button.ConnectClicked(func() {
 		spinner.Start()
-		cluster := p.active.Value()
+		cluster := p.prefs.Value()
 		cluster.Name = p.name.Text()
 		cluster.Host = p.host.Text()
 		cluster.TLS.CertData = []byte(p.cert.Text())
 		cluster.TLS.KeyData = []byte(p.key.Text())
 		cluster.TLS.CAData = []byte(p.ca.Text())
 		cluster.BearerToken = p.bearer.Text()
+		if p.exec.Subtitle() == "" {
+			cluster.Exec = nil
+		}
 		cluster.Defaults()
 
 		if err := p.validate(cluster); err != nil {
@@ -237,10 +266,10 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 					ShowErrorDialog(p.parent, "Cluster connection failed", err)
 					return
 				}
-				p.active.Update(cluster)
-				if util.Index(p.behavior.Preferences.Value().Clusters, p.active) < 0 {
+				p.prefs.Update(cluster)
+				if util.Index(p.behavior.Preferences.Value().Clusters, p.prefs) < 0 {
 					prefs := p.behavior.Preferences.Value()
-					prefs.Clusters = append(prefs.Clusters, p.active)
+					prefs.Clusters = append(prefs.Clusters, p.prefs)
 					p.behavior.Preferences.Update(prefs)
 				}
 
@@ -278,14 +307,14 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 	})
 	group.Add(load)
 
-	if util.Index(p.behavior.Preferences.Value().Clusters, p.active) >= 0 {
+	if util.Index(p.behavior.Preferences.Value().Clusters, p.prefs) >= 0 {
 		delete := adw.NewActionRow()
 		delete.SetActivatable(true)
 		delete.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 		delete.SetTitle("Delete")
 		delete.AddCSSClass("error")
 		delete.ConnectActivated(func() {
-			dialog := adw.NewMessageDialog(p.parent, "Delete cluster?", fmt.Sprintf("Are you sure you want to delete cluster \"%s\"?", p.active.Value().Name))
+			dialog := adw.NewMessageDialog(p.parent, "Delete cluster?", fmt.Sprintf("Are you sure you want to delete cluster \"%s\"?", p.prefs.Value().Name))
 			dialog.AddResponse("cancel", "Cancel")
 			dialog.AddResponse("delete", "Delete")
 			dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
@@ -293,7 +322,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 			dialog.ConnectResponse(func(response string) {
 				if response == "delete" {
 					prefs := p.behavior.Preferences.Value()
-					if i := util.Index(prefs.Clusters, p.active); i >= 0 {
+					if i := util.Index(prefs.Clusters, p.prefs); i >= 0 {
 						prefs.Clusters = append(prefs.Clusters[:i], prefs.Clusters[i+1:]...)
 						p.behavior.Preferences.Update(prefs)
 						p.Parent().(*adw.NavigationView).Pop()
@@ -357,18 +386,21 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 				ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 				return
 			}
-			active := p.active.Value()
-			active.Name = context
-			active.Host = config.Host
+
+			newPrefs := p.prefs.Value()
+			newPrefs.Name = context
+			newPrefs.Host = config.Host
+			newPrefs.Exec = config.ExecProvider
+
 			if config.CertFile != "" {
 				data, err := os.ReadFile(config.CertFile)
 				if err != nil {
 					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
-				active.TLS.CertData = data
+				newPrefs.TLS.CertData = data
 			} else {
-				active.TLS.CertData = config.CertData
+				newPrefs.TLS.CertData = config.CertData
 			}
 			if config.KeyFile != "" {
 				data, err := os.ReadFile(config.KeyFile)
@@ -376,9 +408,9 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
-				active.TLS.KeyData = data
+				newPrefs.TLS.KeyData = data
 			} else {
-				active.TLS.KeyData = config.KeyData
+				newPrefs.TLS.KeyData = config.KeyData
 			}
 			if config.CAFile != "" {
 				data, err := os.ReadFile(config.CAFile)
@@ -386,9 +418,9 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
-				active.TLS.CAData = data
+				newPrefs.TLS.CAData = data
 			} else {
-				active.TLS.CAData = config.CAData
+				newPrefs.TLS.CAData = config.CAData
 			}
 			if config.BearerTokenFile != "" {
 				data, err := os.ReadFile(config.BearerTokenFile)
@@ -396,11 +428,12 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
-				active.BearerToken = string(data)
+				newPrefs.BearerToken = string(data)
 			} else {
-				active.BearerToken = config.BearerToken
+				newPrefs.BearerToken = config.BearerToken
 			}
-			p.active.Update(active)
+
+			p.prefs.Update(newPrefs)
 		}
 	})
 }

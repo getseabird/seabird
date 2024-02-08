@@ -60,6 +60,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		Host:            clusterPrefs.Value().Host,
 		BearerToken:     clusterPrefs.Value().BearerToken,
 		TLSClientConfig: clusterPrefs.Value().TLS,
+		ExecProvider:    clusterPrefs.Value().Exec,
 	}
 
 	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)

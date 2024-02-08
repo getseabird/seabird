@@ -13,6 +13,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd/api"
 )
 
 type basePreferences struct {
@@ -38,6 +39,7 @@ type ClusterPreferences struct {
 	Host        string
 	BearerToken string
 	TLS         rest.TLSClientConfig
+	Exec        *api.ExecConfig
 	Navigation  struct {
 		Favourites []schema.GroupVersionResource
 	}
