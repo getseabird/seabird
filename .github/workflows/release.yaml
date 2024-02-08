@@ -110,6 +110,7 @@ jobs:
       - name: Use Advinst Automation
         shell: pwsh
         run: |
+          $ErrorActionPreference = 'Continue'
           $aipPath = join-path $env:GITHUB_WORKSPACE "build\windows\installer.aip"
           $advinst = new-object -com advancedinstaller
           $project = $advinst.LoadProject($aipPath)
