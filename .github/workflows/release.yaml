@@ -113,7 +113,7 @@ jobs:
           $aipPath = join-path $env:GITHUB_WORKSPACE "build\windows\installer.aip"
           $advinst = new-object -com advancedinstaller
           $project = $advinst.LoadProject($aipPath)
-          if $env:GITHUB_REF.StartsWith('refs/tags/v') {
+          if ($env:GITHUB_REF.StartsWith('refs/tags/v')) {
             $project.ProductDetails.Version = $env:GITHUB_REF.replace('refs/tags/v', '');
           }
           $project.Build();
