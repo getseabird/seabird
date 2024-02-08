@@ -81,12 +81,16 @@ jobs:
             mingw-w64-x86_64-gobject-introspection
             mingw-w64-x86_64-glib2
             mingw-w64-x86_64-go
+      - name: Cache Go
+        id: cache-go
+        uses: actions/cache@v4
+        with:
+          path: /msys2/go
+          key: ${{ runner.os }}-gocache
       - name: Build
         run: |
           set -x
-          export PATH="/mingw64/bin:$PATH"
-          export GOROOT=/mingw64/lib/go
-          export GOPATH=/mingw64
+          export PATH="/mingw64/bin:$PATH" GOROOT=/mingw64/lib/go GOPATH=/go GOCACHE=/go/build
           go run github.com/goreleaser/goreleaser@latest build -f build/windows/.goreleaser.yaml --single-target --snapshot
           dist="$(pwd)/dist/seabird_windows_amd64_v1/"
           pushd $dist
