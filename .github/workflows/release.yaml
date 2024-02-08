@@ -106,8 +106,17 @@ jobs:
           aip-build-name: DefaultBuild
           aip-output-dir: ${{ github.workspace }}\dist
           aip-package-name: seabird_windows_amd64.msi
+          advinst-enable-automation: true
           aip-commands: |
             SetVersion $env:GITHUB_REF.replace('refs/tags/v', '')
+      - name: Use Advinst Automation
+        shell: pwsh
+        run: |
+          $aipPath = join-path $env:GITHUB_WORKSPACE "build\windows\installer.aip"
+          $advinst = new-object -com advancedinstaller;
+          $project = $advinst.LoadProject($aipPath);
+          $project.ProductDetails.Version = $env:GITHUB_REF.replace('refs/tags/v', '');
+          $project.Build();
       - uses: actions/upload-artifact@v4
         with:
           name: msys2
