@@ -103,7 +103,7 @@ jobs:
           aip-output-dir: ${{ github.workspace }}\dist
           aip-package-name: seabird_windows_amd64.msi
           aip-commands: |
-            SetVersion 0.0.1
+            SetVersion $env:GITHUB_REF.replace('refs/tags/v', '')
       - uses: actions/upload-artifact@v4
         with:
           name: msys2
@@ -162,7 +162,7 @@ jobs:
 
           dylibbundler -b -d $dist/lib -x $dist/seabird
           cp -f $brew_prefix/lib/librsvg*.dylib $dist/lib
- 
+
           cp -r $brew_prefix/lib/gdk-pixbuf-2.0 $dist/lib
           sed -i '' "s|$brew_prefix/||" $dist/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
           cp -r $brew_prefix/share/glib-2.0/schemas $dist/share/glib-2.0
