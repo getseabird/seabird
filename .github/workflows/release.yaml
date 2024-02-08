@@ -102,13 +102,13 @@ jobs:
           pushd /mingw64 && cp --parents -r ./share/glib-2.0/schemas/gschemas.compiled ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons ./lib/gdk-pixbuf-2.0 $dist && popd
       - uses: caphyon/advinst-github-action@main
         with:
-          # aip-path: build/windows/installer.aip
-          # aip-build-name: DefaultBuild
-          # aip-output-dir: ${{ github.workspace }}\dist
-          # aip-package-name: seabird_windows_amd64.msi
+          aip-path: build/windows/installer.aip
+          aip-build-name: DefaultBuild
+          aip-output-dir: ${{ github.workspace }}\dist
+          aip-package-name: seabird_windows_amd64.msi
           advinst-enable-automation: true
-          # aip-commands: |
-          #   SetVersion $env:GITHUB_REF.replace('refs/tags/v', '')
+          aip-commands: |
+            SetVersion $env:GITHUB_REF.replace('refs/tags/v', '')
       - name: Use Advinst Automation
         shell: pwsh
         run: |
