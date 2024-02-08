@@ -8,23 +8,26 @@ resource types in a simple, bloat-free user interface.
 
 ## Download
 
-Downloads for all platforms are available under [releases](https://github.com/getseabird/seabird/releases). On Linux, we recommend using the Flatpak package.
+Downloads for all platforms are available under
+[releases](https://github.com/getseabird/seabird/releases). On Linux, we
+recommend using the Flatpak package.
 
 <a href='https://flathub.org/apps/dev.skynomads.Seabird'>
   <img width='180' alt='Download on Flathub' src='https://flathub.org/api/badge?locale=en'/>
 </a>
-
 
 ## Building From Source
 
 Build dependencies
 
 #### Fedora
+
 ```bash
 sudo dnf install gtk4-devel gtksourceview5-devel libadwaita-devel gobject-introspection-devel glib2-devel golang
 ```
 
 #### Debian
+
 ```bash
 sudo apt install libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev libglib2.0-dev-bin golang-go
 ```
@@ -50,8 +53,8 @@ steps.
 
 For feature suggestions, please create a
 [discussion](https://github.com/getseabird/seabird/discussions). If you have a
-concrete vision for the feature and are prepared to implement it, open an issue
-instead.
+concrete vision for the feature, open an issue instead and use the proposal
+template.
 
 ## License
 
