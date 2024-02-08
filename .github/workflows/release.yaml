@@ -82,11 +82,11 @@ jobs:
             mingw-w64-x86_64-glib2
             mingw-w64-x86_64-go
       - name: Cache Go
-        id: cache-go
+        id: go
         uses: actions/cache@v4
         with:
           path: /msys2/go
-          key: ${{ runner.os }}-gocache
+          key: ${{ runner.os }}-go
       - name: Build
         run: |
           set -x
