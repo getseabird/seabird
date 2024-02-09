@@ -111,9 +111,8 @@ jobs:
           $project = $advinst.LoadProject($aip)
           $project.BuildComponent.Builds[0].OutputFolder = "${{ github.workspace }}\dist"
           $project.BuildComponent.Builds[0].PackageName = "seabird_windows_amd64"
-          if ($env:GITHUB_REF.StartsWith('refs/tags/v')) {
-            $project.ProductDetails.Version = $env:GITHUB_REF.replace('refs/tags/v', '')
-          }
+          $tag = git describe --tags --abbrev=0
+          $project.ProductDetails.Version = $tag.replace('refs/tags/v', '')
           $project.ProductDetails.ProductCode.GenerateAll()
           $project.Build()
       - uses: actions/upload-artifact@v4
