@@ -66,11 +66,13 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Set up msys
         uses: msys2/setup-msys2@v2
         with:
           msystem: MINGW64
-          release: false
+          update: true
           install: |
             git zip
             mingw-w64-x86_64-gcc 
@@ -81,12 +83,16 @@ jobs:
             mingw-w64-x86_64-gobject-introspection
             mingw-w64-x86_64-glib2
             mingw-w64-x86_64-go
+      - name: Cache Go
+        id: go
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/msys64/go
+          key: ${{ runner.os }}-go
       - name: Build
         run: |
           set -x
-          export PATH="/mingw64/bin:$PATH"
-          export GOROOT=/mingw64/lib/go
-          export GOPATH=/mingw64
+          export PATH="/mingw64/bin:$PATH" GOROOT=/mingw64/lib/go GOPATH=/go GOCACHE=/go/build
           go run github.com/goreleaser/goreleaser@latest build -f build/windows/.goreleaser.yaml --single-target --snapshot
           dist="$(pwd)/dist/seabird_windows_amd64_v1/"
           pushd $dist
@@ -98,12 +104,19 @@ jobs:
           pushd /mingw64 && cp --parents -r ./share/glib-2.0/schemas/gschemas.compiled ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons ./lib/gdk-pixbuf-2.0 $dist && popd
       - uses: caphyon/advinst-github-action@main
         with:
-          aip-path: build/windows/installer.aip
-          aip-build-name: DefaultBuild
-          aip-output-dir: ${{ github.workspace }}\dist
-          aip-package-name: seabird_windows_amd64.msi
-          aip-commands: |
-            SetVersion 0.0.1
+          advinst-enable-automation: true
+      - name: Use Advinst Automation
+        shell: pwsh
+        run: |
+          $aip = join-path $env:GITHUB_WORKSPACE "build\windows\installer.aip"
+          $advinst = new-object -com advancedinstaller
+          $project = $advinst.LoadProject($aip)
+          $project.BuildComponent.Builds[0].OutputFolder = "${{ github.workspace }}\dist"
+          $project.BuildComponent.Builds[0].PackageName = "seabird_windows_amd64"
+          $tag = git describe --tags --abbrev=0
+          $project.ProductDetails.Version = $tag.replace('v', '')
+          $project.ProductDetails.ProductCode.GenerateAll()
+          $project.Build()
       - uses: actions/upload-artifact@v4
         with:
           name: msys2
@@ -162,7 +175,7 @@ jobs:
 
           dylibbundler -b -d $dist/lib -x $dist/seabird
           cp -f $brew_prefix/lib/librsvg*.dylib $dist/lib
- 
+
           cp -r $brew_prefix/lib/gdk-pixbuf-2.0 $dist/lib
           sed -i '' "s|$brew_prefix/||" $dist/lib/gdk-pixbuf-2.0/2.10.0/loaders.cache
           cp -r $brew_prefix/share/glib-2.0/schemas $dist/share/glib-2.0
