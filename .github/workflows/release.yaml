@@ -114,6 +114,7 @@ jobs:
           if ($env:GITHUB_REF.StartsWith('refs/tags/v')) {
             $project.ProductDetails.Version = $env:GITHUB_REF.replace('refs/tags/v', '')
           }
+          $project.ProductDetails.ProductCode.GenerateAll()
           $project.Build()
       - uses: actions/upload-artifact@v4
         with:
