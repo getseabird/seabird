@@ -13,7 +13,7 @@ Downloads for all platforms are available under
 recommend using the Flatpak package.
 
 <a href='https://flathub.org/apps/dev.skynomads.Seabird'>
-  <img width='180' alt='Download on Flathub' src='https://flathub.org/api/badge?locale=en'/>
+  <img width='140' alt='Download on Flathub' src='https://flathub.org/api/badge?locale=en'/>
 </a>
 
 ## Building From Source
