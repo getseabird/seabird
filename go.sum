@@ -1,3 +1,5 @@
+github.com/KarpelesLab/weak v0.1.1 h1:fNnlPo3aypS9tBzoEQluY13XyUfd/eWaSE/vMvo9s4g=
+github.com/KarpelesLab/weak v0.1.1/go.mod h1:pzXsWs5f2bf+fpgHayTlBE1qJpO3MpJKo5sRaLu1XNw=
 github.com/adrg/strutil v0.3.1 h1:OLvSS7CSJO8lBii4YmBt8jiK9QOtB9CzCzwl4Ic/Fz4=
 github.com/adrg/strutil v0.3.1/go.mod h1:8h90y18QLrs11IBffcGX3NW/GFBXCMcNg4M7H6MspPA=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=
@@ -11,8 +13,8 @@ github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc h1
 github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc/go.mod h1:fkvdR7MYO1sI0ex07VYLTc+YK87v24aRFYyMJQ/xAeA=
 github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240109205950-92962b56dd0f h1:VnrqBt624eRslp4qhW1X1dr7hwLwWw05Kwu6vZKT8e0=
 github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240109205950-92962b56dd0f/go.mod h1:vKV3IOI1vvV9aI7PKCgxYzUUarQByRfgDmXMRrDJy7Q=
-github.com/diamondburned/gotk4/pkg v0.1.1-0.20240206031134-7966a062d938 h1:LTmrRYr5wKWjM80UcmqWUUxx7cOaxdv/Xl4wtRfdQFo=
-github.com/diamondburned/gotk4/pkg v0.1.1-0.20240206031134-7966a062d938/go.mod h1:rffNmHJknEj3Izr7P6x0F536G4fMsD5mgLjnNzyI9To=
+github.com/diamondburned/gotk4/pkg v0.1.1-0.20240210085108-c1ec5c717454 h1:SiyVMYOEz/XkgCHRFt0LBfoRXJtxKWzmyko3Fejvq24=
+github.com/diamondburned/gotk4/pkg v0.1.1-0.20240210085108-c1ec5c717454/go.mod h1:pwRl5fx6vSlYP15ESNqAaZEeaIMPGmk4VTKwzbKKyCA=
 github.com/emicklei/go-restful/v3 v3.11.2 h1:1onLa9DcsMYO9P+CXaL0dStDqQ2EHHXLiz+BtnqkLAU=
 github.com/emicklei/go-restful/v3 v3.11.2/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
 github.com/evanphx/json-patch/v5 v5.9.0 h1:kcBlZQbplgElYIlo/n1hJbls2z/1awpXxpRi0/FOJfg=

@@ -7,7 +7,7 @@ require (
 	github.com/creack/pty v1.1.21
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc
 	github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240109205950-92962b56dd0f
-	github.com/diamondburned/gotk4/pkg v0.1.1-0.20240206031134-7966a062d938
+	github.com/diamondburned/gotk4/pkg v0.1.1-0.20240210085108-c1ec5c717454
 	github.com/go-logr/logr v1.4.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/imkira/go-observer/v2 v2.0.0-20230629064422-8e0b61f11f1b
@@ -20,12 +20,12 @@ require (
 	k8s.io/apimachinery v0.29.1
 	k8s.io/client-go v0.29.1
 	k8s.io/metrics v0.29.1
-	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	nhooyr.io/websocket v1.8.10
 	sigs.k8s.io/controller-runtime v0.17.0
 )
 
 require (
+	github.com/KarpelesLab/weak v0.1.1 // indirect
 	github.com/davecgh/go-spew v1.1.1 // indirect
 	github.com/emicklei/go-restful/v3 v3.11.2 // indirect
 	github.com/evanphx/json-patch/v5 v5.9.0 // indirect
@@ -64,6 +64,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240126223410-2919ad4fcfec // indirect
+	k8s.io/utils v0.0.0-20240102154912-e7106e64919e // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
