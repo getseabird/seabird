@@ -1,13 +1,14 @@
 module github.com/getseabird/seabird
 
 go 1.21
+toolchain go1.22.0
 
 require (
 	github.com/adrg/strutil v0.3.1
 	github.com/creack/pty v1.1.21
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc
 	github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240109205950-92962b56dd0f
-	github.com/diamondburned/gotk4/pkg v0.1.1-0.20240210085108-c1ec5c717454
+	github.com/diamondburned/gotk4/pkg v0.2.1
 	github.com/go-logr/logr v1.4.1
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/imkira/go-observer/v2 v2.0.0-20230629064422-8e0b61f11f1b
