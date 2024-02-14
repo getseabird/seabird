@@ -28,7 +28,7 @@ type Navigation struct {
 
 func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	n := &Navigation{ToolbarView: adw.NewToolbarView(), behavior: b}
-	n.SetSizeRequest(225, 200)
+	n.SetSizeRequest(210, 200)
 	n.SetVExpand(true)
 
 	header := adw.NewHeaderBar()

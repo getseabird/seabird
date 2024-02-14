@@ -2,7 +2,6 @@ package ui
 
 import (
 	"fmt"
-	"runtime"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -31,9 +30,6 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 	w.SetIconName("seabird")
 	w.SetTitle(fmt.Sprintf("%s - %s", behavior.ClusterPreferences.Value().Name, ApplicationName))
 	w.SetDefaultSize(1280, 720)
-	if runtime.GOOS == "windows" {
-		w.SetDecorated(true) // https://gitlab.gnome.org/GNOME/gtk/-/issues/3749
-	}
 
 	var h glib.SignalHandle
 	h = w.ConnectCloseRequest(func() bool {
@@ -65,6 +61,7 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 	w.detailView = NewDetailView(&w.Window, behavior.NewRootDetailBehavior())
 	nav := adw.NewNavigationView()
 	nav.Add(w.detailView.NavigationPage)
+	nav.SetSizeRequest(350, 350)
 	rpane.SetEndChild(nav)
 
 	w.listView = NewListView(&w.Window, behavior.NewListBehavior())

@@ -18,7 +18,6 @@ type LogPage struct {
 func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod *corev1.Pod, container string) *LogPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	p := LogPage{NavigationPage: adw.NewNavigationPage(box, container)}
-	p.SetSizeRequest(350, 350)
 
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(gtk.NewLabel(container))
