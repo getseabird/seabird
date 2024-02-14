@@ -293,12 +293,6 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 	load.ConnectActivated(func() {
 		fileChooser := gtk.NewFileChooserNative("Select kubeconfig", p.parent, gtk.FileChooserActionOpen, "Open", "Cancel")
 		defer fileChooser.Show()
-		filter := gtk.NewFileFilter()
-		filter.AddMIMEType("text/plain")
-		filter.AddMIMEType("application/yaml")
-		filter.AddMIMEType("application/json")
-		filter.SetName("Text")
-		fileChooser.AddFilter(filter)
 		fileChooser.ConnectResponse(func(responseId int) {
 			if responseId == int(gtk.ResponseAccept) {
 				p.showContextSelection(fileChooser.File().Path())
