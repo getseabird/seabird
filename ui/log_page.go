@@ -1,6 +1,8 @@
 package ui
 
 import (
+	"runtime"
+
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -21,6 +23,7 @@ func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod *core
 
 	header := adw.NewHeaderBar()
 	header.SetTitleWidget(gtk.NewLabel(container))
+	header.SetShowEndTitleButtons(runtime.GOOS != "windows")
 	header.AddCSSClass("flat")
 	box.Append(header)
 
