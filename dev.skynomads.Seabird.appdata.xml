@@ -19,6 +19,7 @@
   <developer_name>Seabird Project</developer_name>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="v0.1.1" date="2024-02-15"/>
     <release version="v0.1.0" date="2024-02-09"/>
     <release version="v0.0.25" date="2024-02-04"/>
     <release version="v0.0.24" date="2024-02-02"/>
