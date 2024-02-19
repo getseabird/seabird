@@ -17,10 +17,10 @@ require (
 	github.com/zmwangx/debounce v1.0.0
 	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
 	gopkg.in/yaml.v2 v2.4.0
-	k8s.io/api v0.29.1
-	k8s.io/apiextensions-apiserver v0.29.1
-	k8s.io/apimachinery v0.29.1
-	k8s.io/client-go v0.29.1
+	k8s.io/api v0.29.2
+	k8s.io/apiextensions-apiserver v0.29.2
+	k8s.io/apimachinery v0.29.2
+	k8s.io/client-go v0.29.2
 	k8s.io/metrics v0.29.1
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	nhooyr.io/websocket v1.8.10
