@@ -189,15 +189,17 @@ func (d *DetailView) renderObjectProperty(level, index int, prop behavior.Object
 			row.SetSubtitle(prop.Value)
 		}
 
-		copy := gtk.NewButton()
-		copy.SetIconName("edit-copy-symbolic")
-		copy.AddCSSClass("flat")
-		copy.AddCSSClass("dim-label")
-		copy.SetVAlign(gtk.AlignCenter)
-		copy.ConnectClicked(func() {
-			gdk.DisplayGetDefault().Clipboard().SetText(prop.Value)
-		})
-		row.AddSuffix(copy)
+		if prop.Value != "" {
+			copy := gtk.NewButton()
+			copy.SetIconName("edit-copy-symbolic")
+			copy.AddCSSClass("flat")
+			copy.AddCSSClass("dim-label")
+			copy.SetVAlign(gtk.AlignCenter)
+			copy.ConnectClicked(func() {
+				gdk.DisplayGetDefault().Clipboard().SetText(prop.Value)
+			})
+			row.AddSuffix(copy)
+		}
 
 		d.extendRow(row, level, prop)
 		return row
