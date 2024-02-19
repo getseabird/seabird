@@ -22,7 +22,6 @@ func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod *core
 	p := LogPage{NavigationPage: adw.NewNavigationPage(box, container)}
 
 	header := adw.NewHeaderBar()
-	header.SetTitleWidget(gtk.NewLabel(container))
 	header.SetShowEndTitleButtons(runtime.GOOS != "windows")
 	header.AddCSSClass("flat")
 	box.Append(header)

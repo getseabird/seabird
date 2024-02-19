@@ -39,7 +39,7 @@ type DetailView struct {
 func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *DetailView {
 	toolbarView := adw.NewToolbarView()
 	d := DetailView{
-		NavigationPage: adw.NewNavigationPage(toolbarView, "main"),
+		NavigationPage: adw.NewNavigationPage(toolbarView, ""),
 		prefPage:       adw.NewPreferencesPage(),
 		behavior:       behavior,
 		parent:         parent,
