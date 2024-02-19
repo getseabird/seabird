@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/behavior"
 	"github.com/getseabird/seabird/util"
 	appsv1 "k8s.io/api/apps/v1"
@@ -28,7 +29,7 @@ type Navigation struct {
 
 func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	n := &Navigation{ToolbarView: adw.NewToolbarView(), behavior: b}
-	n.SetSizeRequest(210, 200)
+	n.SetSizeRequest(215, 200)
 	n.SetVExpand(true)
 
 	header := adw.NewHeaderBar()
@@ -147,6 +148,11 @@ func (n *Navigation) createFavourites(prefs behavior.ClusterPreferences) *gtk.Li
 		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
 		box.Append(n.resIcon(gvr))
 		label := gtk.NewLabel(resource.Kind)
+		label.SetEllipsize(pango.EllipsizeEnd)
+		box.Append(label)
+		label = gtk.NewLabel(resource.Group)
+		label.AddCSSClass("dim-label")
+		label.SetEllipsize(pango.EllipsizeEnd)
 		box.Append(label)
 		row.SetChild(box)
 
