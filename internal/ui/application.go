@@ -7,7 +7,6 @@ import (
 	"runtime/debug"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
-	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
@@ -45,15 +44,12 @@ func NewApplication(version string) (*Application, error) {
 		adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(p.ColorScheme))
 	})
 
+	style.Load()
+
 	a := Application{
 		Application: adw.NewApplication("dev.skynomads.Seabird", gio.ApplicationFlagsNone),
 		version:     version,
 	}
-
-	provider := gtk.NewCSSProvider()
-	theme, _ := style.FS.ReadFile("theme.css")
-	provider.LoadFromData(string(theme))
-	gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), provider, gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 
 	a.ConnectActivate(func() {
 		NewWelcomeWindow(&a.Application.Application, b).Show()

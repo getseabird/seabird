@@ -29,7 +29,7 @@ func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *Welcom
 	}
 	w.SetApplication(app)
 	w.SetIconName("seabird")
-	w.SetDefaultSize(600, 600)
+	w.SetDefaultSize(600, 500)
 	w.SetContent(w.content)
 	w.content.SetChild(w.createContent())
 	w.SetTitle(ApplicationName)
