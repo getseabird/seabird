@@ -3,7 +3,8 @@ package ui
 import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/behavior"
+	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/imkira/go-observer/v2"
 )
 
@@ -66,13 +67,12 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	addCluster.AddCSSClass("flat")
 	addCluster.SetIconName("list-add")
 	addCluster.ConnectClicked(func() {
-		page := NewClusterPrefPage(&w.Window.Window, w.behavior.Behavior, observer.NewProperty(behavior.ClusterPreferences{}))
+		page := NewClusterPrefPage(&w.Window.Window, w.behavior.Behavior, observer.NewProperty(api.ClusterPreferences{}))
 		w.navigationView.Push(page.NavigationPage)
 	})
 
 	clusters.SetHeaderSuffix(addCluster)
-	for _, c := range w.behavior.Preferences.Value().Clusters {
-		cluster := c
+	for _, cluster := range w.behavior.Preferences.Value().Clusters {
 		row := adw.NewActionRow()
 		row.SetActivatable(true)
 		row.ConnectActivated(func() {

@@ -1,4 +1,4 @@
-package behavior
+package api
 
 import (
 	"github.com/imkira/go-observer/v2"
@@ -15,7 +15,7 @@ type Events struct {
 	stopCh chan struct{}
 }
 
-func NewEvents(clientset *kubernetes.Clientset) *Events {
+func newEvents(clientset *kubernetes.Clientset) *Events {
 	e := Events{
 		events: observer.NewProperty([]*eventsv1.Event{}),
 		stopCh: make(chan struct{}),

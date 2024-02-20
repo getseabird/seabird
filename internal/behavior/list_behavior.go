@@ -5,7 +5,7 @@ import (
 	"log"
 	"time"
 
-	"github.com/getseabird/seabird/util"
+	"github.com/getseabird/seabird/internal/util"
 	"github.com/imkira/go-observer/v2"
 	"github.com/zmwangx/debounce"
 	appsv1 "k8s.io/api/apps/v1"
@@ -74,17 +74,16 @@ func (b *ListBehavior) onSelectedResourceChange(resource *metav1.APIResource) {
 		obj = &appsv1.StatefulSet{}
 	default:
 		go func() {
-			w, err := b.dynamic.Resource(gvr).Watch(context.TODO(), metav1.ListOptions{})
+			w, err := b.DynamicClient.Resource(gvr).Watch(context.TODO(), metav1.ListOptions{})
 			if err != nil {
 				log.Printf("watch failed: %s", err.Error())
-				list, err := b.dynamic.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
+				list, err := b.DynamicClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
 				if err != nil {
 					log.Printf("list failed: %s", err.Error())
 					return
 				}
 				for _, i := range list.Items {
-					ii := i
-					b.objects = append(b.objects, &ii)
+					b.objects = append(b.objects, &i)
 				}
 				return
 			}
@@ -128,9 +127,9 @@ func (b *ListBehavior) onSelectedResourceChange(resource *metav1.APIResource) {
 	var getter cache.Getter
 	switch (metav1.GroupVersion{Group: gvr.Group, Version: gvr.Version}).String() {
 	case corev1.SchemeGroupVersion.String():
-		getter = b.clientset.CoreV1().RESTClient()
+		getter = b.CoreV1().RESTClient()
 	case appsv1.SchemeGroupVersion.String():
-		getter = b.clientset.AppsV1().RESTClient()
+		getter = b.AppsV1().RESTClient()
 	}
 
 	watchlist := cache.NewListWatchFromClient(getter, gvr.Resource, v1.NamespaceAll,

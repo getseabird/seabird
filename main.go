@@ -3,7 +3,7 @@ package main
 import (
 	"log"
 
-	"github.com/getseabird/seabird/ui"
+	"github.com/getseabird/seabird/internal/ui"
 )
 
 var (

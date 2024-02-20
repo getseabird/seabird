@@ -8,8 +8,9 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
-	"github.com/getseabird/seabird/behavior"
-	"github.com/getseabird/seabird/util"
+	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/util"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -72,7 +73,7 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	addFavouriteBin := adw.NewBin()
 	content.Append(addFavouriteBin)
 
-	onChange(b.ClusterPreferences, func(prefs behavior.ClusterPreferences) {
+	onChange(b.ClusterPreferences, func(prefs api.ClusterPreferences) {
 		favouritesBin.SetChild(n.createFavourites(prefs))
 	})
 
@@ -101,7 +102,7 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	return n
 }
 
-func (n *Navigation) createFavourites(prefs behavior.ClusterPreferences) *gtk.ListBox {
+func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox {
 	n.list = gtk.NewListBox()
 	n.list.AddCSSClass("dim-label")
 	n.list.AddCSSClass("navigation-sidebar")

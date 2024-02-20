@@ -9,8 +9,9 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/behavior"
-	"github.com/getseabird/seabird/util"
+	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
 	"golang.org/x/exp/maps"
@@ -22,7 +23,7 @@ type ClusterPrefPage struct {
 	parent     *gtk.Window
 	content    *adw.Bin
 	behavior   *behavior.Behavior
-	prefs      observer.Property[behavior.ClusterPreferences]
+	prefs      observer.Property[api.ClusterPreferences]
 	name       *adw.EntryRow
 	host       *adw.EntryRow
 	cert       *adw.EntryRow
@@ -35,7 +36,7 @@ type ClusterPrefPage struct {
 	actions    *adw.Bin
 }
 
-func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, prefs observer.Property[behavior.ClusterPreferences]) *ClusterPrefPage {
+func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, prefs observer.Property[api.ClusterPreferences]) *ClusterPrefPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	content := adw.NewBin()
 	p := ClusterPrefPage{
@@ -53,7 +54,7 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, prefs observer
 	box.Append(content)
 	content.SetChild(p.createContent())
 
-	onChange(p.prefs, func(prefs behavior.ClusterPreferences) {
+	onChange(p.prefs, func(prefs api.ClusterPreferences) {
 		p.name.SetText(prefs.Name)
 		p.host.SetText(prefs.Host)
 		p.cert.SetText(string(prefs.TLS.CertData))
@@ -436,7 +437,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 	})
 }
 
-func (p *ClusterPrefPage) validate(pref behavior.ClusterPreferences) error {
+func (p *ClusterPrefPage) validate(pref api.ClusterPreferences) error {
 	if len(pref.Name) == 0 {
 		return errors.New("Name is required")
 	}

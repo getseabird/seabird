@@ -8,14 +8,15 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/behavior"
+	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/widget"
 )
 
 type ClusterWindow struct {
 	*widget.UniversalApplicationWindow
 	behavior     *behavior.ClusterBehavior
-	prefs        *behavior.Preferences
+	prefs        *api.Preferences
 	navigation   *Navigation
 	listView     *ListView
 	detailView   *DetailView
@@ -82,7 +83,7 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 func (w *ClusterWindow) createActions() {
 	newWindow := gio.NewSimpleAction("newWindow", nil)
 	newWindow.ConnectActivate(func(_ *glib.Variant) {
-		prefs, err := behavior.LoadPreferences()
+		prefs, err := api.LoadPreferences()
 		if err != nil {
 			ShowErrorDialog(&w.Window, "Could not load preferences", err)
 			return

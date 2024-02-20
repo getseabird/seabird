@@ -1,4 +1,4 @@
-package behavior
+package api
 
 import (
 	"encoding/json"

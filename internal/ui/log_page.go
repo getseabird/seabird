@@ -6,7 +6,7 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/behavior"
+	"github.com/getseabird/seabird/internal/behavior"
 	corev1 "k8s.io/api/core/v1"
 )
 

@@ -7,8 +7,9 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/behavior"
-	"github.com/getseabird/seabird/util"
+	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/util"
+	"github.com/getseabird/seabird/widget"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -165,7 +166,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				pod := object.(*corev1.Pod)
 				for _, cond := range pod.Status.Conditions {
 					if cond.Type == corev1.ContainersReady {
-						listitem.SetChild(createStatusIcon(cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"))
+						listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"))
 					}
 				}
 			}),
@@ -200,7 +201,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				deployment := object.(*appsv1.Deployment)
 				for _, cond := range deployment.Status.Conditions {
 					if cond.Type == appsv1.DeploymentAvailable {
-						listitem.SetChild(createStatusIcon(cond.Status == corev1.ConditionTrue))
+						listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
 					}
 				}
 			}),
@@ -215,7 +216,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 		columns = append(columns,
 			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
 				statefulset := object.(*appsv1.StatefulSet)
-				listitem.SetChild(createStatusIcon(statefulset.Status.ReadyReplicas == statefulset.Status.Replicas))
+				listitem.SetChild(widget.NewStatusIcon(statefulset.Status.ReadyReplicas == statefulset.Status.Replicas))
 			}),
 			l.createColumn("Available", func(listitem *gtk.ListItem, object client.Object) {
 				statefulSet := object.(*appsv1.StatefulSet)
@@ -255,17 +256,4 @@ func (l *ListView) createModel() *gtk.SingleSelection {
 		l.behavior.RootDetailBehavior.SelectedObject.Update(obj)
 	})
 	return selection
-}
-
-func createStatusIcon(ok bool) *gtk.Image {
-	if ok {
-		icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
-		icon.AddCSSClass("success")
-		icon.SetHAlign(gtk.AlignStart)
-		return icon
-	}
-	icon := gtk.NewImageFromIconName("dialog-warning")
-	icon.AddCSSClass("warning")
-	icon.SetHAlign(gtk.AlignStart)
-	return icon
 }

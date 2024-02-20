@@ -4,14 +4,16 @@ import (
 	"log"
 	"os"
 	"runtime"
+	"runtime/debug"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/behavior"
-	"github.com/getseabird/seabird/icon"
-	"github.com/getseabird/seabird/style"
+	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/icon"
+	"github.com/getseabird/seabird/internal/style"
 )
 
 const ApplicationName = "Seabird"
@@ -39,7 +41,7 @@ func NewApplication(version string) (*Application, error) {
 	}
 
 	adw.StyleManagerGetDefault().SetColorScheme(b.Preferences.Value().ColorScheme)
-	onChange(b.Preferences, func(p behavior.Preferences) {
+	onChange(b.Preferences, func(p api.Preferences) {
 		adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(p.ColorScheme))
 	})
 
@@ -61,6 +63,13 @@ func NewApplication(version string) (*Application, error) {
 }
 
 func (a *Application) Run() {
+	debug.SetPanicOnFault(true)
+	defer func() {
+		if err := recover(); err != nil {
+			NewPanicWindow(err).Present()
+		}
+	}()
+
 	if code := a.Application.Run(os.Args); code > 0 {
 		os.Exit(code)
 	}

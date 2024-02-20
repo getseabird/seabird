@@ -5,8 +5,8 @@ import (
 
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/behavior"
-	"github.com/getseabird/seabird/util"
+	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 

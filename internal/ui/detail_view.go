@@ -2,8 +2,8 @@ package ui
 
 import (
 	"fmt"
-	"log"
 	"runtime"
+	"strconv"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -13,12 +13,13 @@ import (
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
-	"github.com/getseabird/seabird/behavior"
-	"github.com/getseabird/seabird/util"
+	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/util"
+	"github.com/getseabird/seabird/widget"
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -39,7 +40,7 @@ type DetailView struct {
 func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *DetailView {
 	toolbarView := adw.NewToolbarView()
 	d := DetailView{
-		NavigationPage: adw.NewNavigationPage(toolbarView, ""),
+		NavigationPage: adw.NewNavigationPage(toolbarView, "Selection"),
 		prefPage:       adw.NewPreferencesPage(),
 		behavior:       behavior,
 		parent:         parent,
@@ -123,33 +124,78 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 	return &d
 }
 
-func (d *DetailView) onPropertiesChange(properties []behavior.ObjectProperty) {
+func (d *DetailView) onPropertiesChange(properties []api.Property) {
 	for _, g := range d.groups {
 		d.prefPage.Remove(g)
 	}
 	d.groups = nil
 
 	for i, prop := range properties {
-		d.groups = append(d.groups, d.renderObjectProperty(0, i, prop).(*adw.PreferencesGroup))
-	}
-
-	for _, g := range d.groups {
-		d.prefPage.Add(g)
+		group := d.renderObjectProperty(0, i, prop).(*adw.PreferencesGroup)
+		d.groups = append(d.groups, group)
+		d.prefPage.Add(group)
 	}
 }
 
-func (d *DetailView) renderObjectProperty(level, index int, prop behavior.ObjectProperty) gtk.Widgetter {
-	switch level {
-	case 0:
-		g := adw.NewPreferencesGroup()
-		g.SetTitle(prop.Name)
-		for i, child := range prop.Children {
-			g.Add(d.renderObjectProperty(level+1, i, child))
+func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) gtk.Widgetter {
+	switch prop := prop.(type) {
+	case *api.TextProperty:
+		switch level {
+		case 0, 1, 2:
+			row := adw.NewActionRow()
+			row.SetTitle(prop.Name)
+			row.SetUseMarkup(false)
+			row.AddCSSClass("property")
+			// *Very* long labels cause a segfault in GTK. Limiting lines prevents it, but they're still
+			// slow and CPU-intensive to render. https://gitlab.gnome.org/GNOME/gtk/-/issues/1332
+			// TODO explore alternative rendering options such as TextView
+			row.SetSubtitleLines(5)
+			row.SetSubtitle(prop.Value)
+
+			copy := gtk.NewButton()
+			copy.SetIconName("edit-copy-symbolic")
+			copy.AddCSSClass("flat")
+			copy.AddCSSClass("dim-label")
+			copy.SetVAlign(gtk.AlignCenter)
+			copy.ConnectClicked(func() {
+				gdk.DisplayGetDefault().Clipboard().SetText(prop.Value)
+			})
+			row.AddSuffix(copy)
+
+			d.extendRow(row, level, prop)
+			return row
+
+		case 3:
+			box := gtk.NewBox(gtk.OrientationHorizontal, 4)
+			box.SetHAlign(gtk.AlignStart)
+
+			label := gtk.NewLabel(prop.Name)
+			label.AddCSSClass("caption")
+			label.AddCSSClass("dim-label")
+			label.SetVAlign(gtk.AlignStart)
+			label.SetEllipsize(pango.EllipsizeEnd)
+			box.Append(label)
+
+			label = gtk.NewLabel(prop.Value)
+			label.AddCSSClass("caption")
+			label.SetWrap(true)
+			label.SetEllipsize(pango.EllipsizeEnd)
+			box.Append(label)
+
+			return box
 		}
-		d.extendRow(g, level, prop)
-		return g
-	case 1:
-		if len(prop.Children) > 0 {
+
+	case *api.GroupProperty:
+		switch level {
+		case 0:
+			g := adw.NewPreferencesGroup()
+			g.SetTitle(prop.Name)
+			for i, child := range prop.Children {
+				g.Add(d.renderObjectProperty(level+1, i, child))
+			}
+			d.extendRow(g, level, prop)
+			return g
+		case 1:
 			row := adw.NewExpanderRow()
 			id := fmt.Sprintf("%s-%d-%d", util.ResourceGVR(d.behavior.SelectedResource.Value()).String(), level, index)
 			if e, ok := d.expanded[id]; ok && e {
@@ -162,194 +208,126 @@ func (d *DetailView) renderObjectProperty(level, index int, prop behavior.Object
 			for i, child := range prop.Children {
 				row.AddRow(d.renderObjectProperty(level+1, i, child))
 			}
+			row.SetSensitive(len(prop.Children) > 0)
 			d.extendRow(row, level, prop)
 			return row
-		}
-		fallthrough
-	case 2:
-		row := adw.NewActionRow()
-		row.SetTitle(prop.Name)
-		row.SetUseMarkup(false)
-		row.AddCSSClass("property")
+		case 2:
+			row := adw.NewActionRow()
+			row.SetTitle(prop.Name)
+			row.SetUseMarkup(false)
+			row.AddCSSClass("property")
 
-		if len(prop.Children) > 0 {
 			box := gtk.NewFlowBox()
 			box.SetColumnSpacing(8)
 			box.SetSelectionMode(gtk.SelectionNone)
 			row.FirstChild().(*gtk.Box).FirstChild().(*gtk.Box).NextSibling().(*gtk.Image).NextSibling().(*gtk.Box).Append(box)
 			for i, child := range prop.Children {
 				box.Insert(d.renderObjectProperty(level+1, i, child), -1)
-				prop.Value += fmt.Sprintf("%s: %s\n", child.Name, child.Value)
+				// prop.Value += fmt.Sprintf("%s: %s\n", child.Name, child.Value)
 			}
-		} else {
-			// *Very* long labels cause a segfault in GTK. Limiting lines prevents it, but they're still
-			// slow and CPU-intensive to render. https://gitlab.gnome.org/GNOME/gtk/-/issues/1332
-			// TODO explore alternative rendering options such as TextView
-			row.SetSubtitleLines(5)
-			row.SetSubtitle(prop.Value)
+			d.extendRow(row, level, prop)
+			return row
 		}
-
-		if prop.Value != "" {
-			copy := gtk.NewButton()
-			copy.SetIconName("edit-copy-symbolic")
-			copy.AddCSSClass("flat")
-			copy.AddCSSClass("dim-label")
-			copy.SetVAlign(gtk.AlignCenter)
-			copy.ConnectClicked(func() {
-				gdk.DisplayGetDefault().Clipboard().SetText(prop.Value)
-			})
-			row.AddSuffix(copy)
-		}
-
-		d.extendRow(row, level, prop)
-		return row
-	case 3:
-		box := gtk.NewBox(gtk.OrientationHorizontal, 4)
-		box.SetHAlign(gtk.AlignStart)
-
-		label := gtk.NewLabel(prop.Name)
-		label.AddCSSClass("caption")
-		label.AddCSSClass("dim-label")
-		label.SetVAlign(gtk.AlignStart)
-		label.SetEllipsize(pango.EllipsizeEnd)
-		box.Append(label)
-
-		label = gtk.NewLabel(prop.Value)
-		label.AddCSSClass("caption")
-		label.SetWrap(true)
-		label.SetEllipsize(pango.EllipsizeEnd)
-		box.Append(label)
-
-		return box
 	}
 
 	return nil
 }
 
 // This is a bit of a hack, should probably extend ObjectProperty with this stuff...
-func (d *DetailView) extendRow(widget gtk.Widgetter, level int, prop behavior.ObjectProperty) {
-	if level == 0 && prop.Name == "Metadata" {
-		button := gtk.NewMenuButton()
-		button.SetIconName("view-more-symbolic")
-		button.AddCSSClass("flat")
-		model := gio.NewMenu()
-		model.Append("Delete", "detail.delete")
-		button.SetPopover(gtk.NewPopoverMenuFromModel(model))
-		widget.(*adw.PreferencesGroup).SetHeaderSuffix(button)
-	}
-
-	switch selected := d.behavior.SelectedObject.Value().(type) {
-	case *corev1.Pod:
-		switch object := prop.Object.(type) {
-		case *corev1.Container:
-			var status corev1.ContainerStatus
-			for _, s := range selected.Status.ContainerStatuses {
-				if s.Name == object.Name {
-					status = s
-					break
-				}
-			}
-			widget.(*adw.ExpanderRow).AddPrefix(createStatusIcon(status.Ready))
-
-			for _, p := range prop.Children {
-				if p.Name == "Memory" {
-					v, err := resource.ParseQuantity(p.Value)
-					if err != nil {
-						log.Printf(err.Error())
-					} else {
-						widget.(*adw.ExpanderRow).AddSuffix(createMemoryBar(v, object.Resources))
+func (d *DetailView) extendRow(wi gtk.Widgetter, level int, prop api.Property) {
+	switch prop := prop.(type) {
+	case *api.TextProperty:
+		switch {
+		case strings.HasPrefix(prop.GetID(), "pods."):
+			switch pod := prop.Source.(type) {
+			case *corev1.Pod:
+				for _, cond := range pod.Status.Conditions {
+					if cond.Type == corev1.ContainersReady {
+						row := wi.(*adw.ActionRow)
+						row.AddPrefix(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
+						row.SetActivatable(true)
+						row.SetSubtitleSelectable(false)
+						row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+						row.ConnectActivated(func() {
+							dv := NewDetailView(d.parent, d.behavior.NewDetailBehavior())
+							dv.behavior.SelectedObject.Update(pod)
+							d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
+						})
 					}
 				}
 			}
-			for _, p := range prop.Children {
-				if p.Name == "CPU" {
-					v, err := resource.ParseQuantity(p.Value)
-					if err != nil {
-						log.Printf(err.Error())
-					} else {
-						widget.(*adw.ExpanderRow).AddSuffix(createCPUBar(v, object.Resources))
+		}
+	case *api.GroupProperty:
+		switch {
+		case prop.GetID() == "metadata":
+			button := gtk.NewMenuButton()
+			button.SetIconName("view-more-symbolic")
+			button.AddCSSClass("flat")
+			model := gio.NewMenu()
+			model.Append("Delete", "detail.delete")
+			button.SetPopover(gtk.NewPopoverMenuFromModel(model))
+			wi.(*adw.PreferencesGroup).SetHeaderSuffix(button)
+		case strings.HasPrefix(prop.GetID(), "containers."):
+			switch pod := d.behavior.SelectedObject.Value().(type) {
+			case *corev1.Pod:
+				idx, err := strconv.Atoi(strings.Split(prop.GetID(), ".")[1])
+				if err != nil {
+					return
+				}
+				container := pod.Spec.Containers[idx]
+				var status corev1.ContainerStatus
+				for _, s := range pod.Status.ContainerStatuses {
+					if s.Name == container.Name {
+						status = s
+						break
 					}
 				}
-			}
+				wi.(*adw.ExpanderRow).AddPrefix(widget.NewStatusIcon(status.Ready))
 
-			logs := adw.NewActionRow()
-			logs.SetActivatable(true)
-			logs.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-			logs.SetTitle("Logs")
-			logs.ConnectActivated(func() {
-				d.Parent().(*adw.NavigationView).Push(NewLogPage(d.parent, d.behavior, selected, object.Name).NavigationPage)
-			})
-			widget.(*adw.ExpanderRow).AddRow(logs)
+				for _, p := range prop.Children {
+					p, ok := p.(*api.TextProperty)
+					if !ok {
+						continue
+					}
+					switch p.GetID() {
+					case "memory":
+						v, err := resource.ParseQuantity(p.Value)
+						if err != nil {
+							continue
+						}
+						wi.(*adw.ExpanderRow).AddSuffix(createMemoryBar(v, container.Resources))
+					case "cpu":
+						v, err := resource.ParseQuantity(p.Value)
+						if err != nil {
+							continue
+						}
+						wi.(*adw.ExpanderRow).AddSuffix(createCPUBar(v, container.Resources))
+					}
+				}
 
-			if runtime.GOOS != "windows" {
-				exec := adw.NewActionRow()
-				exec.SetActivatable(true)
-				exec.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-				exec.SetTitle("Exec")
-				exec.ConnectActivated(func() {
-					d.Parent().(*adw.NavigationView).Push(NewTerminalPage(d.parent, d.behavior, selected, object.Name).NavigationPage)
+				logs := adw.NewActionRow()
+				logs.SetActivatable(true)
+				logs.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+				logs.SetTitle("Logs")
+				logs.ConnectActivated(func() {
+					d.Parent().(*adw.NavigationView).Push(NewLogPage(d.parent, d.behavior, pod, container.Name).NavigationPage)
 				})
-				widget.(*adw.ExpanderRow).AddRow(exec)
-			}
-		}
+				wi.(*adw.ExpanderRow).AddRow(logs)
 
-	case *appsv1.Deployment:
-		switch object := prop.Object.(type) {
-		case *corev1.Pod:
-			for _, cond := range object.Status.Conditions {
-				if cond.Type == corev1.ContainersReady {
-					row := widget.(*adw.ActionRow)
-					row.AddPrefix(createStatusIcon(cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"))
-					row.SetActivatable(true)
-					row.SetSubtitleSelectable(false)
-					row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-					row.ConnectActivated(func() {
-						dv := NewDetailView(d.parent, d.behavior.NewDetailBehavior())
-						dv.behavior.SelectedObject.Update(object)
-						d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
+				if runtime.GOOS != "windows" {
+					exec := adw.NewActionRow()
+					exec.SetActivatable(true)
+					exec.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+					exec.SetTitle("Exec")
+					exec.ConnectActivated(func() {
+						d.Parent().(*adw.NavigationView).Push(NewTerminalPage(d.parent, d.behavior, pod, container.Name).NavigationPage)
 					})
-				}
-			}
-		}
-
-	case *appsv1.StatefulSet:
-		switch object := prop.Object.(type) {
-		case *corev1.Pod:
-			for _, cond := range object.Status.Conditions {
-				if cond.Type == corev1.ContainersReady {
-					row := widget.(*adw.ActionRow)
-					row.AddPrefix(createStatusIcon(cond.Status == corev1.ConditionTrue))
-					row.SetActivatable(true)
-					row.SetSubtitleSelectable(false)
-					row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-					row.ConnectActivated(func() {
-						dv := NewDetailView(d.parent, d.behavior.NewDetailBehavior())
-						dv.behavior.SelectedObject.Update(object)
-						d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
-					})
-				}
-			}
-		}
-
-	case *corev1.Node:
-		switch object := prop.Object.(type) {
-		case *corev1.Pod:
-			for _, cond := range object.Status.Conditions {
-				if cond.Type == corev1.ContainersReady {
-					row := widget.(*adw.ActionRow)
-					row.AddPrefix(createStatusIcon(cond.Status == corev1.ConditionTrue))
-					row.SetActivatable(true)
-					row.SetSubtitleSelectable(false)
-					row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-					row.ConnectActivated(func() {
-						dv := NewDetailView(d.parent, d.behavior.NewDetailBehavior())
-						dv.behavior.SelectedObject.Update(object)
-						d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
-					})
+					wi.(*adw.ExpanderRow).AddRow(exec)
 				}
 			}
 		}
 	}
+
 }
 
 func (d *DetailView) createSource() *gtk.ScrolledWindow {

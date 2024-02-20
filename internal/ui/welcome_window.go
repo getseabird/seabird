@@ -9,7 +9,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/behavior"
+	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
 )
@@ -70,7 +71,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		add.AddCSSClass("flat")
 		add.SetIconName("list-add")
 		add.ConnectClicked(func() {
-			pref := NewClusterPrefPage(&w.ApplicationWindow.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
+			pref := NewClusterPrefPage(&w.ApplicationWindow.Window, w.behavior, observer.NewProperty(api.ClusterPreferences{}))
 			view.Push(pref.NavigationPage)
 		})
 
@@ -111,7 +112,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		status.SetDescription("Connect to a cluster to get started.")
 		btn := gtk.NewButton()
 		btn.ConnectClicked(func() {
-			pref := NewClusterPrefPage(&w.ApplicationWindow.Window, w.behavior, observer.NewProperty(behavior.ClusterPreferences{}))
+			pref := NewClusterPrefPage(&w.ApplicationWindow.Window, w.behavior, observer.NewProperty(api.ClusterPreferences{}))
 			view.Push(pref.NavigationPage)
 		})
 		btn.SetHAlign(gtk.AlignCenter)

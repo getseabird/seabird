@@ -1,4 +1,4 @@
-package behavior
+package api
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"log"
 	"sort"
 
-	"github.com/go-logr/logr"
 	"github.com/imkira/go-observer/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -25,38 +24,22 @@ import (
 	"k8s.io/client-go/restmapper"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type ClusterBehavior struct {
-	*Behavior
-
-	restconfig *rest.Config
-	client     client.Client
-	clientset  *kubernetes.Clientset
-	mapper     meta.RESTMapper
-	dynamic    *dynamic.DynamicClient
-	scheme     *runtime.Scheme
-
+type Cluster struct {
+	client.Client
+	*kubernetes.Clientset
+	Config             *rest.Config
 	ClusterPreferences observer.Property[ClusterPreferences]
-
-	metrics *Metrics
-	events  *Events
-
-	Resources  []metav1.APIResource
-	Namespaces observer.Property[[]corev1.Namespace]
-
-	SelectedResource observer.Property[*metav1.APIResource]
-
-	SearchText   observer.Property[string]
-	SearchFilter observer.Property[SearchFilter]
-
-	RootDetailBehavior *DetailBehavior
+	Metrics            *Metrics
+	Events             *Events
+	RESTMapper         meta.RESTMapper
+	DynamicClient      *dynamic.DynamicClient
+	Scheme             *runtime.Scheme
+	Resources          []metav1.APIResource
 }
 
-func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPreferences]) (*ClusterBehavior, error) {
-	logf.SetLogger(logr.Discard())
-
+func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPreferences]) (*Cluster, error) {
 	config := &rest.Config{
 		Host:            clusterPrefs.Value().Host,
 		BearerToken:     clusterPrefs.Value().BearerToken,
@@ -95,34 +78,14 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		return nil, err
 	}
 
-	var namespaces corev1.NamespaceList
-	if err := rclient.List(context.TODO(), &namespaces); err != nil {
-		return nil, err
-	}
-
 	res, err := restmapper.GetAPIGroupResources(discoveryClient)
 	if err != nil {
 		return nil, err
 	}
 	mapper := restmapper.NewDiscoveryRESTMapper(res)
 
-	cluster := ClusterBehavior{
-		Behavior:           b,
-		restconfig:         config,
-		client:             rclient,
-		clientset:          clientset,
-		mapper:             mapper,
-		scheme:             scheme,
-		ClusterPreferences: clusterPrefs,
-		dynamic:            dynamicClient,
-		Namespaces:         observer.NewProperty(namespaces.Items),
-		SelectedResource:   observer.NewProperty[*metav1.APIResource](nil),
-		SearchText:         observer.NewProperty(""),
-		SearchFilter:       observer.NewProperty(SearchFilter{}),
-		events:             NewEvents(clientset),
-	}
-
-	resources, err := discoveryClient.ServerPreferredResources()
+	var resources []metav1.APIResource
+	preferredResources, err := discoveryClient.ServerPreferredResources()
 	if err != nil {
 		var groupDiscoveryFailed *discovery.ErrGroupDiscoveryFailed
 		if errors.As(err, &groupDiscoveryFailed) {
@@ -134,7 +97,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 			return nil, err
 		}
 	}
-	for _, list := range resources {
+	for _, list := range preferredResources {
 		gv, err := schema.ParseGroupVersion(list.GroupVersion)
 		if err != nil {
 			return nil, err
@@ -146,18 +109,31 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 			if res.Version == "" {
 				res.Version = gv.Version
 			}
-			cluster.Resources = append(cluster.Resources, res)
+			resources = append(resources, res)
 		}
 	}
 
-	cluster.metrics, err = cluster.newMetrics(&cluster)
+	metrics, err := newMetrics(rclient, resources)
 	if err != nil {
 		log.Printf("metrics disabled: %s", err.Error())
 	}
 
-	sort.Slice(cluster.Resources, func(i, j int) bool {
-		return cluster.Resources[i].Kind[0] < cluster.Resources[j].Kind[0]
+	sort.Slice(resources, func(i, j int) bool {
+		return resources[i].Kind[0] < resources[j].Kind[0]
 	})
+
+	cluster := Cluster{
+		Client:             rclient,
+		Config:             config,
+		Clientset:          clientset,
+		RESTMapper:         mapper,
+		Scheme:             scheme,
+		ClusterPreferences: clusterPrefs,
+		DynamicClient:      dynamicClient,
+		Metrics:            metrics,
+		Events:             newEvents(clientset),
+		Resources:          resources,
+	}
 
 	return &cluster, nil
 

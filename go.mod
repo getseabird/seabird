@@ -1,8 +1,6 @@
 module github.com/getseabird/seabird
 
-go 1.21.0
-
-toolchain go1.21.7
+go 1.22.0
 
 require (
 	github.com/adrg/strutil v0.3.1
