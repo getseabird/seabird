@@ -195,6 +195,17 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				listitem.SetChild(gtk.NewLabel(pvc.Spec.Capacity.Storage().String()))
 			}),
 		)
+	case corev1.SchemeGroupVersion.WithResource("nodes").String():
+		columns = append(columns,
+			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
+				node := object.(*corev1.Node)
+				for _, cond := range node.Status.Conditions {
+					if cond.Type == corev1.NodeReady {
+						listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
+					}
+				}
+			}),
+		)
 	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
 		columns = append(columns,
 			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {

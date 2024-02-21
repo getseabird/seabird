@@ -171,13 +171,38 @@ func (e *Core) CreateObjectProperties(object client.Object, props []api.Property
 			&api.TextProperty{Name: "Access modes", Value: strings.Join(accessModes, ", ")},
 		}})
 	case *corev1.Node:
-		prop := &api.GroupProperty{Name: "Pods"}
+		infoProp := &api.GroupProperty{Name: "Info"}
+		infoProp.Children = append(infoProp.Children,
+			&api.TextProperty{
+				Name:  "Architecture",
+				Value: object.Status.NodeInfo.Architecture,
+			},
+			&api.TextProperty{
+				Name:  "Container runtime",
+				Value: object.Status.NodeInfo.ContainerRuntimeVersion,
+			},
+			&api.TextProperty{
+				Name:  "Kernel",
+				Value: object.Status.NodeInfo.KernelVersion,
+			},
+			&api.TextProperty{
+				Name:  "Kubelet",
+				Value: object.Status.NodeInfo.KubeletVersion,
+			},
+			&api.TextProperty{
+				Name:  "Operating system image",
+				Value: object.Status.NodeInfo.OSImage,
+			},
+		)
+		props = append(props, infoProp)
+
+		podsProp := &api.GroupProperty{Name: "Pods"}
 		var pods v1.PodList
 		e.List(context.TODO(), &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", object.Name)})
 		for i, pod := range pods.Items {
-			prop.Children = append(prop.Children, &api.TextProperty{ID: fmt.Sprintf("pods.%d", i), Source: &pod, Value: pod.Name})
+			podsProp.Children = append(podsProp.Children, &api.TextProperty{ID: fmt.Sprintf("pods.%d", i), Source: &pod, Value: pod.Name})
 		}
-		props = append(props, prop)
+		props = append(props, podsProp)
 	}
 
 	return props
