@@ -97,6 +97,7 @@ func (w *ClusterWindow) createActions() {
 	disconnect := gio.NewSimpleAction("disconnect", nil)
 	disconnect.ConnectActivate(func(_ *glib.Variant) {
 		w.ActivateAction("newWindow", nil)
+		w.behavior.Cluster.Disconnect()
 		w.Close()
 	})
 	w.AddAction(disconnect)

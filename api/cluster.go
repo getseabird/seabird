@@ -136,5 +136,9 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 	}
 
 	return &cluster, nil
+}
 
+func (c *Cluster) Disconnect() {
+	c.Events.stop()
+	c.Metrics.stop()
 }
