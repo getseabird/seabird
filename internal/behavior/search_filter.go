@@ -54,7 +54,7 @@ func (f *SearchFilter) Test(object client.Object) bool {
 			}
 			for _, term := range strings.Split(term, "-") {
 				for _, name := range strings.Split(object.GetName(), "-") {
-					if strutil.Similarity(name, term, metrics.NewHamming()) > 0.5 {
+					if strutil.Similarity(name, term, metrics.NewLevenshtein()) > 0.7 {
 						ok = true
 					}
 				}
