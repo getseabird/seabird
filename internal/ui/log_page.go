@@ -12,9 +12,6 @@ import (
 
 type LogPage struct {
 	*adw.NavigationPage
-	parent    *gtk.Window
-	pod       *corev1.Pod
-	container *corev1.Container
 }
 
 func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod *corev1.Pod, container string) *LogPage {
@@ -27,11 +24,8 @@ func NewLogPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod *core
 	box.Append(header)
 
 	buffer := gtksource.NewBuffer(nil)
-	buffer.SetStyleScheme(gtksource.StyleSchemeManagerGetDefault().Scheme("Adwaita-dark"))
+	setSourceColorScheme(buffer)
 	view := gtksource.NewViewWithBuffer(buffer)
-	view.SetMarginBottom(8)
-	view.SetMarginTop(8)
-	view.SetMarginEnd(8)
 	view.SetEditable(false)
 	view.SetWrapMode(gtk.WrapWord)
 	view.SetShowLineNumbers(true)
