@@ -1,0 +1,29 @@
+@define-color window_bg_color #eff5f9;
+@define-color view_bg_color #eff5f9;
+@define-color headerbar_bg_color #eff5f9;
+@define-color card_bg_color #fbfbfe;
+@define-color dialog_bg_color #fbfbfe;
+@define-color popover_bg_color #fbfbfe;
+
+/* Courtesy of Fluent GTK theme */
+@define-color theme_fg_color rgba(0, 0, 0, 0.87);
+@define-color theme_text_color rgba(0, 0, 0, 0.87);
+@define-color theme_bg_color #F2F2F2;
+@define-color theme_base_color #FFFFFF;
+@define-color theme_selected_bg_color #1A73E8;
+@define-color theme_selected_fg_color white;
+@define-color insensitive_bg_color #F2F2F2;
+@define-color insensitive_fg_color rgba(0, 0, 0, 0.38);
+@define-color insensitive_base_color #FAFAFA;
+@define-color theme_unfocused_fg_color rgba(0, 0, 0, 0.87);
+@define-color theme_unfocused_text_color rgba(0, 0, 0, 0.87);
+@define-color theme_unfocused_bg_color #F2F2F2;
+@define-color theme_unfocused_base_color #FFFFFF;
+@define-color theme_unfocused_selected_bg_color #1A73E8;
+@define-color theme_unfocused_selected_fg_color white;
+@define-color unfocused_insensitive_color rgba(0, 0, 0, 0.38);
+@define-color borders rgba(0, 0, 0, 0.12);
+@define-color unfocused_borders rgba(0, 0, 0, 0.12);
+@define-color warning_color #F4B400;
+@define-color error_color #D93025;
+@define-color success_color #0F9D58;

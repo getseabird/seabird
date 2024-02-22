@@ -1,0 +1,41 @@
+windowcontrols {
+  border-spacing: 6px;
+  padding: 0 10px;
+}
+
+windowcontrols button>image {
+  padding: 0;
+  margin: 0;
+  background-color: transparent;
+  background-image: none;
+  -gtk-icon-size: 0;
+}
+
+windowcontrols button.close,
+windowcontrols button.maximize,
+windowcontrols button.minimize {
+  min-width: 14px;
+  min-height: 14px;
+  margin: 0;
+  padding: 0;
+}
+
+windowcontrols button:hover>image {
+  color: black;
+  filter: brightness(110%);
+}
+
+windowcontrols button.close>image {
+  border: 1px solid #e2463f;
+  background-color: #ff5f57;
+}
+
+windowcontrols button.minimize>image {
+  border: 1px solid #e1a116;
+  background-color: #ffbd2e;
+}
+
+windowcontrols button.maximize>image {
+  border: 1px solid #12ac28;
+  background-color: #28c940;
+}

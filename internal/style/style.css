@@ -28,6 +28,12 @@ levelbar block.lb-normal {
   background-color: @view_fg_color;
 }
 
+/* Replace fixed background color with var */
+textview.sourceview>text,
+textview.sourceview>border>gutter {
+  background-color: @window_bg_color;
+}
+
 /* Windows defaults to the awful Courier New monospace font */
 .monospace {
   font-family: 'Source Code Pro 10', Consolas, monospace;

@@ -56,11 +56,16 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
-	header.SetShowEndTitleButtons(runtime.GOOS != "windows")
+
 	switcher := adw.NewViewSwitcher()
 	switcher.SetPolicy(adw.ViewSwitcherPolicyWide)
 	switcher.SetStack(stack)
 	header.SetTitleWidget(switcher)
+	switch runtime.GOOS {
+	case "windows", "darwin":
+		header.SetShowStartTitleButtons(false)
+		header.SetShowEndTitleButtons(false)
+	}
 
 	toolbarView.AddTopBar(header)
 	toolbarView.SetContent(stack)
@@ -338,9 +343,6 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	d.setSourceColorScheme()
 	gtk.SettingsGetDefault().NotifyProperty("gtk-application-prefer-dark-theme", d.setSourceColorScheme)
 	d.sourceView = gtksource.NewViewWithBuffer(d.sourceBuffer)
-	d.sourceView.SetMarginBottom(8)
-	d.sourceView.SetMarginTop(8)
-	d.sourceView.SetMarginEnd(8)
 	d.sourceView.SetEditable(false)
 	d.sourceView.SetWrapMode(gtk.WrapWord)
 	d.sourceView.SetShowLineNumbers(true)

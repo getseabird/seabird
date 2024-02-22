@@ -3,6 +3,7 @@ package ui
 import (
 	"encoding/json"
 	"log"
+	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -38,7 +39,11 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	title.AddCSSClass("heading")
 	header.SetTitleWidget(title)
 	header.SetShowEndTitleButtons(false)
-	header.SetShowStartTitleButtons(false)
+	switch runtime.GOOS {
+	case "darwin":
+	default:
+		header.SetShowStartTitleButtons(false)
+	}
 
 	button := gtk.NewMenuButton()
 	button.SetIconName("open-menu-symbolic")

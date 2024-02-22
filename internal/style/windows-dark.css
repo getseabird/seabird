@@ -1,0 +1,29 @@
+@define-color window_bg_color #1a2229;
+@define-color view_bg_color #1a2229;
+@define-color headerbar_bg_color #1a2229;
+@define-color card_bg_color #272e3c;
+@define-color dialog_bg_color #272e3c;
+@define-color popover_bg_color #272e3c;
+
+/* Courtesy of Fluent GTK theme */
+@define-color theme_fg_color white;
+@define-color theme_text_color white;
+@define-color theme_bg_color #333333;
+@define-color theme_base_color #2B2B2B;
+@define-color theme_selected_bg_color #3281EA;
+@define-color theme_selected_fg_color white;
+@define-color insensitive_bg_color #333333;
+@define-color insensitive_fg_color rgba(255, 255, 255, 0.5);
+@define-color insensitive_base_color #303030;
+@define-color theme_unfocused_fg_color white;
+@define-color theme_unfocused_text_color white;
+@define-color theme_unfocused_bg_color #333333;
+@define-color theme_unfocused_base_color #2B2B2B;
+@define-color theme_unfocused_selected_bg_color #3281EA;
+@define-color theme_unfocused_selected_fg_color white;
+@define-color unfocused_insensitive_color rgba(255, 255, 255, 0.5);
+@define-color borders rgba(255, 255, 255, 0.12);
+@define-color unfocused_borders rgba(255, 255, 255, 0.12);
+@define-color warning_color #FDD633;
+@define-color error_color #F28B82;
+@define-color success_color #81C995;

@@ -23,12 +23,14 @@ type Application struct {
 }
 
 func NewApplication(version string) (*Application, error) {
+	gtk.Init()
+
 	switch runtime.GOOS {
 	case "windows":
 		os.Setenv("GTK_CSD", "0")
+	case "darwin":
+		gtk.SettingsGetDefault().SetObjectProperty("gtk-decoration-layout", "close,minimize,maximize")
 	}
-
-	gtk.Init()
 
 	if err := icon.Register(); err != nil {
 		log.Printf("failed to load icons: %v", err)
