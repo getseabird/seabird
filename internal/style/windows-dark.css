@@ -1,9 +1,9 @@
-@define-color window_bg_color #1a2229;
-@define-color view_bg_color #1a2229;
-@define-color headerbar_bg_color #1a2229;
-@define-color card_bg_color #272e3c;
-@define-color dialog_bg_color #272e3c;
-@define-color popover_bg_color #272e3c;
+@define-color window_bg_color #1f1f1f;
+@define-color view_bg_color @window_bg_color;
+@define-color headerbar_bg_color @window_bg_color;
+@define-color card_bg_color #2b2b2b;
+@define-color dialog_bg_color @card_bg_color;
+@define-color popover_bg_color @card_bg_color;
 
 /* Courtesy of Fluent GTK theme */
 @define-color theme_fg_color white;

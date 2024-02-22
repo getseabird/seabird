@@ -1,9 +1,9 @@
-@define-color window_bg_color #eff5f9;
-@define-color view_bg_color #eff5f9;
-@define-color headerbar_bg_color #eff5f9;
-@define-color card_bg_color #fbfbfe;
-@define-color dialog_bg_color #fbfbfe;
-@define-color popover_bg_color #fbfbfe;
+@define-color window_bg_color #f3f3f3f;
+@define-color view_bg_color @window_bg_color;
+@define-color headerbar_bg_color @window_bg_color;
+@define-color card_bg_color #fbfbfb;
+@define-color dialog_bg_color @card_bg_color;
+@define-color popover_bg_color @card_bg_color;
 
 /* Courtesy of Fluent GTK theme */
 @define-color theme_fg_color rgba(0, 0, 0, 0.87);
