@@ -14,8 +14,8 @@ windowcontrols button>image {
 windowcontrols button.close,
 windowcontrols button.maximize,
 windowcontrols button.minimize {
-  min-width: 14px;
-  min-height: 14px;
+  min-width: 13px;
+  min-height: 13px;
   margin: 0;
   padding: 0;
 }

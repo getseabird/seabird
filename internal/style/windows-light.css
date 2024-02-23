@@ -1,4 +1,4 @@
-@define-color window_bg_color #f3f3f3f;
+@define-color window_bg_color #f3f3f3;
 @define-color view_bg_color @window_bg_color;
 @define-color headerbar_bg_color @window_bg_color;
 @define-color card_bg_color #fbfbfb;
