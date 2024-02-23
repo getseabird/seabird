@@ -367,17 +367,13 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 	dialog.ConnectResponse(func(response string) {
 		if response == "confirm" {
 			var context string
+			button := group
 			for {
-				b := group
-				if b.Active() {
-					context = b.Label()
+				if button.Active() {
+					context = button.Label()
 					break
 				}
-				if s := b.NextSibling(); s != nil {
-					b = s.(*gtk.CheckButton)
-				} else {
-					return
-				}
+				button = button.NextSibling().(*gtk.CheckButton)
 			}
 
 			config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, &clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
