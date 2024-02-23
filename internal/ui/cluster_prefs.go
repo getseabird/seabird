@@ -256,7 +256,7 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		cluster.Defaults()
 
 		if err := p.validate(cluster); err != nil {
-			ShowErrorDialog(p.parent, "Validation failed", err)
+			widget.ShowErrorDialog(p.parent, "Validation failed", err)
 			return
 		}
 		go func() {
@@ -264,7 +264,7 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 			glib.IdleAdd(func() {
 				defer spinner.Stop()
 				if err != nil {
-					ShowErrorDialog(p.parent, "Cluster connection failed", err)
+					widget.ShowErrorDialog(p.parent, "Cluster connection failed", err)
 					return
 				}
 				p.prefs.Update(cluster)
@@ -336,12 +336,12 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 	apiConfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, nil).
 		ConfigAccess().GetStartingConfig()
 	if err != nil {
-		ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+		widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 		return
 	}
 
 	if len(apiConfig.Contexts) == 0 {
-		ShowErrorDialog(p.parent, "Error loading kubeconfig", errors.New("No contexts found."))
+		widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", errors.New("No contexts found."))
 		return
 	}
 
@@ -382,7 +382,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 
 			config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, &clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
 			if err != nil {
-				ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+				widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 				return
 			}
 
@@ -394,7 +394,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 			if config.CertFile != "" {
 				data, err := os.ReadFile(config.CertFile)
 				if err != nil {
-					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
 				newPrefs.TLS.CertData = data
@@ -404,7 +404,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 			if config.KeyFile != "" {
 				data, err := os.ReadFile(config.KeyFile)
 				if err != nil {
-					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
 				newPrefs.TLS.KeyData = data
@@ -414,7 +414,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 			if config.CAFile != "" {
 				data, err := os.ReadFile(config.CAFile)
 				if err != nil {
-					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
 				newPrefs.TLS.CAData = data
@@ -424,7 +424,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 			if config.BearerTokenFile != "" {
 				data, err := os.ReadFile(config.BearerTokenFile)
 				if err != nil {
-					ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
 					return
 				}
 				newPrefs.BearerToken = string(data)
@@ -439,7 +439,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 
 func (p *ClusterPrefPage) validate(pref api.ClusterPreferences) error {
 	if len(pref.Name) == 0 {
-		return errors.New("Name is required")
+		return errors.New("name is required")
 	}
 
 	return nil

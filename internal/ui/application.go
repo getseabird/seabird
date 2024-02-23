@@ -4,7 +4,6 @@ import (
 	"log"
 	"os"
 	"runtime"
-	"runtime/debug"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -61,12 +60,13 @@ func NewApplication(version string) (*Application, error) {
 }
 
 func (a *Application) Run() {
-	debug.SetPanicOnFault(true)
-	defer func() {
-		if err := recover(); err != nil {
-			NewPanicWindow(err).Present()
-		}
-	}()
+	// TODO doesn't work
+	// debug.SetPanicOnFault(true)
+	// defer func() {
+	// 	if err := recover(); err != nil {
+	// 		NewPanicWindow(err).Present()
+	// 	}
+	// }()
 
 	if code := a.Application.Run(os.Args); code > 0 {
 		os.Exit(code)

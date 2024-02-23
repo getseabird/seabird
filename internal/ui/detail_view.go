@@ -3,7 +3,6 @@ package ui
 import (
 	"fmt"
 	"runtime"
-	"strconv"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -21,7 +20,6 @@ import (
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
 	corev1 "k8s.io/api/core/v1"
-	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -99,7 +97,7 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 		dialog.ConnectResponse(func(response string) {
 			if response == "delete" {
 				if err := behavior.DeleteObject(selected); err != nil {
-					ShowErrorDialog(d.parent, "Failed to delete object", err)
+					widget.ShowErrorDialog(d.parent, "Failed to delete object", err)
 				}
 			}
 		})
@@ -166,10 +164,22 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 				gdk.DisplayGetDefault().Clipboard().SetText(prop.Value)
 			})
 			row.AddSuffix(copy)
-
-			d.extendRow(row, level, prop)
+			if prop.Widget != nil {
+				prop.Widget(row, d.Parent().(*adw.NavigationView))
+			}
+			// TODO move to extension?
+			switch source := prop.Source.(type) {
+			case *corev1.Pod:
+				row.SetActivatable(true)
+				row.SetSubtitleSelectable(false)
+				row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+				row.ConnectActivated(func() {
+					dv := NewDetailView(d.parent, d.behavior.NewDetailBehavior())
+					dv.behavior.SelectedObject.Update(source)
+					d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
+				})
+			}
 			return row
-
 		case 3:
 			box := gtk.NewBox(gtk.OrientationHorizontal, 4)
 			box.SetHAlign(gtk.AlignStart)
@@ -187,19 +197,24 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 			label.SetEllipsize(pango.EllipsizeEnd)
 			box.Append(label)
 
+			if prop.Widget != nil {
+				prop.Widget(box, d.Parent().(*adw.NavigationView))
+			}
 			return box
 		}
 
 	case *api.GroupProperty:
 		switch level {
 		case 0:
-			g := adw.NewPreferencesGroup()
-			g.SetTitle(prop.Name)
+			group := adw.NewPreferencesGroup()
+			group.SetTitle(prop.Name)
 			for i, child := range prop.Children {
-				g.Add(d.renderObjectProperty(level+1, i, child))
+				group.Add(d.renderObjectProperty(level+1, i, child))
 			}
-			d.extendRow(g, level, prop)
-			return g
+			if prop.Widget != nil {
+				prop.Widget(group, d.Parent().(*adw.NavigationView))
+			}
+			return group
 		case 1:
 			row := adw.NewExpanderRow()
 			id := fmt.Sprintf("%s-%d-%d", util.ResourceGVR(d.behavior.SelectedResource.Value()).String(), level, index)
@@ -214,7 +229,9 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 				row.AddRow(d.renderObjectProperty(level+1, i, child))
 			}
 			row.SetSensitive(len(prop.Children) > 0)
-			d.extendRow(row, level, prop)
+			if prop.Widget != nil {
+				prop.Widget(row, d.Parent().(*adw.NavigationView))
+			}
 			return row
 		case 2:
 			row := adw.NewActionRow()
@@ -230,109 +247,14 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 				box.Insert(d.renderObjectProperty(level+1, i, child), -1)
 				// prop.Value += fmt.Sprintf("%s: %s\n", child.Name, child.Value)
 			}
-			d.extendRow(row, level, prop)
+			if prop.Widget != nil {
+				prop.Widget(row, d.Parent().(*adw.NavigationView))
+			}
 			return row
 		}
 	}
 
 	return nil
-}
-
-// This is a bit of a hack, should probably extend ObjectProperty with this stuff...
-func (d *DetailView) extendRow(wi gtk.Widgetter, level int, prop api.Property) {
-	switch prop := prop.(type) {
-	case *api.TextProperty:
-		switch {
-		case strings.HasPrefix(prop.GetID(), "pods."):
-			switch pod := prop.Source.(type) {
-			case *corev1.Pod:
-				for _, cond := range pod.Status.Conditions {
-					if cond.Type == corev1.ContainersReady {
-						row := wi.(*adw.ActionRow)
-						row.AddPrefix(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
-						row.SetActivatable(true)
-						row.SetSubtitleSelectable(false)
-						row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-						row.ConnectActivated(func() {
-							dv := NewDetailView(d.parent, d.behavior.NewDetailBehavior())
-							dv.behavior.SelectedObject.Update(pod)
-							d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
-						})
-					}
-				}
-			}
-		}
-	case *api.GroupProperty:
-		switch {
-		case prop.GetID() == "metadata":
-			button := gtk.NewMenuButton()
-			button.SetIconName("view-more-symbolic")
-			button.AddCSSClass("flat")
-			model := gio.NewMenu()
-			model.Append("Delete", "detail.delete")
-			button.SetPopover(gtk.NewPopoverMenuFromModel(model))
-			wi.(*adw.PreferencesGroup).SetHeaderSuffix(button)
-		case strings.HasPrefix(prop.GetID(), "containers."):
-			switch pod := d.behavior.SelectedObject.Value().(type) {
-			case *corev1.Pod:
-				idx, err := strconv.Atoi(strings.Split(prop.GetID(), ".")[1])
-				if err != nil {
-					return
-				}
-				container := pod.Spec.Containers[idx]
-				var status corev1.ContainerStatus
-				for _, s := range pod.Status.ContainerStatuses {
-					if s.Name == container.Name {
-						status = s
-						break
-					}
-				}
-				wi.(*adw.ExpanderRow).AddPrefix(widget.NewStatusIcon(status.Ready))
-
-				for _, p := range prop.Children {
-					p, ok := p.(*api.TextProperty)
-					if !ok {
-						continue
-					}
-					switch p.GetID() {
-					case "memory":
-						v, err := resource.ParseQuantity(p.Value)
-						if err != nil {
-							continue
-						}
-						wi.(*adw.ExpanderRow).AddSuffix(createMemoryBar(v, container.Resources))
-					case "cpu":
-						v, err := resource.ParseQuantity(p.Value)
-						if err != nil {
-							continue
-						}
-						wi.(*adw.ExpanderRow).AddSuffix(createCPUBar(v, container.Resources))
-					}
-				}
-
-				logs := adw.NewActionRow()
-				logs.SetActivatable(true)
-				logs.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-				logs.SetTitle("Logs")
-				logs.ConnectActivated(func() {
-					d.Parent().(*adw.NavigationView).Push(NewLogPage(d.parent, d.behavior, pod, container.Name).NavigationPage)
-				})
-				wi.(*adw.ExpanderRow).AddRow(logs)
-
-				if runtime.GOOS != "windows" {
-					exec := adw.NewActionRow()
-					exec.SetActivatable(true)
-					exec.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-					exec.SetTitle("Exec")
-					exec.ConnectActivated(func() {
-						d.Parent().(*adw.NavigationView).Push(NewTerminalPage(d.parent, d.behavior, pod, container.Name).NavigationPage)
-					})
-					wi.(*adw.ExpanderRow).AddRow(exec)
-				}
-			}
-		}
-	}
-
 }
 
 func (d *DetailView) createSource() *gtk.ScrolledWindow {
@@ -358,18 +280,18 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 }
 
 func (d *DetailView) setSourceColorScheme() {
-	setSourceColorScheme(d.sourceBuffer)
+	util.SetSourceColorScheme(d.sourceBuffer)
 }
 
 func (d *DetailView) showSaveDialog(parent *gtk.Window, object client.Object, current, next string) *adw.MessageDialog {
 	json, err := util.YamlToJson([]byte(next))
 	if err != nil {
-		return ShowErrorDialog(parent, "Error decoding object", err)
+		return widget.ShowErrorDialog(parent, "Error decoding object", err)
 	}
 	var obj unstructured.Unstructured
 	_, _, err = unstructured.UnstructuredJSONScheme.Decode(json, nil, &obj)
 	if err != nil {
-		return ShowErrorDialog(parent, "Error decoding object", err)
+		return widget.ShowErrorDialog(parent, "Error decoding object", err)
 	}
 
 	dialog := adw.NewMessageDialog(parent, fmt.Sprintf("Saving %s", object.GetName()), "The following changes will be made")
@@ -387,7 +309,7 @@ func (d *DetailView) showSaveDialog(parent *gtk.Window, object client.Object, cu
 
 	buf := gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("diff"))
 	buf.SetText(strings.TrimPrefix(fmt.Sprint(gotextdiff.ToUnified("", "", current, edits)), "--- \n+++ \n"))
-	setSourceColorScheme(buf)
+	util.SetSourceColorScheme(buf)
 	view := gtksource.NewViewWithBuffer(buf)
 	view.SetEditable(false)
 	view.SetWrapMode(gtk.WrapWord)
@@ -403,68 +325,10 @@ func (d *DetailView) showSaveDialog(parent *gtk.Window, object client.Object, cu
 	dialog.ConnectResponse(func(response string) {
 		if response == "save" {
 			if err := d.behavior.UpdateObject(&obj); err != nil {
-				ShowErrorDialog(parent, "Error updating object", err)
+				widget.ShowErrorDialog(parent, "Error updating object", err)
 			}
 		}
 	})
 
 	return dialog
-}
-
-func createMemoryBar(actual resource.Quantity, res corev1.ResourceRequirements) *gtk.Box {
-	box := gtk.NewBox(gtk.OrientationVertical, 4)
-	box.SetVAlign(gtk.AlignCenter)
-	req := res.Requests.Memory()
-	if req == nil || req.IsZero() {
-		req = res.Limits.Memory()
-	}
-	if req == nil || req.IsZero() {
-		return box
-	}
-
-	percent := actual.AsApproximateFloat64() / req.AsApproximateFloat64()
-	levelBar := gtk.NewLevelBar()
-	levelBar.SetSizeRequest(50, -1)
-	levelBar.SetHAlign(gtk.AlignCenter)
-	levelBar.SetVAlign(gtk.AlignCenter)
-	levelBar.SetValue(min(percent, 1))
-	// down from offset, not up
-	levelBar.RemoveOffsetValue(gtk.LEVEL_BAR_OFFSET_LOW)
-	levelBar.RemoveOffsetValue(gtk.LEVEL_BAR_OFFSET_HIGH)
-	levelBar.AddOffsetValue("lb-normal", .8)
-	levelBar.AddOffsetValue("lb-warning", .9)
-	levelBar.AddOffsetValue("lb-error", 1)
-	box.SetTooltipText(fmt.Sprintf("%.0f%% Memory", percent*100))
-
-	box.Append(gtk.NewImageFromIconName("memory-stick-symbolic"))
-	box.Append(levelBar)
-
-	return box
-}
-
-func createCPUBar(actual resource.Quantity, res corev1.ResourceRequirements) *gtk.Box {
-	box := gtk.NewBox(gtk.OrientationVertical, 4)
-	box.SetVAlign(gtk.AlignCenter)
-	req := res.Requests.Cpu()
-	if req == nil || req.IsZero() {
-		req = res.Limits.Cpu()
-	}
-	if req == nil || req.IsZero() {
-		return box
-	}
-
-	percent := actual.AsApproximateFloat64() / req.AsApproximateFloat64()
-	levelBar := gtk.NewLevelBar()
-	levelBar.SetSizeRequest(50, -1)
-	levelBar.SetHAlign(gtk.AlignCenter)
-	levelBar.SetVAlign(gtk.AlignCenter)
-	levelBar.SetValue(min(percent, 1))
-	levelBar.AddOffsetValue("lb-warning", .9)
-	levelBar.AddOffsetValue("lb-error", 1)
-	box.SetTooltipText(fmt.Sprintf("%.0f%% CPU", percent*100))
-
-	box.Append(gtk.NewImageFromIconName("cpu-symbolic"))
-	box.Append(levelBar)
-
-	return box
 }

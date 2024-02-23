@@ -91,7 +91,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 					glib.IdleAdd(func() {
 						spinner.Stop()
 						if err != nil {
-							ShowErrorDialog(&w.ApplicationWindow.Window, "Cluster connection failed", err)
+							widget.ShowErrorDialog(&w.ApplicationWindow.Window, "Cluster connection failed", err)
 							return
 						}
 						app := w.Application()

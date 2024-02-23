@@ -36,7 +36,7 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 	h = w.ConnectCloseRequest(func() bool {
 		prefs := behavior.Preferences.Value()
 		if err := prefs.Save(); err != nil {
-			d := ShowErrorDialog(&w.Window, "Could not save preferences", err)
+			d := widget.ShowErrorDialog(&w.Window, "Could not save preferences", err)
 			d.ConnectUnrealize(func() {
 				w.Close()
 			})
@@ -85,7 +85,7 @@ func (w *ClusterWindow) createActions() {
 	newWindow.ConnectActivate(func(_ *glib.Variant) {
 		prefs, err := api.LoadPreferences()
 		if err != nil {
-			ShowErrorDialog(&w.Window, "Could not load preferences", err)
+			widget.ShowErrorDialog(&w.Window, "Could not load preferences", err)
 			return
 		}
 		prefs.Defaults()

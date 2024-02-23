@@ -3,10 +3,14 @@ package extension
 import (
 	"context"
 	"fmt"
+	"runtime"
 	"strconv"
 	"strings"
 
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/widget"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
@@ -106,22 +110,85 @@ func (e *Core) CreateObjectProperties(object client.Object, props []api.Property
 			}
 			props = append(props, prop)
 
+			var cpu *resource.Quantity
+			var mem *resource.Quantity
 			if metrics != nil {
-				if cpu := metrics.Usage.Cpu(); cpu != nil {
+				if cpu = metrics.Usage.Cpu(); cpu != nil {
 					c, _ := cpu.AsInt64()
 					cpu = resource.NewQuantity(c, resource.DecimalSI)
 					cpu.RoundUp(resource.Milli)
 					props = append(props, &api.TextProperty{Name: "CPU", Value: fmt.Sprintf("%v", cpu)})
 				}
-				if mem := metrics.Usage.Memory(); mem != nil {
+				if mem = metrics.Usage.Memory(); mem != nil {
 					m, _ := mem.AsInt64()
 					mem = resource.NewQuantity(m, resource.DecimalSI)
 					mem.RoundUp(resource.Mega)
-					props = append(props, &api.TextProperty{Name: "Memory", Value: fmt.Sprintf("%v", mem)})
+					props = append(props, &api.TextProperty{
+						Name:  "Memory",
+						Value: fmt.Sprintf("%v", mem),
+					})
 				}
 			}
 
-			containers = append(containers, &api.GroupProperty{ID: fmt.Sprintf("containers.%d", i), Name: container.Name, Children: props})
+			containers = append(containers, &api.GroupProperty{
+				ID:   fmt.Sprintf("containers.%d", i),
+				Name: container.Name, Children: props,
+				Widget: func(w gtk.Widgetter, nav *adw.NavigationView) {
+					switch row := w.(type) {
+					case *adw.ExpanderRow:
+						row.AddPrefix(widget.NewStatusIcon(status.Ready))
+						if cpu != nil {
+							req := container.Resources.Requests.Memory()
+							if req == nil || req.IsZero() {
+								req = container.Resources.Limits.Memory()
+							}
+							row.AddSuffix(widget.NewResourceBar(cpu, req, "cpu-symbolic"))
+						}
+						if mem != nil {
+							req := container.Resources.Requests.Memory()
+							if req == nil || req.IsZero() {
+								req = container.Resources.Limits.Memory()
+							}
+							row.AddSuffix(widget.NewResourceBar(mem, req, "memory-stick-symbolic"))
+						}
+
+						logs := adw.NewActionRow()
+						logs.SetActivatable(true)
+						logs.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+						logs.SetTitle("Logs")
+						logs.ConnectActivated(func() {
+							// TODO this is not great
+							var window *gtk.Window
+							switch w := row.Root().Cast().(type) {
+							case *adw.ApplicationWindow:
+								window = &w.Window
+							case *gtk.ApplicationWindow:
+								window = &w.Window
+							}
+							nav.Push(widget.NewLogPage(window, e.Cluster, object, container.Name).NavigationPage)
+						})
+						row.AddRow(logs)
+
+						if runtime.GOOS != "windows" {
+							exec := adw.NewActionRow()
+							exec.SetActivatable(true)
+							exec.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+							exec.SetTitle("Exec")
+							exec.ConnectActivated(func() {
+								var window *gtk.Window
+								switch w := row.Root().Cast().(type) {
+								case *adw.ApplicationWindow:
+									window = &w.Window
+								case *gtk.ApplicationWindow:
+									window = &w.Window
+								}
+								nav.Push(widget.NewTerminalPage(window, e.Cluster, object, container.Name).NavigationPage)
+							})
+							row.AddRow(exec)
+						}
+					}
+				},
+			})
 		}
 
 		props = append(props, &api.GroupProperty{Name: "Containers", Children: containers})

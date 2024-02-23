@@ -1,10 +1,11 @@
 //go:build !windows
 
-package ui
+package widget
 
 import (
 	"context"
 	"errors"
+	"io"
 	"os"
 	"time"
 
@@ -12,9 +13,11 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/api"
 	"github.com/jgillich/gotk4-vte/pkg/vte/v3"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/util/httpstream"
+	"k8s.io/client-go/kubernetes/scheme"
 	"k8s.io/client-go/tools/remotecommand"
 )
 
@@ -23,7 +26,7 @@ type TerminalPage struct {
 	pty *os.File
 }
 
-func NewTerminalPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod *corev1.Pod, container string) (w *TerminalPage) {
+func NewTerminalPage(parent *gtk.Window, cluster *api.Cluster, pod *corev1.Pod, container string) (w *TerminalPage) {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	nav := adw.NewNavigationPage(box, container)
 	w = &TerminalPage{NavigationPage: nav}
@@ -76,7 +79,7 @@ func NewTerminalPage(parent *gtk.Window, behavior *behavior.DetailBehavior, pod 
 			})
 		}()
 
-		if err := behavior.PodExec(ctx, pod, container, []string{"/bin/sh"}, tty, tty, tty, nil); err != nil {
+		if err := podExec(ctx, cluster, pod, container, []string{"/bin/sh"}, tty, tty, tty, nil); err != nil {
 			if !errors.Is(err, context.Canceled) {
 				glib.IdleAdd(func() {
 					ShowErrorDialog(parent, "Exec failed", err)
@@ -96,4 +99,41 @@ func (s *sizeQueue) Next() *remotecommand.TerminalSize {
 		return nil
 	}
 	return &size
+}
+
+func podExec(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, container string, command []string, stdin io.Reader, stdout io.Writer, stderr io.Writer, sizeQueue remotecommand.TerminalSizeQueue) error {
+	req := cluster.CoreV1().RESTClient().Post().Resource("pods").Name(pod.Name).Namespace(pod.Namespace).SubResource("exec")
+	option := &corev1.PodExecOptions{
+		Container: container,
+		Command:   command,
+		Stdin:     true,
+		Stdout:    true,
+		Stderr:    true,
+		TTY:       true,
+	}
+	req.VersionedParams(
+		option,
+		scheme.ParameterCodec,
+	)
+
+	spdy, err := remotecommand.NewSPDYExecutor(cluster.Config, "POST", req.URL())
+	if err != nil {
+		return err
+	}
+	ws, err := remotecommand.NewWebSocketExecutor(cluster.Config, "GET", req.URL().String())
+	if err != nil {
+		return err
+	}
+	exec, err := remotecommand.NewFallbackExecutor(ws, spdy, httpstream.IsUpgradeFailure)
+	if err != nil {
+		return err
+	}
+
+	return exec.StreamWithContext(ctx, remotecommand.StreamOptions{
+		Stdin:             stdin,
+		Stdout:            stdout,
+		Stderr:            stderr,
+		Tty:               true,
+		TerminalSizeQueue: sizeQueue,
+	})
 }
