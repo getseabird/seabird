@@ -267,7 +267,14 @@ func (e *Core) CreateObjectProperties(object client.Object, props []api.Property
 		var pods v1.PodList
 		e.List(context.TODO(), &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", object.Name)})
 		for i, pod := range pods.Items {
-			podsProp.Children = append(podsProp.Children, &api.TextProperty{ID: fmt.Sprintf("pods.%d", i), Source: &pod, Value: pod.Name})
+			podsProp.Children = append(podsProp.Children, &api.TextProperty{
+				ID:     fmt.Sprintf("pods.%d", i),
+				Source: &pod,
+				Value:  pod.Name,
+				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
+					podWidget(pod, w, nv)
+				},
+			})
 		}
 		props = append(props, podsProp)
 	}
