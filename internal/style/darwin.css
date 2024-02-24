@@ -14,8 +14,8 @@ windowcontrols button>image {
 windowcontrols button.close,
 windowcontrols button.maximize,
 windowcontrols button.minimize {
-  min-width: 13px;
-  min-height: 13px;
+  min-width: 12px;
+  min-height: 12px;
   margin: 0;
   padding: 0;
 }
@@ -26,16 +26,13 @@ windowcontrols button:hover>image {
 }
 
 windowcontrols button.close>image {
-  border: 1px solid #e2463f;
   background-color: #ff5f57;
 }
 
 windowcontrols button.minimize>image {
-  border: 1px solid #e1a116;
-  background-color: #ffbd2e;
+  background-color: #febc2e;
 }
 
 windowcontrols button.maximize>image {
-  border: 1px solid #12ac28;
-  background-color: #28c940;
+  background-color: #28c840;
 }
