@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"runtime"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -17,7 +18,6 @@ import (
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/utils/ptr"
 )
@@ -31,11 +31,12 @@ type Navigation struct {
 
 func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	n := &Navigation{ToolbarView: adw.NewToolbarView(), behavior: b}
-	n.SetSizeRequest(215, 200)
+	n.SetSizeRequest(175, 175)
 	n.SetVExpand(true)
 
 	header := adw.NewHeaderBar()
 	title := gtk.NewLabel(b.ClusterPreferences.Value().Name)
+	title.SetEllipsize(pango.EllipsizeEnd)
 	title.AddCSSClass("heading")
 	header.SetTitleWidget(title)
 	header.SetShowEndTitleButtons(false)
@@ -132,7 +133,7 @@ func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox
 	n.rows = nil
 
 	for _, gvr := range prefs.Navigation.Favourites {
-		var resource *v1.APIResource
+		var resource *metav1.APIResource
 		for _, r := range n.behavior.Resources {
 			if r.Group == gvr.Group && r.Version == gvr.Version && r.Name == gvr.Resource {
 				resource = &r
@@ -154,6 +155,9 @@ func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox
 		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
 		box.Append(n.resIcon(gvr))
 		label := gtk.NewLabel(resource.Kind)
+		if len(resource.Kind) > 12 && len(resource.ShortNames) > 0 {
+			label.SetText(strings.ToUpper(resource.ShortNames[0]))
+		}
 		label.SetEllipsize(pango.EllipsizeEnd)
 		box.Append(label)
 		label = gtk.NewLabel(resource.Group)
