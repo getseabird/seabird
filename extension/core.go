@@ -31,8 +31,8 @@ type Core struct {
 	*api.Cluster
 }
 
-func (e *Core) CreateColumns(resource *metav1.APIResource, columns []api.Column) []api.Column {
-	switch util.ResourceGVR(resource).String() {
+func (e *Core) CreateColumns(res *metav1.APIResource, columns []api.Column) []api.Column {
+	switch util.ResourceGVR(res).String() {
 	case corev1.SchemeGroupVersion.WithResource("pods").String():
 		columns = append(columns,
 			api.Column{
@@ -62,6 +62,52 @@ func (e *Core) CreateColumns(resource *metav1.APIResource, columns []api.Column)
 				},
 			},
 		)
+
+		if e.Metrics != nil {
+			columns = append(columns,
+				api.Column{
+					Name:     "Memory",
+					Priority: 50,
+					Bind: func(listitem *gtk.ListItem, object client.Object) {
+						pod := object.(*corev1.Pod)
+						req := resource.NewQuantity(0, resource.DecimalSI)
+						for _, container := range pod.Spec.Containers {
+							if mem := container.Resources.Requests.Memory(); mem != nil {
+								req.Add(*mem)
+							}
+						}
+						use, _ := e.Metrics.PodSum(types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace})
+						req.RoundUp(resource.Mega)
+						if use != nil {
+							use.RoundUp(resource.Mega)
+						}
+						bar := widget.NewResourceBar(use, req, "")
+						bar.SetHAlign(gtk.AlignStart)
+						listitem.SetChild(bar)
+					},
+				},
+				api.Column{
+					Name:     "CPU",
+					Priority: 40,
+					Bind: func(listitem *gtk.ListItem, object client.Object) {
+						pod := object.(*corev1.Pod)
+						req := resource.NewQuantity(0, resource.DecimalSI)
+						for _, container := range pod.Spec.Containers {
+							if cpu := container.Resources.Requests.Cpu(); cpu != nil {
+								req.Add(*cpu)
+							}
+						}
+						_, use := e.Metrics.PodSum(types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace})
+						req.RoundUp(resource.Milli)
+						if use != nil {
+							use.RoundUp(resource.Milli)
+						}
+						bar := widget.NewResourceBar(use, req, "")
+						bar.SetHAlign(gtk.AlignStart)
+						listitem.SetChild(bar)
+					},
+				})
+		}
 	case corev1.SchemeGroupVersion.WithResource("persistentvolumeclaims").String():
 		columns = append(columns, api.Column{
 			Name:     "Size",
