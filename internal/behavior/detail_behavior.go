@@ -67,7 +67,7 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 
 	var props []api.Property
 
-	for _, ext := range b.extensions {
+	for _, ext := range b.Extensions {
 		props = ext.CreateObjectProperties(object, props)
 	}
 	sort.Slice(props, func(i, j int) bool {

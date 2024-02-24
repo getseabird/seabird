@@ -7,10 +7,12 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -22,6 +24,59 @@ func init() {
 
 type Apps struct {
 	*api.Cluster
+}
+
+func (e *Apps) CreateColumns(resource *metav1.APIResource, columns []api.Column) []api.Column {
+	switch util.ResourceGVR(resource).String() {
+	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
+		columns = append(columns,
+			api.Column{
+				Name:     "Status",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					deployment := object.(*appsv1.Deployment)
+					for _, cond := range deployment.Status.Conditions {
+						if cond.Type == appsv1.DeploymentAvailable {
+							listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
+						}
+					}
+				},
+			},
+			api.Column{
+				Name:     "Available",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					deployment := object.(*appsv1.Deployment)
+					label := gtk.NewLabel(fmt.Sprintf("%d/%d", deployment.Status.AvailableReplicas, deployment.Status.Replicas))
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
+			},
+		)
+	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
+		columns = append(columns,
+			api.Column{
+				Name:     "Status",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					statefulset := object.(*appsv1.StatefulSet)
+					listitem.SetChild(widget.NewStatusIcon(statefulset.Status.ReadyReplicas == statefulset.Status.Replicas))
+				},
+			},
+			api.Column{
+				Name:     "Available",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					statefulSet := object.(*appsv1.StatefulSet)
+					label := gtk.NewLabel(fmt.Sprintf("%d/%d", statefulSet.Status.AvailableReplicas, statefulSet.Status.Replicas))
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
+			},
+		)
+	}
+
+	return columns
 }
 
 func (e *Apps) CreateObjectProperties(object client.Object, props []api.Property) []api.Property {

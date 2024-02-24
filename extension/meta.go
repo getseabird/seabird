@@ -8,6 +8,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/util"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -19,6 +21,43 @@ func init() {
 
 type Meta struct {
 	*api.Cluster
+}
+
+func (e *Meta) CreateColumns(resource *metav1.APIResource, columns []api.Column) []api.Column {
+	columns = append(columns, api.Column{
+		Name:     "Name",
+		Priority: 100,
+		Bind: func(listitem *gtk.ListItem, object client.Object) {
+			label := gtk.NewLabel(object.GetName())
+			label.SetHAlign(gtk.AlignStart)
+			listitem.SetChild(label)
+		},
+	})
+
+	if resource.Namespaced {
+		columns = append(columns, api.Column{
+			Name:     "Namespace",
+			Priority: 90,
+			Bind: func(listitem *gtk.ListItem, object client.Object) {
+				label := gtk.NewLabel(object.GetNamespace())
+				label.SetHAlign(gtk.AlignStart)
+				listitem.SetChild(label)
+			},
+		})
+	}
+
+	columns = append(columns, api.Column{
+		Name:     "Age",
+		Priority: 80,
+		Bind: func(listitem *gtk.ListItem, object client.Object) {
+			duration := time.Since(object.GetCreationTimestamp().Time)
+			label := gtk.NewLabel(util.HumanizeApproximateDuration(duration))
+			label.SetHAlign(gtk.AlignStart)
+			listitem.SetChild(label)
+		},
+	})
+
+	return columns
 }
 
 func (e *Meta) CreateObjectProperties(object client.Object, props []api.Property) []api.Property {

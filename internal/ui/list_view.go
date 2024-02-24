@@ -1,17 +1,14 @@
 package ui
 
 import (
-	"fmt"
+	"sort"
 	"strconv"
-	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/util"
-	"github.com/getseabird/seabird/widget"
-	appsv1 "k8s.io/api/apps/v1"
-	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -136,122 +133,30 @@ func (l *ListView) onSearchFilterChange(filter behavior.SearchFilter) {
 }
 
 func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
-	var columns []*gtk.ColumnViewColumn
+	var columns []api.Column
 
-	columns = append(columns, l.createColumn("Name", func(listitem *gtk.ListItem, object client.Object) {
-		label := gtk.NewLabel(object.GetName())
-		label.SetHAlign(gtk.AlignStart)
-		listitem.SetChild(label)
-	}))
-
-	if l.behavior.SelectedResource.Value().Namespaced {
-		columns = append(columns, l.createColumn("Namespace", func(listitem *gtk.ListItem, object client.Object) {
-			label := gtk.NewLabel(object.GetNamespace())
-			label.SetHAlign(gtk.AlignStart)
-			listitem.SetChild(label)
-		}))
+	for _, e := range l.behavior.Extensions {
+		columns = e.CreateColumns(l.behavior.SelectedResource.Value(), columns)
 	}
-
-	columns = append(columns, l.createColumn("Age", func(listitem *gtk.ListItem, object client.Object) {
-		duration := time.Since(object.GetCreationTimestamp().Time)
-		label := gtk.NewLabel(util.HumanizeApproximateDuration(duration))
-		label.SetHAlign(gtk.AlignStart)
-		listitem.SetChild(label)
-	}))
-
-	switch util.ResourceGVR(l.behavior.SelectedResource.Value()).String() {
-	case corev1.SchemeGroupVersion.WithResource("pods").String():
-		columns = append(columns,
-			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
-				pod := object.(*corev1.Pod)
-				for _, cond := range pod.Status.Conditions {
-					if cond.Type == corev1.ContainersReady {
-						listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"))
-					}
-				}
-			}),
-			l.createColumn("Restarts", func(listitem *gtk.ListItem, object client.Object) {
-				pod := object.(*corev1.Pod)
-				var restartCount int
-				for _, container := range pod.Status.ContainerStatuses {
-					restartCount += int(container.RestartCount)
-				}
-				label := gtk.NewLabel(strconv.Itoa(restartCount))
-				label.SetHAlign(gtk.AlignStart)
-				listitem.SetChild(label)
-			}),
-		)
-	case corev1.SchemeGroupVersion.WithResource("persistentvolumeclaims").String():
-		columns = append(columns,
-			l.createColumn("Size", func(listitem *gtk.ListItem, object client.Object) {
-				pvc := object.(*corev1.PersistentVolumeClaim)
-				listitem.SetChild(gtk.NewLabel(pvc.Spec.Resources.Requests.Storage().String()))
-			}),
-		)
-	case corev1.SchemeGroupVersion.WithResource("persistentvolumes").String():
-		columns = append(columns,
-			l.createColumn("Size", func(listitem *gtk.ListItem, object client.Object) {
-				pvc := object.(*corev1.PersistentVolume)
-				listitem.SetChild(gtk.NewLabel(pvc.Spec.Capacity.Storage().String()))
-			}),
-		)
-	case corev1.SchemeGroupVersion.WithResource("nodes").String():
-		columns = append(columns,
-			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
-				node := object.(*corev1.Node)
-				for _, cond := range node.Status.Conditions {
-					if cond.Type == corev1.NodeReady {
-						listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
-					}
-				}
-			}),
-		)
-	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
-		columns = append(columns,
-			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
-				deployment := object.(*appsv1.Deployment)
-				for _, cond := range deployment.Status.Conditions {
-					if cond.Type == appsv1.DeploymentAvailable {
-						listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
-					}
-				}
-			}),
-			l.createColumn("Available", func(listitem *gtk.ListItem, object client.Object) {
-				deployment := object.(*appsv1.Deployment)
-				label := gtk.NewLabel(fmt.Sprintf("%d/%d", deployment.Status.AvailableReplicas, deployment.Status.Replicas))
-				label.SetHAlign(gtk.AlignStart)
-				listitem.SetChild(label)
-			}),
-		)
-	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
-		columns = append(columns,
-			l.createColumn("Status", func(listitem *gtk.ListItem, object client.Object) {
-				statefulset := object.(*appsv1.StatefulSet)
-				listitem.SetChild(widget.NewStatusIcon(statefulset.Status.ReadyReplicas == statefulset.Status.Replicas))
-			}),
-			l.createColumn("Available", func(listitem *gtk.ListItem, object client.Object) {
-				statefulSet := object.(*appsv1.StatefulSet)
-				label := gtk.NewLabel(fmt.Sprintf("%d/%d", statefulSet.Status.AvailableReplicas, statefulSet.Status.Replicas))
-				label.SetHAlign(gtk.AlignStart)
-				listitem.SetChild(label)
-			}),
-		)
-	}
-
-	return columns
-}
-
-func (l *ListView) createColumn(name string, bind func(listitem *gtk.ListItem, object client.Object)) *gtk.ColumnViewColumn {
-	factory := gtk.NewSignalListItemFactory()
-	factory.ConnectBind(func(listitem *gtk.ListItem) {
-		idx, _ := strconv.Atoi(listitem.Item().Cast().(*gtk.StringObject).String())
-		object := l.objects[idx]
-		bind(listitem, object)
+	sort.Slice(columns, func(i, j int) bool {
+		return columns[i].Priority > columns[j].Priority
 	})
-	column := gtk.NewColumnViewColumn(name, &factory.ListItemFactory)
-	column.SetResizable(true)
-	column.SetExpand(true)
-	return column
+
+	var gtkColumns []*gtk.ColumnViewColumn
+	for _, col := range columns {
+		factory := gtk.NewSignalListItemFactory()
+		factory.ConnectBind(func(listitem *gtk.ListItem) {
+			idx, _ := strconv.Atoi(listitem.Item().Cast().(*gtk.StringObject).String())
+			object := l.objects[idx]
+			col.Bind(listitem, object)
+		})
+		column := gtk.NewColumnViewColumn(col.Name, &factory.ListItemFactory)
+		column.SetResizable(true)
+		column.SetExpand(true)
+		gtkColumns = append(gtkColumns, column)
+	}
+
+	return gtkColumns
 }
 
 func (l *ListView) createModel() *gtk.SingleSelection {

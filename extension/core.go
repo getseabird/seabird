@@ -10,10 +10,11 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
@@ -28,6 +29,76 @@ func init() {
 
 type Core struct {
 	*api.Cluster
+}
+
+func (e *Core) CreateColumns(resource *metav1.APIResource, columns []api.Column) []api.Column {
+	switch util.ResourceGVR(resource).String() {
+	case corev1.SchemeGroupVersion.WithResource("pods").String():
+		columns = append(columns,
+			api.Column{
+				Name:     "Status",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pod := object.(*corev1.Pod)
+					for _, cond := range pod.Status.Conditions {
+						if cond.Type == corev1.ContainersReady {
+							listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"))
+						}
+					}
+				},
+			},
+			api.Column{
+				Name:     "Restarts",
+				Priority: 60,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pod := object.(*corev1.Pod)
+					var restartCount int
+					for _, container := range pod.Status.ContainerStatuses {
+						restartCount += int(container.RestartCount)
+					}
+					label := gtk.NewLabel(strconv.Itoa(restartCount))
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
+			},
+		)
+	case corev1.SchemeGroupVersion.WithResource("persistentvolumeclaims").String():
+		columns = append(columns, api.Column{
+			Name:     "Size",
+			Priority: 70,
+			Bind: func(listitem *gtk.ListItem, object client.Object) {
+				pvc := object.(*corev1.PersistentVolumeClaim)
+				label := gtk.NewLabel(pvc.Spec.Resources.Requests.Storage().String())
+				label.SetHAlign(gtk.AlignStart)
+				listitem.SetChild(label)
+			},
+		})
+	case corev1.SchemeGroupVersion.WithResource("persistentvolumes").String():
+		columns = append(columns, api.Column{
+			Name:     "Size",
+			Priority: 70,
+			Bind: func(listitem *gtk.ListItem, object client.Object) {
+				pvc := object.(*corev1.PersistentVolume)
+				label := gtk.NewLabel(pvc.Spec.Capacity.Storage().String())
+				label.SetHAlign(gtk.AlignStart)
+				listitem.SetChild(label)
+			},
+		})
+	case corev1.SchemeGroupVersion.WithResource("nodes").String():
+		columns = append(columns, api.Column{
+			Name:     "Status",
+			Priority: 70,
+			Bind: func(listitem *gtk.ListItem, object client.Object) {
+				node := object.(*corev1.Node)
+				for _, cond := range node.Status.Conditions {
+					if cond.Type == corev1.NodeReady {
+						listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
+					}
+				}
+			},
+		})
+	}
+	return columns
 }
 
 func (e *Core) CreateObjectProperties(object client.Object, props []api.Property) []api.Property {
@@ -264,7 +335,7 @@ func (e *Core) CreateObjectProperties(object client.Object, props []api.Property
 		props = append(props, infoProp)
 
 		podsProp := &api.GroupProperty{Name: "Pods"}
-		var pods v1.PodList
+		var pods corev1.PodList
 		e.List(context.TODO(), &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", object.Name)})
 		for i, pod := range pods.Items {
 			podsProp.Children = append(podsProp.Children, &api.TextProperty{

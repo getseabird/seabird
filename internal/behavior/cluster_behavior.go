@@ -15,7 +15,7 @@ import (
 type ClusterBehavior struct {
 	*Behavior
 	*api.Cluster
-	extensions         []extension.Extension
+	Extensions         []extension.Extension
 	Namespaces         observer.Property[[]corev1.Namespace]
 	SelectedResource   observer.Property[*metav1.APIResource]
 	SearchText         observer.Property[string]
@@ -46,7 +46,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 	}
 
 	for _, new := range extension.Extensions {
-		cluster.extensions = append(cluster.extensions, new(clusterApi))
+		cluster.Extensions = append(cluster.Extensions, new(clusterApi))
 	}
 
 	return &cluster, nil
