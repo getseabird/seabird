@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/util"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -54,9 +55,12 @@ func NewListHeader(b *behavior.ListBehavior) *ListHeader {
 	box.Append(button)
 
 	namespace := gio.NewMenu()
-	for _, ns := range b.Namespaces.Value() {
-		namespace.Append(ns.GetName(), fmt.Sprintf("list.filterNamespace('%s')", ns.GetName()))
-	}
+	onChange(b.Namespaces, func(ns []*corev1.Namespace) {
+		namespace.RemoveAll()
+		for _, ns := range ns {
+			namespace.Append(ns.GetName(), fmt.Sprintf("list.filterNamespace('%s')", ns.GetName()))
+		}
+	})
 	model := gio.NewMenu()
 	model.AppendSection("Namespace", namespace)
 	popover := gtk.NewPopoverMenuFromModel(model)

@@ -5,6 +5,7 @@ import (
 
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/extension"
+	"github.com/getseabird/seabird/internal/util"
 	"github.com/go-logr/logr"
 	"github.com/imkira/go-observer/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -16,7 +17,7 @@ type ClusterBehavior struct {
 	*Behavior
 	*api.Cluster
 	Extensions         []extension.Extension
-	Namespaces         observer.Property[[]corev1.Namespace]
+	Namespaces         observer.Property[[]*corev1.Namespace]
 	SelectedResource   observer.Property[*metav1.APIResource]
 	SearchText         observer.Property[string]
 	SearchFilter       observer.Property[SearchFilter]
@@ -31,19 +32,16 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		return nil, err
 	}
 
-	var namespaces corev1.NamespaceList
-	if err := clusterApi.List(context.TODO(), &namespaces); err != nil {
-		return nil, err
-	}
-
 	cluster := ClusterBehavior{
 		Behavior:         b,
 		Cluster:          clusterApi,
-		Namespaces:       observer.NewProperty(namespaces.Items),
+		Namespaces:       observer.NewProperty([]*corev1.Namespace{}),
 		SelectedResource: observer.NewProperty[*metav1.APIResource](nil),
 		SearchText:       observer.NewProperty(""),
 		SearchFilter:     observer.NewProperty(SearchFilter{}),
 	}
+
+	util.ObjectWatcher(clusterApi, corev1.SchemeGroupVersion.WithResource("namespaces"), make(chan struct{}), cluster.Namespaces)
 
 	for _, new := range extension.Extensions {
 		cluster.Extensions = append(cluster.Extensions, new(clusterApi))
