@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"runtime"
@@ -29,7 +30,7 @@ type Navigation struct {
 	rows     []*gtk.ListBoxRow
 }
 
-func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
+func NewNavigation(ctx context.Context, b *behavior.ClusterBehavior) *Navigation {
 	n := &Navigation{ToolbarView: adw.NewToolbarView(), behavior: b}
 	n.SetSizeRequest(175, 175)
 	n.SetVExpand(true)
@@ -79,11 +80,11 @@ func NewNavigation(b *behavior.ClusterBehavior) *Navigation {
 	addFavouriteBin := adw.NewBin()
 	content.Append(addFavouriteBin)
 
-	onChange(b.ClusterPreferences, func(prefs api.ClusterPreferences) {
+	onChange(ctx, b.ClusterPreferences, func(prefs api.ClusterPreferences) {
 		favouritesBin.SetChild(n.createFavourites(prefs))
 	})
 
-	onChange(b.SelectedResource, func(res *metav1.APIResource) {
+	onChange(ctx, b.SelectedResource, func(res *metav1.APIResource) {
 		var idx *int
 		for i, r := range b.ClusterPreferences.Value().Navigation.Favourites {
 			if util.ResourceGVR(res).String() == r.String() {

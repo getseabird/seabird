@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"log"
 	"os"
 	"runtime"
@@ -35,13 +36,15 @@ func NewApplication(version string) (*Application, error) {
 		log.Printf("failed to load icons: %v", err)
 	}
 
+	ctx := context.Background()
+
 	b, err := behavior.NewBehavior()
 	if err != nil {
 		return nil, err
 	}
 
 	adw.StyleManagerGetDefault().SetColorScheme(b.Preferences.Value().ColorScheme)
-	onChange(b.Preferences, func(p api.Preferences) {
+	onChange(ctx, b.Preferences, func(p api.Preferences) {
 		adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(p.ColorScheme))
 	})
 
@@ -53,7 +56,7 @@ func NewApplication(version string) (*Application, error) {
 	}
 
 	a.ConnectActivate(func() {
-		NewWelcomeWindow(&a.Application.Application, b).Show()
+		NewWelcomeWindow(ctx, &a.Application.Application, b).Show()
 	})
 
 	return &a, nil

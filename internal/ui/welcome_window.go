@@ -16,21 +16,26 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
 )
 
 type WelcomeWindow struct {
 	*widget.UniversalApplicationWindow
+	ctx      context.Context
 	content  *adw.Bin
 	behavior *behavior.Behavior
 	nav      *adw.NavigationView
 	toast    *adw.ToastOverlay
 }
 
-func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *WelcomeWindow {
+func NewWelcomeWindow(ctx context.Context, app *gtk.Application, behavior *behavior.Behavior) *WelcomeWindow {
+	window := widget.NewUniversalApplicationWindow(app)
+	ctx = ctxt.With[*gtk.Window](ctx, &window.Window)
 	w := WelcomeWindow{
-		UniversalApplicationWindow: widget.NewUniversalApplicationWindow(app),
+		ctx:                        ctx,
+		UniversalApplicationWindow: window,
 		content:                    adw.NewBin(),
 		behavior:                   behavior,
 	}
@@ -47,7 +52,7 @@ func NewWelcomeWindow(app *gtk.Application, behavior *behavior.Behavior) *Welcom
 	h = w.ConnectCloseRequest(func() bool {
 		prefs := behavior.Preferences.Value()
 		if err := prefs.Save(); err != nil {
-			d := widget.ShowErrorDialog(&w.Window, "Could not save preferences", err)
+			d := widget.ShowErrorDialog(ctx, "Could not save preferences", err)
 			d.ConnectUnrealize(func() {
 				w.Close()
 			})
@@ -96,7 +101,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		add.AddCSSClass("flat")
 		add.SetIconName("list-add")
 		add.ConnectClicked(func() {
-			pref := NewClusterPrefPage(&w.ApplicationWindow.Window, w.behavior, observer.NewProperty(api.ClusterPreferences{}))
+			pref := NewClusterPrefPage(w.ctx, w.behavior, observer.NewProperty(api.ClusterPreferences{}))
 			w.nav.Push(pref.NavigationPage)
 		})
 
@@ -112,16 +117,17 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 			row.ConnectActivated(func() {
 				spinner.Start()
 				go func() {
-					behavior, err := w.behavior.WithCluster(context.TODO(), cluster)
+					ctx, cancel := context.WithCancel(context.Background())
+					behavior, err := w.behavior.WithCluster(ctx, cluster)
 					glib.IdleAdd(func() {
 						spinner.Stop()
 						if err != nil {
-							widget.ShowErrorDialog(&w.ApplicationWindow.Window, "Cluster connection failed", err)
+							widget.ShowErrorDialog(w.ctx, "Cluster connection failed", err)
 							return
 						}
 						app := w.Application()
 						w.Close()
-						NewClusterWindow(app, behavior).Show()
+						NewClusterWindow(w.ctx, app, behavior, cancel).Show()
 					})
 				}()
 			})
@@ -137,7 +143,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		status.SetDescription("Connect to a cluster to get started.")
 		btn := gtk.NewButton()
 		btn.ConnectClicked(func() {
-			pref := NewClusterPrefPage(&w.ApplicationWindow.Window, w.behavior, observer.NewProperty(api.ClusterPreferences{}))
+			pref := NewClusterPrefPage(w.ctx, w.behavior, observer.NewProperty(api.ClusterPreferences{}))
 			w.nav.Push(pref.NavigationPage)
 		})
 		btn.SetHAlign(gtk.AlignCenter)
@@ -178,12 +184,12 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 	entry.SetTitle("License key")
 	entry.SetShowApplyButton(true)
 	entry.ConnectApply(func() {
-		res, raw, err := lemonsqueezy.New().Licenses.Activate(context.TODO(), strings.TrimSpace(entry.Text()), "Seabird")
+		res, raw, err := lemonsqueezy.New().Licenses.Activate(w.ctx, strings.TrimSpace(entry.Text()), "Seabird")
 		switch {
 		case err != nil:
 			log.Printf("%v", err)
 			err = errors.New(http.StatusText(raw.HTTPResponse.StatusCode))
-			widget.ShowErrorDialog(&w.ApplicationWindow.Window, "Could not activate license", err)
+			widget.ShowErrorDialog(w.ctx, "Could not activate license", err)
 		case res.Activated:
 			prefs := w.behavior.Preferences.Value()
 			prefs.License = &api.License{
@@ -195,7 +201,7 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 			w.toast.AddToast(adw.NewToast("License activated. Thank you!"))
 			w.nav.Pop()
 		default:
-			widget.ShowErrorDialog(&w.ApplicationWindow.Window, "Could not activate license", errors.New(res.Error))
+			widget.ShowErrorDialog(w.ctx, "Could not activate license", errors.New(res.Error))
 		}
 	})
 	group.Add(entry)

@@ -18,27 +18,28 @@ import (
 
 type DetailBehavior struct {
 	*ClusterBehavior
-
+	ctx            context.Context
 	SelectedObject observer.Property[client.Object]
 	Yaml           observer.Property[string]
 	Properties     observer.Property[[]api.Property]
 }
 
-func (b *ClusterBehavior) NewRootDetailBehavior() *DetailBehavior {
-	db := b.NewDetailBehavior()
+func (b *ClusterBehavior) NewRootDetailBehavior(ctx context.Context) *DetailBehavior {
+	db := b.NewDetailBehavior(ctx)
 	b.RootDetailBehavior = db
 	return db
 }
 
-func (b *ClusterBehavior) NewDetailBehavior() *DetailBehavior {
+func (b *ClusterBehavior) NewDetailBehavior(ctx context.Context) *DetailBehavior {
 	d := DetailBehavior{
 		ClusterBehavior: b,
+		ctx:             ctx,
 		SelectedObject:  observer.NewProperty[client.Object](nil),
 		Yaml:            observer.NewProperty[string](""),
 		Properties:      observer.NewProperty[[]api.Property](nil),
 	}
 
-	onChange(d.SelectedObject, d.onObjectChange)
+	onChange(ctx, d.SelectedObject, d.onObjectChange)
 
 	return &d
 }
@@ -68,7 +69,7 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 	var props []api.Property
 
 	for _, ext := range b.Extensions {
-		props = ext.CreateObjectProperties(object, props)
+		props = ext.CreateObjectProperties(b.ctx, object, props)
 	}
 	sort.Slice(props, func(i, j int) bool {
 		return props[i].GetPriority() > props[j].GetPriority()

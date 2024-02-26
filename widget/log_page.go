@@ -17,7 +17,7 @@ type LogPage struct {
 	*adw.NavigationPage
 }
 
-func NewLogPage(parent *gtk.Window, cluster *api.Cluster, pod *corev1.Pod, container string) *LogPage {
+func NewLogPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, container string) *LogPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	p := LogPage{NavigationPage: adw.NewNavigationPage(box, container)}
 
@@ -39,9 +39,9 @@ func NewLogPage(parent *gtk.Window, cluster *api.Cluster, pod *corev1.Pod, conta
 	scrolledWindow.SetVExpand(true)
 	box.Append(scrolledWindow)
 
-	logs, err := podLogs(cluster, pod, container)
+	logs, err := podLogs(ctx, cluster, pod, container)
 	if err != nil {
-		ShowErrorDialog(parent, "Could not load logs", err)
+		ShowErrorDialog(ctx, "Could not load logs", err)
 	} else {
 		buffer.SetText(string(logs))
 	}
@@ -49,9 +49,9 @@ func NewLogPage(parent *gtk.Window, cluster *api.Cluster, pod *corev1.Pod, conta
 	return &p
 }
 
-func podLogs(cluster *api.Cluster, pod *corev1.Pod, container string) ([]byte, error) {
+func podLogs(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, container string) ([]byte, error) {
 	req := cluster.CoreV1().Pods(pod.Namespace).GetLogs(pod.Name, &corev1.PodLogOptions{Container: container})
-	r, err := req.Stream(context.TODO())
+	r, err := req.Stream(ctx)
 	if err != nil {
 		return nil, err
 	}

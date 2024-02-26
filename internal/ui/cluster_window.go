@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"strings"
 
@@ -10,23 +11,29 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/getseabird/seabird/widget"
 )
 
 type ClusterWindow struct {
 	*widget.UniversalApplicationWindow
+	ctx          context.Context
+	cancel       context.CancelFunc
 	behavior     *behavior.ClusterBehavior
-	prefs        *api.Preferences
 	navigation   *Navigation
 	listView     *ListView
 	detailView   *DetailView
 	toastOverlay *adw.ToastOverlay
 }
 
-func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) *ClusterWindow {
+func NewClusterWindow(ctx context.Context, app *gtk.Application, behavior *behavior.ClusterBehavior, cancel context.CancelFunc) *ClusterWindow {
+	window := widget.NewUniversalApplicationWindow(app)
+	ctx = ctxt.With[*gtk.Window](ctx, &window.Window)
 	w := ClusterWindow{
-		UniversalApplicationWindow: widget.NewUniversalApplicationWindow(app),
+		ctx:                        ctx,
+		UniversalApplicationWindow: window,
 		behavior:                   behavior,
+		cancel:                     cancel,
 	}
 	w.SetIconName("seabird")
 	w.SetTitle(fmt.Sprintf("%s - %s", behavior.ClusterPreferences.Value().Name, ApplicationName))
@@ -36,7 +43,7 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 	h = w.ConnectCloseRequest(func() bool {
 		prefs := behavior.Preferences.Value()
 		if err := prefs.Save(); err != nil {
-			d := widget.ShowErrorDialog(&w.Window, "Could not save preferences", err)
+			d := widget.ShowErrorDialog(ctx, "Could not save preferences", err)
 			d.ConnectUnrealize(func() {
 				w.Close()
 			})
@@ -59,18 +66,18 @@ func NewClusterWindow(app *gtk.Application, behavior *behavior.ClusterBehavior) 
 	lpane.SetEndChild(rpane)
 	w.toastOverlay.SetChild(lpane)
 
-	w.detailView = NewDetailView(&w.Window, behavior.NewRootDetailBehavior())
+	w.detailView = NewDetailView(ctx, behavior.NewRootDetailBehavior(ctx))
 	nav := adw.NewNavigationView()
 	nav.Add(w.detailView.NavigationPage)
 	nav.SetSizeRequest(350, 350)
 	rpane.SetEndChild(nav)
 
-	w.listView = NewListView(&w.Window, behavior.NewListBehavior())
+	w.listView = NewListView(ctx, behavior.NewListBehavior(ctx))
 	rpane.SetStartChild(w.listView)
 	sw, _ := w.listView.SizeRequest()
 	rpane.SetPosition(sw)
 
-	w.navigation = NewNavigation(behavior)
+	w.navigation = NewNavigation(ctx, behavior)
 	lpane.SetStartChild(w.navigation)
 	sw, _ = w.navigation.SizeRequest()
 	lpane.SetPosition(sw)
@@ -85,11 +92,11 @@ func (w *ClusterWindow) createActions() {
 	newWindow.ConnectActivate(func(_ *glib.Variant) {
 		prefs, err := api.LoadPreferences()
 		if err != nil {
-			widget.ShowErrorDialog(&w.Window, "Could not load preferences", err)
+			widget.ShowErrorDialog(w.ctx, "Could not load preferences", err)
 			return
 		}
 		prefs.Defaults()
-		NewWelcomeWindow(w.Application(), w.behavior.Behavior).Show()
+		NewWelcomeWindow(w.ctx, w.Application(), w.behavior.Behavior).Show()
 	})
 	w.AddAction(newWindow)
 	w.Application().SetAccelsForAction("win.newWindow", []string{"<Ctrl>N"})
@@ -97,7 +104,7 @@ func (w *ClusterWindow) createActions() {
 	disconnect := gio.NewSimpleAction("disconnect", nil)
 	disconnect.ConnectActivate(func(_ *glib.Variant) {
 		w.ActivateAction("newWindow", nil)
-		w.behavior.Cluster.Disconnect()
+		w.cancel()
 		w.Close()
 	})
 	w.AddAction(disconnect)
@@ -105,7 +112,7 @@ func (w *ClusterWindow) createActions() {
 
 	action := gio.NewSimpleAction("prefs", nil)
 	action.ConnectActivate(func(_ *glib.Variant) {
-		prefs := NewPreferencesWindow(w.behavior)
+		prefs := NewPreferencesWindow(w.ctx, w.behavior)
 		prefs.SetTransientFor(&w.Window)
 		prefs.Show()
 	})

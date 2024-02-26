@@ -17,10 +17,9 @@ import (
 type Metrics struct {
 	podMetrics  observer.Property[[]metricsv1beta1.PodMetrics]
 	nodeMetrics observer.Property[[]metricsv1beta1.NodeMetrics]
-	stopCh      chan struct{}
 }
 
-func newMetrics(client client.Client, resources []metav1.APIResource) (*Metrics, error) {
+func newMetrics(ctx context.Context, client client.Client, resources []metav1.APIResource) (*Metrics, error) {
 	if !metricsAPIAvailable(resources) {
 		return nil, errors.New("no compatible metrics API detected")
 	}
@@ -28,23 +27,22 @@ func newMetrics(client client.Client, resources []metav1.APIResource) (*Metrics,
 	m := Metrics{
 		podMetrics:  observer.NewProperty([]metricsv1beta1.PodMetrics{}),
 		nodeMetrics: observer.NewProperty([]metricsv1beta1.NodeMetrics{}),
-		stopCh:      make(chan struct{}),
 	}
 
 	go func() {
 		for {
 			select {
-			case <-m.stopCh:
+			case <-ctx.Done():
 				return
 			default:
 				var podMetricsList metricsv1beta1.PodMetricsList
-				if err := client.List(context.TODO(), &podMetricsList); err != nil {
+				if err := client.List(ctx, &podMetricsList); err != nil {
 					log.Printf("unable to fetch pod metrics: %s", err.Error())
 				}
 				m.podMetrics.Update(podMetricsList.Items)
 
 				var nodeMetricsList metricsv1beta1.NodeMetricsList
-				if err := client.List(context.TODO(), &nodeMetricsList); err != nil {
+				if err := client.List(ctx, &nodeMetricsList); err != nil {
 					log.Printf("unable to fetch node metrics: %s", err.Error())
 				}
 				m.nodeMetrics.Update(nodeMetricsList.Items)
@@ -55,10 +53,6 @@ func newMetrics(client client.Client, resources []metav1.APIResource) (*Metrics,
 	}()
 
 	return &m, nil
-}
-
-func (m *Metrics) stop() {
-	close(m.stopCh)
 }
 
 func (m *Metrics) Pod(name types.NamespacedName) *metricsv1beta1.PodMetrics {

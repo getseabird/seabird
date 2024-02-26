@@ -1,10 +1,12 @@
 package behavior
 
 import (
+	"context"
+
 	"github.com/imkira/go-observer/v2"
 )
 
-func onChange[T any](prop observer.Property[T], f func(T)) {
+func onChange[T any](ctx context.Context, prop observer.Property[T], f func(T)) {
 	go func() {
 		stream := prop.Observe()
 		for {
@@ -12,6 +14,8 @@ func onChange[T any](prop observer.Property[T], f func(T)) {
 			case <-stream.Changes():
 				stream.Next()
 				f(stream.Value())
+			case <-ctx.Done():
+				return
 			}
 		}
 	}()

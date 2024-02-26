@@ -8,7 +8,6 @@ import (
 	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	corev1 "k8s.io/api/core/v1"
 	"nhooyr.io/websocket"
@@ -38,7 +37,7 @@ type TerminalPage struct {
 	*adw.NavigationPage
 }
 
-func NewTerminalPage(parent *gtk.Window, cluster *api.Cluster, pod *corev1.Pod, container string) *TerminalPage {
+func NewTerminalPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, container string) *TerminalPage {
 	return nil
 }
 

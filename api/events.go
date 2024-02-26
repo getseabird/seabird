@@ -1,6 +1,8 @@
 package api
 
 import (
+	"context"
+
 	"github.com/imkira/go-observer/v2"
 	v1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
@@ -12,13 +14,11 @@ import (
 
 type Events struct {
 	events observer.Property[[]*eventsv1.Event]
-	stopCh chan struct{}
 }
 
-func newEvents(clientset *kubernetes.Clientset) *Events {
+func newEvents(ctx context.Context, clientset *kubernetes.Clientset) *Events {
 	e := Events{
 		events: observer.NewProperty([]*eventsv1.Event{}),
-		stopCh: make(chan struct{}),
 	}
 	var event eventsv1.Event
 	var events []*eventsv1.Event
@@ -53,13 +53,9 @@ func newEvents(clientset *kubernetes.Clientset) *Events {
 		},
 	)
 
-	go controller.Run(e.stopCh)
+	go controller.Run(ctx.Done())
 
 	return &e
-}
-
-func (e *Events) stop() {
-	close(e.stopCh)
 }
 
 func (e *Events) For(object client.Object) []*eventsv1.Event {

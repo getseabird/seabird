@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 	"runtime"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	"github.com/hexops/gotextdiff"
@@ -26,7 +28,7 @@ import (
 
 type DetailView struct {
 	*adw.NavigationPage
-	parent       *gtk.Window
+	ctx          context.Context
 	behavior     *behavior.DetailBehavior
 	prefPage     *adw.PreferencesPage
 	groups       []*adw.PreferencesGroup
@@ -35,14 +37,14 @@ type DetailView struct {
 	expanded     map[string]bool
 }
 
-func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *DetailView {
+func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *DetailView {
 	toolbarView := adw.NewToolbarView()
 	d := DetailView{
 		NavigationPage: adw.NewNavigationPage(toolbarView, "Selection"),
 		prefPage:       adw.NewPreferencesPage(),
 		behavior:       behavior,
-		parent:         parent,
 		expanded:       map[string]bool{},
+		ctx:            ctx,
 	}
 
 	clamp := d.prefPage.FirstChild().(*gtk.ScrolledWindow).FirstChild().(*gtk.Viewport).FirstChild().(*adw.Clamp)
@@ -79,17 +81,18 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 	})
 	save.ConnectActivate(func(parameter *glib.Variant) {
 		text := d.sourceBuffer.Text(d.sourceBuffer.StartIter(), d.sourceBuffer.EndIter(), true)
-		d.showSaveDialog(d.parent, d.behavior.SelectedObject.Value(), d.behavior.Yaml.Value(), text)
+		d.showSaveDialog(d.behavior.SelectedObject.Value(), d.behavior.Yaml.Value(), text)
 	})
 
 	// TODO should be local shortcuts, not global. how?
-	d.parent.Application().SetAccelsForAction("detail.editable", []string{"<Ctrl>E"})
-	d.parent.Application().SetAccelsForAction("detail.save", []string{"<Ctrl>S"})
+
+	ctxt.MustFrom[*gtk.Window](ctx).Application().SetAccelsForAction("detail.editable", []string{"<Ctrl>E"})
+	ctxt.MustFrom[*gtk.Window](ctx).Application().SetAccelsForAction("detail.save", []string{"<Ctrl>S"})
 
 	delete := gio.NewSimpleAction("delete", nil)
 	delete.ConnectActivate(func(parameter *glib.Variant) {
 		selected := d.behavior.SelectedObject.Value()
-		dialog := adw.NewMessageDialog(d.parent, "Delete object?", selected.GetName())
+		dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](ctx), "Delete object?", selected.GetName())
 		defer dialog.Show()
 		dialog.AddResponse("cancel", "Cancel")
 		dialog.AddResponse("delete", "Delete")
@@ -97,7 +100,7 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 		dialog.ConnectResponse(func(response string) {
 			if response == "delete" {
 				if err := behavior.DeleteObject(selected); err != nil {
-					widget.ShowErrorDialog(d.parent, "Failed to delete object", err)
+					widget.ShowErrorDialog(ctx, "Failed to delete object", err)
 				}
 			}
 		})
@@ -106,9 +109,9 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 	actionGroup.AddAction(editable)
 	actionGroup.AddAction(save)
 	actionGroup.AddAction(delete)
-	d.parent.InsertActionGroup("detail", actionGroup)
+	ctxt.MustFrom[*gtk.Window](ctx).InsertActionGroup("detail", actionGroup)
 
-	onChange(d.behavior.SelectedObject, func(_ client.Object) {
+	onChange(ctx, d.behavior.SelectedObject, func(_ client.Object) {
 		for {
 			if !d.Parent().(*adw.NavigationView).Pop() {
 				break
@@ -119,10 +122,10 @@ func NewDetailView(parent *gtk.Window, behavior *behavior.DetailBehavior) *Detai
 			editable.Activate(nil)
 		}
 	})
-	onChange(d.behavior.Yaml, func(yaml string) {
+	onChange(ctx, d.behavior.Yaml, func(yaml string) {
 		d.sourceBuffer.SetText(string(yaml))
 	})
-	onChange(d.behavior.Properties, d.onPropertiesChange)
+	onChange(ctx, d.behavior.Properties, d.onPropertiesChange)
 
 	return &d
 }
@@ -174,7 +177,7 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 				row.SetSubtitleSelectable(false)
 				row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 				row.ConnectActivated(func() {
-					dv := NewDetailView(d.parent, d.behavior.NewDetailBehavior())
+					dv := NewDetailView(d.ctx, d.behavior.NewDetailBehavior(d.ctx))
 					dv.behavior.SelectedObject.Update(source)
 					d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
 				})
@@ -283,18 +286,18 @@ func (d *DetailView) setSourceColorScheme() {
 	util.SetSourceColorScheme(d.sourceBuffer)
 }
 
-func (d *DetailView) showSaveDialog(parent *gtk.Window, object client.Object, current, next string) *adw.MessageDialog {
+func (d *DetailView) showSaveDialog(object client.Object, current, next string) *adw.MessageDialog {
 	json, err := util.YamlToJson([]byte(next))
 	if err != nil {
-		return widget.ShowErrorDialog(parent, "Error decoding object", err)
+		return widget.ShowErrorDialog(d.ctx, "Error decoding object", err)
 	}
 	var obj unstructured.Unstructured
 	_, _, err = unstructured.UnstructuredJSONScheme.Decode(json, nil, &obj)
 	if err != nil {
-		return widget.ShowErrorDialog(parent, "Error decoding object", err)
+		return widget.ShowErrorDialog(d.ctx, "Error decoding object", err)
 	}
 
-	dialog := adw.NewMessageDialog(parent, fmt.Sprintf("Saving %s", object.GetName()), "The following changes will be made")
+	dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](d.ctx), fmt.Sprintf("Saving %s", object.GetName()), "The following changes will be made")
 	dialog.AddResponse("cancel", "Cancel")
 	dialog.AddResponse("save", "Save")
 	dialog.SetResponseAppearance("save", adw.ResponseSuggested)
@@ -325,7 +328,7 @@ func (d *DetailView) showSaveDialog(parent *gtk.Window, object client.Object, cu
 	dialog.ConnectResponse(func(response string) {
 		if response == "save" {
 			if err := d.behavior.UpdateObject(&obj); err != nil {
-				widget.ShowErrorDialog(parent, "Error updating object", err)
+				widget.ShowErrorDialog(d.ctx, "Error updating object", err)
 			}
 		}
 	})

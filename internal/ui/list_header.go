@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"fmt"
 
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -15,7 +16,7 @@ type ListHeader struct {
 	*gtk.Box
 }
 
-func NewListHeader(b *behavior.ListBehavior) *ListHeader {
+func NewListHeader(ctx context.Context, b *behavior.ListBehavior) *ListHeader {
 	box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 	box.AddCSSClass("linked")
 	box.SetMarginStart(12)
@@ -44,7 +45,7 @@ func NewListHeader(b *behavior.ListBehavior) *ListHeader {
 			b.SearchText.Update(entry.Text())
 		}
 	})
-	onChange(b.SearchText, func(txt string) {
+	onChange(ctx, b.SearchText, func(txt string) {
 		if txt != entry.Text() {
 			entry.SetText(txt)
 		}
@@ -55,7 +56,7 @@ func NewListHeader(b *behavior.ListBehavior) *ListHeader {
 	box.Append(button)
 
 	namespace := gio.NewMenu()
-	onChange(b.Namespaces, func(ns []*corev1.Namespace) {
+	onChange(ctx, b.Namespaces, func(ns []*corev1.Namespace) {
 		namespace.RemoveAll()
 		for _, ns := range ns {
 			namespace.Append(ns.GetName(), fmt.Sprintf("list.filterNamespace('%s')", ns.GetName()))
@@ -70,7 +71,7 @@ func NewListHeader(b *behavior.ListBehavior) *ListHeader {
 		b.SearchFilter.Update(behavior.NewSearchFilter(entry.Text()))
 	})
 
-	onChange(b.SelectedResource, func(res *metav1.APIResource) {
+	onChange(ctx, b.SelectedResource, func(res *metav1.APIResource) {
 		var idx uint
 		for i, r := range b.Resources {
 			if util.ResourceEquals(&r, res) {

@@ -1,6 +1,8 @@
 package behavior
 
 import (
+	"context"
+
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/imkira/go-observer/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -9,25 +11,28 @@ import (
 
 type ListBehavior struct {
 	*ClusterBehavior
-	Objects   observer.Property[[]client.Object]
-	stopWatch chan struct{}
+	ctx         context.Context
+	watchCancel context.CancelFunc
+	Objects     observer.Property[[]client.Object]
 }
 
-func (b *ClusterBehavior) NewListBehavior() *ListBehavior {
+func (b *ClusterBehavior) NewListBehavior(ctx context.Context) *ListBehavior {
 	listView := ListBehavior{
 		ClusterBehavior: b,
+		ctx:             ctx,
 		Objects:         observer.NewProperty[[]client.Object](nil),
 	}
 
-	onChange(listView.SelectedResource, listView.onSelectedResourceChange)
+	onChange(ctx, listView.SelectedResource, listView.onSelectedResourceChange)
 
 	return &listView
 }
 
 func (b *ListBehavior) onSelectedResourceChange(resource *metav1.APIResource) {
-	if b.stopWatch != nil {
-		close(b.stopWatch)
+	if b.watchCancel != nil {
+		b.watchCancel()
 	}
-	b.stopWatch = make(chan struct{})
-	util.ObjectWatcher(b.Cluster, util.ResourceGVR(resource), b.stopWatch, b.Objects)
+	var ctx context.Context
+	ctx, b.watchCancel = context.WithCancel(b.ctx)
+	util.ObjectWatcher(ctx, b.Cluster, util.ResourceGVR(resource), b.Objects)
 }

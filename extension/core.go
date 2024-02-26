@@ -31,7 +31,7 @@ type Core struct {
 	*api.Cluster
 }
 
-func (e *Core) CreateColumns(res *metav1.APIResource, columns []api.Column) []api.Column {
+func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, columns []api.Column) []api.Column {
 	switch util.ResourceGVR(res).String() {
 	case corev1.SchemeGroupVersion.WithResource("pods").String():
 		columns = append(columns,
@@ -147,7 +147,7 @@ func (e *Core) CreateColumns(res *metav1.APIResource, columns []api.Column) []ap
 	return columns
 }
 
-func (e *Core) CreateObjectProperties(object client.Object, props []api.Property) []api.Property {
+func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object, props []api.Property) []api.Property {
 	switch object := object.(type) {
 	case *corev1.Pod:
 		var containers []api.Property
@@ -207,14 +207,14 @@ func (e *Core) CreateObjectProperties(object client.Object, props []api.Property
 				if from := env.ValueFrom; from != nil {
 					if ref := from.ConfigMapKeyRef; ref != nil {
 						var cm corev1.ConfigMap
-						if err := e.Get(context.TODO(), types.NamespacedName{Name: ref.Name, Namespace: object.Namespace}, &cm); err != nil {
+						if err := e.Get(ctx, types.NamespacedName{Name: ref.Name, Namespace: object.Namespace}, &cm); err != nil {
 							prop.Children = append(prop.Children, &api.TextProperty{ID: id, Name: env.Name, Value: fmt.Sprintf("error: %v", err)})
 						} else {
 							prop.Children = append(prop.Children, &api.TextProperty{ID: id, Name: env.Name, Value: cm.Data[ref.Key]})
 						}
 					} else if ref := from.SecretKeyRef; ref != nil {
 						var secret corev1.Secret
-						if err := e.Get(context.TODO(), types.NamespacedName{Name: ref.Name, Namespace: object.Namespace}, &secret); err != nil {
+						if err := e.Get(ctx, types.NamespacedName{Name: ref.Name, Namespace: object.Namespace}, &secret); err != nil {
 							prop.Children = append(prop.Children, &api.TextProperty{ID: id, Name: env.Name, Value: fmt.Sprintf("error: %v", err)})
 						} else {
 							prop.Children = append(prop.Children, &api.TextProperty{ID: id, Name: env.Name, Value: string(secret.Data[ref.Key])})
@@ -274,15 +274,7 @@ func (e *Core) CreateObjectProperties(object client.Object, props []api.Property
 						logs.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 						logs.SetTitle("Logs")
 						logs.ConnectActivated(func() {
-							// TODO this is not great
-							var window *gtk.Window
-							switch w := row.Root().Cast().(type) {
-							case *adw.ApplicationWindow:
-								window = &w.Window
-							case *gtk.ApplicationWindow:
-								window = &w.Window
-							}
-							nav.Push(widget.NewLogPage(window, e.Cluster, object, container.Name).NavigationPage)
+							nav.Push(widget.NewLogPage(ctx, e.Cluster, object, container.Name).NavigationPage)
 						})
 						row.AddRow(logs)
 
@@ -292,14 +284,7 @@ func (e *Core) CreateObjectProperties(object client.Object, props []api.Property
 							exec.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 							exec.SetTitle("Exec")
 							exec.ConnectActivated(func() {
-								var window *gtk.Window
-								switch w := row.Root().Cast().(type) {
-								case *adw.ApplicationWindow:
-									window = &w.Window
-								case *gtk.ApplicationWindow:
-									window = &w.Window
-								}
-								nav.Push(widget.NewTerminalPage(window, e.Cluster, object, container.Name).NavigationPage)
+								nav.Push(widget.NewTerminalPage(ctx, e.Cluster, object, container.Name).NavigationPage)
 							})
 							row.AddRow(exec)
 						}
@@ -382,7 +367,7 @@ func (e *Core) CreateObjectProperties(object client.Object, props []api.Property
 
 		podsProp := &api.GroupProperty{Name: "Pods"}
 		var pods corev1.PodList
-		e.List(context.TODO(), &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", object.Name)})
+		e.List(ctx, &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", object.Name)})
 		for i, pod := range pods.Items {
 			podsProp.Children = append(podsProp.Children, &api.TextProperty{
 				ID:     fmt.Sprintf("pods.%d", i),

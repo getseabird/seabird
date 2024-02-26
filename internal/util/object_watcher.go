@@ -19,7 +19,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func ObjectWatcher[T client.Object](cluster *api.Cluster, gvr schema.GroupVersionResource, stopWatch chan struct{}, prop observer.Property[[]T]) {
+func ObjectWatcher[T client.Object](ctx context.Context, cluster *api.Cluster, gvr schema.GroupVersionResource, prop observer.Property[[]T]) {
 	objects := []T{}
 	update, _ := debounce.Debounce(func() {
 		prop.Update(objects)
@@ -50,10 +50,10 @@ func ObjectWatcher[T client.Object](cluster *api.Cluster, gvr schema.GroupVersio
 		obj = &appsv1.StatefulSet{}
 	default:
 		go func() {
-			w, err := cluster.DynamicClient.Resource(gvr).Watch(context.TODO(), metav1.ListOptions{})
+			w, err := cluster.DynamicClient.Resource(gvr).Watch(ctx, metav1.ListOptions{})
 			if err != nil {
 				log.Printf("watch failed: %s", err.Error())
-				list, err := cluster.DynamicClient.Resource(gvr).List(context.TODO(), metav1.ListOptions{})
+				list, err := cluster.DynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
 				if err != nil {
 					log.Printf("list failed: %s", err.Error())
 					return
@@ -89,7 +89,7 @@ func ObjectWatcher[T client.Object](cluster *api.Cluster, gvr schema.GroupVersio
 						}
 						update()
 					}
-				case <-stopWatch:
+				case <-ctx.Done():
 					w.Stop()
 					return
 				}
@@ -137,5 +137,5 @@ func ObjectWatcher[T client.Object](cluster *api.Cluster, gvr schema.GroupVersio
 			},
 		},
 	)
-	go controller.Run(stopWatch)
+	go controller.Run(ctx.Done())
 }

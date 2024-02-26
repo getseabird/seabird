@@ -113,7 +113,7 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 		}
 	}
 
-	metrics, err := newMetrics(rclient, resources)
+	metrics, err := newMetrics(ctx, rclient, resources)
 	if err != nil {
 		log.Printf("metrics disabled: %s", err.Error())
 	}
@@ -131,16 +131,9 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 		ClusterPreferences: clusterPrefs,
 		DynamicClient:      dynamicClient,
 		Metrics:            metrics,
-		Events:             newEvents(clientset),
+		Events:             newEvents(ctx, clientset),
 		Resources:          resources,
 	}
 
 	return &cluster, nil
-}
-
-func (c *Cluster) Disconnect() {
-	c.Events.stop()
-	if c.Metrics != nil {
-		c.Metrics.stop()
-	}
 }

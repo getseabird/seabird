@@ -1,6 +1,7 @@
 package ui
 
 import (
+	"context"
 	"sort"
 	"strconv"
 
@@ -18,8 +19,8 @@ const GtkInvalidListPosition uint = 4294967295
 
 type ListView struct {
 	*gtk.Box
+	ctx        context.Context
 	behavior   *behavior.ListBehavior
-	parent     *gtk.Window
 	selection  *gtk.SingleSelection
 	columnView *gtk.ColumnView
 	columns    []*gtk.ColumnViewColumn
@@ -28,10 +29,10 @@ type ListView struct {
 	selected   types.UID
 }
 
-func NewListView(parent *gtk.Window, behavior *behavior.ListBehavior) *ListView {
+func NewListView(ctx context.Context, behavior *behavior.ListBehavior) *ListView {
 	l := ListView{
+		ctx:      ctx,
 		Box:      gtk.NewBox(gtk.OrientationVertical, 0),
-		parent:   parent,
 		behavior: behavior,
 	}
 	l.AddCSSClass("view")
@@ -40,7 +41,7 @@ func NewListView(parent *gtk.Window, behavior *behavior.ListBehavior) *ListView 
 	header.AddCSSClass("flat")
 	header.SetShowEndTitleButtons(false)
 	header.SetShowStartTitleButtons(false)
-	header.SetTitleWidget(NewListHeader(behavior))
+	header.SetTitleWidget(NewListHeader(ctx, behavior))
 	l.Append(header)
 
 	l.selection = l.createModel()
@@ -58,8 +59,8 @@ func NewListView(parent *gtk.Window, behavior *behavior.ListBehavior) *ListView 
 	sw.SetChild(vp)
 	l.Append(sw)
 
-	onChange(l.behavior.Objects, l.onObjectsChange)
-	onChange(l.behavior.SearchFilter, l.onSearchFilterChange)
+	onChange(ctx, l.behavior.Objects, l.onObjectsChange)
+	onChange(ctx, l.behavior.SearchFilter, l.onSearchFilterChange)
 
 	return &l
 }
@@ -136,7 +137,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 	var columns []api.Column
 
 	for _, e := range l.behavior.Extensions {
-		columns = e.CreateColumns(l.behavior.SelectedResource.Value(), columns)
+		columns = e.CreateColumns(l.ctx, l.behavior.SelectedResource.Value(), columns)
 	}
 	sort.Slice(columns, func(i, j int) bool {
 		return columns[i].Priority > columns[j].Priority

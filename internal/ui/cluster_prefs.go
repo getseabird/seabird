@@ -11,6 +11,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
@@ -20,7 +21,7 @@ import (
 
 type ClusterPrefPage struct {
 	*adw.NavigationPage
-	parent     *gtk.Window
+	ctx        context.Context
 	content    *adw.Bin
 	behavior   *behavior.Behavior
 	prefs      observer.Property[api.ClusterPreferences]
@@ -36,14 +37,14 @@ type ClusterPrefPage struct {
 	actions    *adw.Bin
 }
 
-func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, prefs observer.Property[api.ClusterPreferences]) *ClusterPrefPage {
+func NewClusterPrefPage(ctx context.Context, b *behavior.Behavior, prefs observer.Property[api.ClusterPreferences]) *ClusterPrefPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	content := adw.NewBin()
 	p := ClusterPrefPage{
+		ctx:            ctx,
 		NavigationPage: adw.NewNavigationPage(box, "Cluster"),
 		content:        content,
 		behavior:       b,
-		parent:         parent,
 		prefs:          prefs,
 	}
 
@@ -54,7 +55,7 @@ func NewClusterPrefPage(parent *gtk.Window, b *behavior.Behavior, prefs observer
 	box.Append(content)
 	content.SetChild(p.createContent())
 
-	onChange(p.prefs, func(prefs api.ClusterPreferences) {
+	onChange(ctx, p.prefs, func(prefs api.ClusterPreferences) {
 		p.name.SetText(prefs.Name)
 		p.host.SetText(prefs.Host)
 		p.cert.SetText(string(prefs.TLS.CertData))
@@ -200,7 +201,7 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 		sw.SetChild(pp)
 		content.Append(sw)
 
-		cluster, _ := p.behavior.WithCluster(context.TODO(), p.prefs)
+		cluster, _ := p.behavior.WithCluster(p.ctx, p.prefs)
 		for _, r := range cluster.Resources {
 			res := r
 			exists := false
@@ -256,15 +257,16 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		cluster.Defaults()
 
 		if err := p.validate(cluster); err != nil {
-			widget.ShowErrorDialog(p.parent, "Validation failed", err)
+			widget.ShowErrorDialog(p.ctx, "Validation failed", err)
+			spinner.Stop()
 			return
 		}
 		go func() {
-			_, err := p.behavior.WithCluster(context.TODO(), observer.NewProperty(cluster))
+			_, err := p.behavior.WithCluster(p.ctx, observer.NewProperty(cluster))
 			glib.IdleAdd(func() {
 				defer spinner.Stop()
 				if err != nil {
-					widget.ShowErrorDialog(p.parent, "Cluster connection failed", err)
+					widget.ShowErrorDialog(p.ctx, "Cluster connection failed", err)
 					return
 				}
 				p.prefs.Update(cluster)
@@ -292,7 +294,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 	load.SetTitle("Load kubeconfig")
 
 	load.ConnectActivated(func() {
-		fileChooser := gtk.NewFileChooserNative("Select kubeconfig", p.parent, gtk.FileChooserActionOpen, "Open", "Cancel")
+		fileChooser := gtk.NewFileChooserNative("Select kubeconfig", ctxt.MustFrom[*gtk.Window](p.ctx), gtk.FileChooserActionOpen, "Open", "Cancel")
 		defer fileChooser.Show()
 		fileChooser.ConnectResponse(func(responseId int) {
 			if responseId == int(gtk.ResponseAccept) {
@@ -309,7 +311,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 		delete.SetTitle("Delete")
 		delete.AddCSSClass("error")
 		delete.ConnectActivated(func() {
-			dialog := adw.NewMessageDialog(p.parent, "Delete cluster?", fmt.Sprintf("Are you sure you want to delete cluster \"%s\"?", p.prefs.Value().Name))
+			dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](p.ctx), "Delete cluster?", fmt.Sprintf("Are you sure you want to delete cluster \"%s\"?", p.prefs.Value().Name))
 			dialog.AddResponse("cancel", "Cancel")
 			dialog.AddResponse("delete", "Delete")
 			dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
@@ -336,16 +338,16 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 	apiConfig, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(rules, nil).
 		ConfigAccess().GetStartingConfig()
 	if err != nil {
-		widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+		widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
 		return
 	}
 
 	if len(apiConfig.Contexts) == 0 {
-		widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", errors.New("No contexts found."))
+		widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", errors.New("No contexts found."))
 		return
 	}
 
-	dialog := adw.NewMessageDialog(p.parent, "Select Context", "")
+	dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](p.ctx), "Select Context", "")
 	defer dialog.Show()
 	dialog.AddResponse("cancel", "Cancel")
 	dialog.AddResponse("confirm", "Confirm")
@@ -378,7 +380,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 
 			config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, &clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
 			if err != nil {
-				widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+				widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
 				return
 			}
 
@@ -390,7 +392,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 			if config.CertFile != "" {
 				data, err := os.ReadFile(config.CertFile)
 				if err != nil {
-					widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
 					return
 				}
 				newPrefs.TLS.CertData = data
@@ -400,7 +402,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 			if config.KeyFile != "" {
 				data, err := os.ReadFile(config.KeyFile)
 				if err != nil {
-					widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
 					return
 				}
 				newPrefs.TLS.KeyData = data
@@ -410,7 +412,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 			if config.CAFile != "" {
 				data, err := os.ReadFile(config.CAFile)
 				if err != nil {
-					widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
 					return
 				}
 				newPrefs.TLS.CAData = data
@@ -420,7 +422,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 			if config.BearerTokenFile != "" {
 				data, err := os.ReadFile(config.BearerTokenFile)
 				if err != nil {
-					widget.ShowErrorDialog(p.parent, "Error loading kubeconfig", err)
+					widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
 					return
 				}
 				newPrefs.BearerToken = string(data)

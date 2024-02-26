@@ -26,7 +26,7 @@ type Apps struct {
 	*api.Cluster
 }
 
-func (e *Apps) CreateColumns(resource *metav1.APIResource, columns []api.Column) []api.Column {
+func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, columns []api.Column) []api.Column {
 	switch util.ResourceGVR(resource).String() {
 	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
 		columns = append(columns,
@@ -79,12 +79,12 @@ func (e *Apps) CreateColumns(resource *metav1.APIResource, columns []api.Column)
 	return columns
 }
 
-func (e *Apps) CreateObjectProperties(object client.Object, props []api.Property) []api.Property {
+func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object, props []api.Property) []api.Property {
 	switch object := object.(type) {
 	case *appsv1.Deployment:
 		prop := &api.GroupProperty{Name: "Pods"}
 		var pods v1.PodList
-		e.List(context.TODO(), &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
+		e.List(ctx, &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
 		// TODO should we also filter pods by owner? takes one more api call to fetch replicasets
 		for i, pod := range pods.Items {
 			prop.Children = append(prop.Children, &api.TextProperty{
@@ -100,7 +100,7 @@ func (e *Apps) CreateObjectProperties(object client.Object, props []api.Property
 	case *appsv1.StatefulSet:
 		prop := &api.GroupProperty{Name: "Pods"}
 		var pods v1.PodList
-		e.List(context.TODO(), &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
+		e.List(ctx, &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
 		for i, pod := range pods.Items {
 			var ok bool
 			for _, owner := range pod.OwnerReferences {

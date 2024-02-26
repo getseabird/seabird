@@ -1,6 +1,7 @@
 package extension
 
 import (
+	"context"
 	"fmt"
 	"time"
 
@@ -23,7 +24,7 @@ type Meta struct {
 	*api.Cluster
 }
 
-func (e *Meta) CreateColumns(resource *metav1.APIResource, columns []api.Column) []api.Column {
+func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, columns []api.Column) []api.Column {
 	columns = append(columns, api.Column{
 		Name:     "Name",
 		Priority: 100,
@@ -60,7 +61,7 @@ func (e *Meta) CreateColumns(resource *metav1.APIResource, columns []api.Column)
 	return columns
 }
 
-func (e *Meta) CreateObjectProperties(object client.Object, props []api.Property) []api.Property {
+func (e *Meta) CreateObjectProperties(ctx context.Context, object client.Object, props []api.Property) []api.Property {
 	var labels []api.Property
 	for key, value := range object.GetLabels() {
 		labels = append(labels, &api.TextProperty{Name: key, Value: value})

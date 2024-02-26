@@ -1,21 +1,27 @@
 package ui
 
 import (
+	"context"
+
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/imkira/go-observer/v2"
 )
 
 type PrefsWindow struct {
 	*adw.PreferencesWindow
+	ctx            context.Context
 	behavior       *behavior.ClusterBehavior
 	navigationView *adw.NavigationView
 }
 
-func NewPreferencesWindow(behavior *behavior.ClusterBehavior) *PrefsWindow {
-	w := PrefsWindow{PreferencesWindow: adw.NewPreferencesWindow(), behavior: behavior}
+func NewPreferencesWindow(ctx context.Context, behavior *behavior.ClusterBehavior) *PrefsWindow {
+	window := adw.NewPreferencesWindow()
+	ctx = ctxt.With[*gtk.Window](ctx, &window.Window.Window)
+	w := PrefsWindow{PreferencesWindow: window, behavior: behavior, ctx: ctx}
 
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	w.navigationView = adw.NewNavigationView()
@@ -67,7 +73,7 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	addCluster.AddCSSClass("flat")
 	addCluster.SetIconName("list-add")
 	addCluster.ConnectClicked(func() {
-		page := NewClusterPrefPage(&w.Window.Window, w.behavior.Behavior, observer.NewProperty(api.ClusterPreferences{}))
+		page := NewClusterPrefPage(w.ctx, w.behavior.Behavior, observer.NewProperty(api.ClusterPreferences{}))
 		w.navigationView.Push(page.NavigationPage)
 	})
 
@@ -76,7 +82,7 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 		row := adw.NewActionRow()
 		row.SetActivatable(true)
 		row.ConnectActivated(func() {
-			w.navigationView.Push(NewClusterPrefPage(&w.Window.Window, w.behavior.Behavior, cluster).NavigationPage)
+			w.navigationView.Push(NewClusterPrefPage(w.ctx, w.behavior.Behavior, cluster).NavigationPage)
 		})
 		row.SetTitle(cluster.Value().Name)
 		row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))

@@ -26,12 +26,12 @@ type TerminalPage struct {
 	pty *os.File
 }
 
-func NewTerminalPage(parent *gtk.Window, cluster *api.Cluster, pod *corev1.Pod, container string) (w *TerminalPage) {
+func NewTerminalPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, container string) (w *TerminalPage) {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	nav := adw.NewNavigationPage(box, container)
 	w = &TerminalPage{NavigationPage: nav}
 
-	ctx, cancel := context.WithCancel(context.Background())
+	ctx, cancel := context.WithCancel(ctx)
 	nav.ConnectHidden(cancel)
 
 	header := adw.NewHeaderBar()
@@ -61,7 +61,7 @@ func NewTerminalPage(parent *gtk.Window, cluster *api.Cluster, pod *corev1.Pod, 
 	go func() {
 		pty, tty, err := pty.Open()
 		if err != nil {
-			ShowErrorDialog(parent, "Unable to open pty", err)
+			ShowErrorDialog(ctx, "Unable to open pty", err)
 			return
 		}
 		defer tty.Close()
@@ -72,7 +72,7 @@ func NewTerminalPage(parent *gtk.Window, cluster *api.Cluster, pod *corev1.Pod, 
 			glib.IdleAdd(func() {
 				vtePty, err := vte.NewPtyForeignSync(ctx, int(pty.Fd()))
 				if err != nil {
-					ShowErrorDialog(parent, "Unable to open pty", err)
+					ShowErrorDialog(ctx, "Unable to open pty", err)
 					return
 				}
 				terminal.SetPty(vtePty)
@@ -82,7 +82,7 @@ func NewTerminalPage(parent *gtk.Window, cluster *api.Cluster, pod *corev1.Pod, 
 		if err := podExec(ctx, cluster, pod, container, []string{"/bin/sh"}, tty, tty, tty, nil); err != nil {
 			if !errors.Is(err, context.Canceled) {
 				glib.IdleAdd(func() {
-					ShowErrorDialog(parent, "Exec failed", err)
+					ShowErrorDialog(ctx, "Exec failed", err)
 				})
 			}
 		}
