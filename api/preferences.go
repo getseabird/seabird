@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path"
+	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/imkira/go-observer/v2"
@@ -19,6 +20,13 @@ import (
 type basePreferences struct {
 	ColorScheme adw.ColorScheme
 	Clusters    []ClusterPreferences
+	License     *License
+}
+
+type License struct {
+	ID        string
+	Key       string
+	ExpiresAt *time.Time
 }
 
 type Preferences struct {

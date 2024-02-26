@@ -3,6 +3,7 @@ module github.com/getseabird/seabird
 go 1.22.0
 
 require (
+	github.com/NdoleStudio/lemonsqueezy-go v1.1.0
 	github.com/adrg/strutil v0.3.1
 	github.com/creack/pty v1.1.21
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc
