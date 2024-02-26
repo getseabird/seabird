@@ -1,27 +1,26 @@
 name: Bug report
 description: Report a bug
 body:
+  - type: textarea
+    attributes:
+      label: Issue description
+      description: |
+        Describe your issue briefly. What doesn't work, and how do you expect it to work instead?
+    validations:
+      required: true
 
-- type: textarea
-  attributes:
-    label: Issue description
-    description: |
-      Describe your issue briefly. What doesn't work, and how do you expect it to work instead?
-  validations:
-    required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      description: |
+        List of steps to reproduce the issue.
+    validations:
+      required: true
 
-- type: textarea
-  attributes:
-    label: Steps to reproduce
-    description: |
-      List of steps to reproduce the issue.
-  validations:
-    required: true
-
-- type: input
-  attributes:
-    label: System information
-    description: |
-      Seabird version, operating system, architecture and other relevant information
-  validations:
-    required: true
+  - type: input
+    attributes:
+      label: System information
+      description: |
+        Seabird version, operating system, architecture and other relevant information.
+    validations:
+      required: true
