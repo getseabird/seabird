@@ -38,10 +38,10 @@ type DetailView struct {
 }
 
 func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *DetailView {
-	toolbarView := adw.NewToolbarView()
-	toolbarView.AddCSSClass("view")
+	content := gtk.NewBox(gtk.OrientationVertical, 0)
+	content.AddCSSClass("view")
 	d := DetailView{
-		NavigationPage: adw.NewNavigationPage(toolbarView, "Selection"),
+		NavigationPage: adw.NewNavigationPage(content, "Selection"),
 		prefPage:       adw.NewPreferencesPage(),
 		behavior:       behavior,
 		expanded:       map[string]bool{},
@@ -51,25 +51,24 @@ func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *Deta
 	clamp := d.prefPage.FirstChild().(*gtk.ScrolledWindow).FirstChild().(*gtk.Viewport).FirstChild().(*adw.Clamp)
 	clamp.SetMaximumSize(5000)
 
-	stack := adw.NewViewStack()
-	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "info-outline-symbolic")
-	stack.AddTitledWithIcon(d.createSource(), "source", "Yaml", "code-symbolic")
-
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
-
-	switcher := adw.NewViewSwitcher()
-	switcher.SetPolicy(adw.ViewSwitcherPolicyWide)
-	switcher.SetStack(stack)
-	header.SetTitleWidget(switcher)
+	content.Append(header)
 	switch runtime.GOOS {
 	case "windows", "darwin":
 		header.SetShowStartTitleButtons(false)
 		header.SetShowEndTitleButtons(false)
 	}
 
-	toolbarView.AddTopBar(header)
-	toolbarView.SetContent(stack)
+	stack := adw.NewViewStack()
+	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "info-outline-symbolic")
+	stack.AddTitledWithIcon(d.createSource(), "source", "Yaml", "code-symbolic")
+	content.Append(stack)
+
+	switcher := adw.NewViewSwitcher()
+	switcher.SetPolicy(adw.ViewSwitcherPolicyWide)
+	switcher.SetStack(stack)
+	header.SetTitleWidget(switcher)
 
 	editable := gio.NewSimpleActionStateful("editable", nil, glib.NewVariantBoolean(false))
 	save := gio.NewSimpleAction("save", nil)
