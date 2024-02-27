@@ -53,18 +53,29 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, behavior *behav
 		return false
 	})
 
+	breakpointBin := adw.NewBreakpointBin()
+	breakpointBin.SetSizeRequest(800, 500)
 	w.toastOverlay = adw.NewToastOverlay()
-	w.SetContent(w.toastOverlay)
+	breakpointBin.SetChild(w.toastOverlay)
+	w.SetContent(breakpointBin)
 
-	lpane := gtk.NewPaned(gtk.OrientationHorizontal)
-	lpane.SetShrinkStartChild(false)
-	lpane.SetShrinkEndChild(false)
+	splitView := adw.NewOverlaySplitView()
+	splitView.SetEnableHideGesture(true)
+	splitView.SetEnableShowGesture(true)
+	splitView.SetMinSidebarWidth(200)
+	splitView.SetMaxSidebarWidth(300)
+	splitView.SetSidebarWidthFraction(0.15)
+	w.toastOverlay.SetChild(splitView)
+
+	breakpoint := adw.NewBreakpoint(adw.BreakpointConditionParse("max-width: 1500sp"))
+	breakpoint.AddSetter(splitView, "collapsed", true)
+	breakpointBin.AddBreakpoint(breakpoint)
+
 	rpane := gtk.NewPaned(gtk.OrientationHorizontal)
 	rpane.SetShrinkStartChild(false)
 	rpane.SetShrinkEndChild(false)
 	rpane.SetHExpand(true)
-	lpane.SetEndChild(rpane)
-	w.toastOverlay.SetChild(lpane)
+	splitView.SetContent(rpane)
 
 	w.detailView = NewDetailView(ctx, behavior.NewRootDetailBehavior(ctx))
 	nav := adw.NewNavigationView()
@@ -72,15 +83,15 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, behavior *behav
 	nav.SetSizeRequest(350, 350)
 	rpane.SetEndChild(nav)
 
-	w.listView = NewListView(ctx, behavior.NewListBehavior(ctx))
+	listBehavior := behavior.NewListBehavior(ctx)
+	listHeader := NewListHeader(ctx, listBehavior, breakpoint, func() { splitView.SetShowSidebar(true) })
+	w.listView = NewListView(ctx, listBehavior, listHeader)
 	rpane.SetStartChild(w.listView)
 	sw, _ := w.listView.SizeRequest()
 	rpane.SetPosition(sw)
 
 	w.navigation = NewNavigation(ctx, behavior)
-	lpane.SetStartChild(w.navigation)
-	sw, _ = w.navigation.SizeRequest()
-	lpane.SetPosition(sw)
+	splitView.SetSidebar(w.navigation)
 
 	w.createActions()
 

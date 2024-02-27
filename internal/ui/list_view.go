@@ -5,7 +5,6 @@ import (
 	"sort"
 	"strconv"
 
-	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
@@ -29,19 +28,13 @@ type ListView struct {
 	selected   types.UID
 }
 
-func NewListView(ctx context.Context, behavior *behavior.ListBehavior) *ListView {
+func NewListView(ctx context.Context, behavior *behavior.ListBehavior, header gtk.Widgetter) *ListView {
 	l := ListView{
 		ctx:      ctx,
 		Box:      gtk.NewBox(gtk.OrientationVertical, 0),
 		behavior: behavior,
 	}
 	l.AddCSSClass("view")
-
-	header := adw.NewHeaderBar()
-	header.AddCSSClass("flat")
-	header.SetShowEndTitleButtons(false)
-	header.SetShowStartTitleButtons(false)
-	header.SetTitleWidget(NewListHeader(ctx, behavior))
 	l.Append(header)
 
 	l.selection = l.createModel()
@@ -152,7 +145,6 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 			col.Bind(listitem, object)
 		})
 		column := gtk.NewColumnViewColumn(col.Name, &factory.ListItemFactory)
-		column.SetResizable(true)
 		column.SetExpand(true)
 		gtkColumns = append(gtkColumns, column)
 	}

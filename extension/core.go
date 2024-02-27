@@ -47,20 +47,20 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					}
 				},
 			},
-			api.Column{
-				Name:     "Restarts",
-				Priority: 60,
-				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					pod := object.(*corev1.Pod)
-					var restartCount int
-					for _, container := range pod.Status.ContainerStatuses {
-						restartCount += int(container.RestartCount)
-					}
-					label := gtk.NewLabel(strconv.Itoa(restartCount))
-					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
-				},
-			},
+			// api.Column{
+			// 	Name:     "Restarts",
+			// 	Priority: 60,
+			// 	Bind: func(listitem *gtk.ListItem, object client.Object) {
+			// 		pod := object.(*corev1.Pod)
+			// 		var restartCount int
+			// 		for _, container := range pod.Status.ContainerStatuses {
+			// 			restartCount += int(container.RestartCount)
+			// 		}
+			// 		label := gtk.NewLabel(strconv.Itoa(restartCount))
+			// 		label.SetHAlign(gtk.AlignStart)
+			// 		listitem.SetChild(label)
+			// 	},
+			// },
 		)
 
 		if e.Metrics != nil {

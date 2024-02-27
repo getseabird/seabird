@@ -39,6 +39,7 @@ type DetailView struct {
 
 func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *DetailView {
 	toolbarView := adw.NewToolbarView()
+	toolbarView.AddCSSClass("view")
 	d := DetailView{
 		NavigationPage: adw.NewNavigationPage(toolbarView, "Selection"),
 		prefPage:       adw.NewPreferencesPage(),

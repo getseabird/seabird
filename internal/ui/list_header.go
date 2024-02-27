@@ -3,7 +3,9 @@ package ui
 import (
 	"context"
 	"fmt"
+	"runtime"
 
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/internal/behavior"
@@ -13,14 +15,29 @@ import (
 )
 
 type ListHeader struct {
-	*gtk.Box
+	*adw.HeaderBar
 }
 
-func NewListHeader(ctx context.Context, b *behavior.ListBehavior) *ListHeader {
+func NewListHeader(ctx context.Context, b *behavior.ListBehavior, breakpoint *adw.Breakpoint, showSidebar func()) *ListHeader {
+	header := adw.NewHeaderBar()
+	header.AddCSSClass("flat")
+	header.SetShowEndTitleButtons(false)
+	header.SetShowStartTitleButtons(false)
+	switch runtime.GOOS {
+	case "darwin":
+		breakpoint.AddSetter(header, "show-start-title-buttons", true)
+	}
+
+	btn := gtk.NewButton()
+	btn.SetIconName("sidebar-show-symbolic")
+	btn.SetVisible(false)
+	btn.ConnectClicked(showSidebar)
+	header.PackStart(btn)
+	breakpoint.AddSetter(btn, "visible", true)
+
 	box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 	box.AddCSSClass("linked")
-	box.SetMarginStart(12)
-	box.SetMarginEnd(12)
+	header.SetTitleWidget(box)
 
 	// TODO expression triggers G_IS_OBJECT (object) assertion fails
 	kind := gtk.NewDropDown(gtk.NewStringList([]string{}), gtk.NewPropertyExpression(gtk.GTypeStringObject, nil, "string"))
@@ -38,7 +55,7 @@ func NewListHeader(ctx context.Context, b *behavior.ListBehavior) *ListHeader {
 	box.Append(kind)
 
 	entry := gtk.NewSearchEntry()
-	entry.SetHExpand(true)
+	entry.SetMaxWidthChars(50)
 	box.Append(entry)
 	entry.ConnectChanged(func() {
 		if entry.Text() != b.SearchText.Value() {
@@ -82,5 +99,5 @@ func NewListHeader(ctx context.Context, b *behavior.ListBehavior) *ListHeader {
 		kind.SetSelected(idx)
 	})
 
-	return &ListHeader{box}
+	return &ListHeader{header}
 }
