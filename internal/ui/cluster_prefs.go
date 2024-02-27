@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -56,20 +55,7 @@ func NewClusterPrefPage(ctx context.Context, b *behavior.Behavior, prefs observe
 	content.SetChild(p.createContent())
 
 	onChange(ctx, p.prefs, func(prefs api.ClusterPreferences) {
-		p.name.SetText(prefs.Name)
-		p.host.SetText(prefs.Host)
-		p.cert.SetText(string(prefs.TLS.CertData))
-		p.key.SetText(string(prefs.TLS.KeyData))
-		p.ca.SetText(string(prefs.TLS.CAData))
-		p.bearer.SetText(string(prefs.BearerToken))
-		if prefs.Exec != nil {
-			p.exec.SetSubtitle(prefs.Exec.Command)
-			p.execDelete.SetSensitive(true)
-		} else {
-			p.exec.SetSubtitle("")
-			p.execDelete.SetSensitive(false)
-		}
-
+		p.updateValues(prefs)
 		p.favourites.SetChild(p.createFavourites())
 		p.actions.SetChild(p.createActions())
 	})
@@ -119,17 +105,7 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.exec.AddSuffix(p.execDelete)
 	auth.AddRow(p.exec)
 
-	p.name.SetText(p.prefs.Value().Name)
-	p.host.SetText(p.prefs.Value().Host)
-	p.cert.SetText(string(p.prefs.Value().TLS.CertData))
-	p.key.SetText(string(p.prefs.Value().TLS.KeyData))
-	p.ca.SetText(string(p.prefs.Value().TLS.CAData))
-	p.bearer.SetText(string(p.prefs.Value().BearerToken))
-	if exec := p.prefs.Value().Exec; exec != nil {
-		p.exec.SetSubtitle(exec.Command)
-	} else {
-		p.execDelete.SetSensitive(false)
-	}
+	p.updateValues(p.prefs.Value())
 
 	p.favourites = adw.NewBin()
 	p.favourites.SetChild(p.createFavourites())
@@ -377,60 +353,12 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 				}
 				button = button.NextSibling().(*gtk.CheckButton)
 			}
-
-			config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, &clientcmd.ConfigOverrides{CurrentContext: context}).ClientConfig()
-			if err != nil {
+			prefs := p.prefs.Value()
+			if err := api.UpdateClusterPreferences(&prefs, path, context); err != nil {
 				widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
 				return
 			}
-
-			newPrefs := p.prefs.Value()
-			newPrefs.Name = context
-			newPrefs.Host = config.Host
-			newPrefs.Exec = config.ExecProvider
-
-			if config.CertFile != "" {
-				data, err := os.ReadFile(config.CertFile)
-				if err != nil {
-					widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
-					return
-				}
-				newPrefs.TLS.CertData = data
-			} else {
-				newPrefs.TLS.CertData = config.CertData
-			}
-			if config.KeyFile != "" {
-				data, err := os.ReadFile(config.KeyFile)
-				if err != nil {
-					widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
-					return
-				}
-				newPrefs.TLS.KeyData = data
-			} else {
-				newPrefs.TLS.KeyData = config.KeyData
-			}
-			if config.CAFile != "" {
-				data, err := os.ReadFile(config.CAFile)
-				if err != nil {
-					widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
-					return
-				}
-				newPrefs.TLS.CAData = data
-			} else {
-				newPrefs.TLS.CAData = config.CAData
-			}
-			if config.BearerTokenFile != "" {
-				data, err := os.ReadFile(config.BearerTokenFile)
-				if err != nil {
-					widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
-					return
-				}
-				newPrefs.BearerToken = string(data)
-			} else {
-				newPrefs.BearerToken = config.BearerToken
-			}
-
-			p.prefs.Update(newPrefs)
+			p.prefs.Update(prefs)
 		}
 	})
 }
@@ -441,4 +369,30 @@ func (p *ClusterPrefPage) validate(pref api.ClusterPreferences) error {
 	}
 
 	return nil
+}
+
+func (p *ClusterPrefPage) updateValues(prefs api.ClusterPreferences) {
+	p.name.SetText(prefs.Name)
+	p.host.SetText(prefs.Host)
+	p.cert.SetText(string(prefs.TLS.CertData))
+	p.key.SetText(string(prefs.TLS.KeyData))
+	p.ca.SetText(string(prefs.TLS.CAData))
+	p.bearer.SetText(string(prefs.BearerToken))
+	if prefs.Exec != nil {
+		p.exec.SetSubtitle(prefs.Exec.Command)
+		p.execDelete.SetSensitive(true)
+	} else {
+		p.exec.SetSubtitle("")
+		p.execDelete.SetSensitive(false)
+	}
+
+	if prefs.Kubeconfig != nil {
+		p.name.SetSensitive(false)
+		p.host.SetSensitive(false)
+		p.cert.SetSensitive(false)
+		p.key.SetSensitive(false)
+		p.ca.SetSensitive(false)
+		p.bearer.SetSensitive(false)
+		p.execDelete.SetSensitive(false)
+	}
 }

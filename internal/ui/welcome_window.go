@@ -3,6 +3,7 @@ package ui
 import (
 	"context"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -112,6 +113,14 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 			row := adw.NewActionRow()
 			row.SetTitle(cluster.Value().Name)
 			row.SetActivatable(true)
+
+			if kubeconfig := c.Value().Kubeconfig; kubeconfig != nil {
+				label := gtk.NewLabel(fmt.Sprintf("%v:%v", kubeconfig.Path, kubeconfig.Context))
+				label.AddCSSClass("dim-label")
+				label.SetHAlign(gtk.AlignStart)
+				row.AddSuffix(label)
+			}
+
 			spinner := widget.NewFallbackSpinner(gtk.NewImageFromIconName("go-next-symbolic"))
 			row.AddSuffix(spinner)
 			row.ConnectActivated(func() {

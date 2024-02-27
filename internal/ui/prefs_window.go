@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -85,6 +86,12 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 			w.navigationView.Push(NewClusterPrefPage(w.ctx, w.behavior.Behavior, cluster).NavigationPage)
 		})
 		row.SetTitle(cluster.Value().Name)
+		if kubeconfig := cluster.Value().Kubeconfig; kubeconfig != nil {
+			label := gtk.NewLabel(fmt.Sprintf("%v:%v", kubeconfig.Path, kubeconfig.Context))
+			label.AddCSSClass("dim-label")
+			label.SetHAlign(gtk.AlignStart)
+			row.AddSuffix(label)
+		}
 		row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 		clusters.Add(row)
 	}

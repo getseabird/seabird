@@ -14,6 +14,7 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/tools/clientcmd/api"
 )
 
@@ -43,6 +44,7 @@ func prefsPath() string {
 }
 
 type ClusterPreferences struct {
+	Kubeconfig  *Kubeconfig
 	Name        string
 	Host        string
 	BearerToken string
@@ -51,6 +53,11 @@ type ClusterPreferences struct {
 	Navigation  struct {
 		Favourites []schema.GroupVersionResource
 	}
+}
+
+type Kubeconfig struct {
+	Path    string
+	Context string
 }
 
 func LoadPreferences() (*Preferences, error) {
@@ -74,9 +81,50 @@ func LoadPreferences() (*Preferences, error) {
 	}
 	base.Defaults()
 
+	for i := len(base.Clusters) - 1; i >= 0; i-- {
+		config := base.Clusters[i].Kubeconfig
+		if config == nil {
+			continue
+		}
+		var prefs = base.Clusters[i]
+		if err := UpdateClusterPreferences(&prefs, config.Path, config.Context); err != nil {
+			base.Clusters = append(base.Clusters[:i], base.Clusters[i+1:]...)
+		} else {
+			base.Clusters[i] = prefs
+		}
+	}
+
+	home, _ := os.UserHomeDir()
+	for _, path := range []string{path.Join(home, ".kube/config"), os.Getenv("KUBECONFIG")} {
+		if _, err := os.Stat(path); err != nil {
+			continue
+		}
+
+		config, err := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, nil).
+			ConfigAccess().GetStartingConfig()
+		if err != nil {
+			continue
+		}
+
+	context:
+		for context := range config.Contexts {
+			for _, c := range base.Clusters {
+				if c.Kubeconfig != nil && c.Kubeconfig.Path == path && c.Kubeconfig.Context == context {
+					continue context
+				}
+			}
+			prefs := ClusterPreferences{Kubeconfig: &Kubeconfig{Path: path, Context: context}}
+			if err := UpdateClusterPreferences(&prefs, path, context); err == nil {
+				base.Clusters = append(base.Clusters, prefs)
+			}
+		}
+
+	}
+
 	prefs := Preferences{
 		basePreferences: &base,
 	}
+
 	for _, cluster := range base.Clusters {
 		prefs.Clusters = append(prefs.Clusters, observer.NewProperty(cluster))
 	}
@@ -85,7 +133,7 @@ func LoadPreferences() (*Preferences, error) {
 }
 
 func (c *basePreferences) Defaults() {
-	for i, _ := range c.Clusters {
+	for i := range c.Clusters {
 		c.Clusters[i].Defaults()
 	}
 }
@@ -163,6 +211,70 @@ func (c *Preferences) Save() error {
 
 	if err := json.NewEncoder(f).Encode(c.basePreferences); err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func UpdateClusterPreferences(prefs *ClusterPreferences, path, context string) error {
+	var overrides *clientcmd.ConfigOverrides
+	if context != "" {
+		overrides = &clientcmd.ConfigOverrides{CurrentContext: context}
+	}
+	cc := clientcmd.NewNonInteractiveDeferredLoadingClientConfig(&clientcmd.ClientConfigLoadingRules{ExplicitPath: path}, overrides)
+	config, err := cc.ClientConfig()
+	if err != nil {
+		return err
+	}
+
+	prefs.Host = config.Host
+	prefs.Exec = config.ExecProvider
+
+	if prefs.Name == "" {
+		prefs.Name = context
+		if prefs.Name == "" {
+			c, err := cc.ConfigAccess().GetStartingConfig()
+			if err == nil {
+				prefs.Name = c.CurrentContext
+			}
+		}
+	}
+
+	if config.CertFile != "" {
+		data, err := os.ReadFile(config.CertFile)
+		if err != nil {
+			return err
+		}
+		prefs.TLS.CertData = data
+	} else {
+		prefs.TLS.CertData = config.CertData
+	}
+	if config.KeyFile != "" {
+		data, err := os.ReadFile(config.KeyFile)
+		if err != nil {
+			return err
+		}
+		prefs.TLS.KeyData = data
+	} else {
+		prefs.TLS.KeyData = config.KeyData
+	}
+	if config.CAFile != "" {
+		data, err := os.ReadFile(config.CAFile)
+		if err != nil {
+			return err
+		}
+		prefs.TLS.CAData = data
+	} else {
+		prefs.TLS.CAData = config.CAData
+	}
+	if config.BearerTokenFile != "" {
+		data, err := os.ReadFile(config.BearerTokenFile)
+		if err != nil {
+			return err
+		}
+		prefs.BearerToken = string(data)
+	} else {
+		prefs.BearerToken = config.BearerToken
 	}
 
 	return nil
