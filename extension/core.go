@@ -231,11 +231,10 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 			var mem *resource.Quantity
 			if metrics != nil {
 				if cpu = metrics.Usage.Cpu(); cpu != nil {
-					c, _ := cpu.AsInt64()
-					cpu = resource.NewQuantity(c, resource.DecimalSI)
 					cpu.RoundUp(resource.Milli)
-					props = append(props, &api.TextProperty{Name: "CPU", Value: fmt.Sprintf("%v", cpu)})
 				}
+				props = append(props, &api.TextProperty{Name: "CPU", Value: fmt.Sprintf("%v", cpu)})
+
 				if mem = metrics.Usage.Memory(); mem != nil {
 					m, _ := mem.AsInt64()
 					mem = resource.NewQuantity(m, resource.DecimalSI)
@@ -255,9 +254,9 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 					case *adw.ExpanderRow:
 						row.AddPrefix(widget.NewStatusIcon(status.Ready))
 						if cpu != nil {
-							req := container.Resources.Requests.Memory()
+							req := container.Resources.Requests.Cpu()
 							if req == nil || req.IsZero() {
-								req = container.Resources.Limits.Memory()
+								req = container.Resources.Limits.Cpu()
 							}
 							row.AddSuffix(widget.NewResourceBar(cpu, req, "cpu-symbolic"))
 						}
