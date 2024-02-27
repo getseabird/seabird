@@ -47,20 +47,6 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					}
 				},
 			},
-			// api.Column{
-			// 	Name:     "Restarts",
-			// 	Priority: 60,
-			// 	Bind: func(listitem *gtk.ListItem, object client.Object) {
-			// 		pod := object.(*corev1.Pod)
-			// 		var restartCount int
-			// 		for _, container := range pod.Status.ContainerStatuses {
-			// 			restartCount += int(container.RestartCount)
-			// 		}
-			// 		label := gtk.NewLabel(strconv.Itoa(restartCount))
-			// 		label.SetHAlign(gtk.AlignStart)
-			// 		listitem.SetChild(label)
-			// 	},
-			// },
 		)
 
 		if e.Metrics != nil {
@@ -131,18 +117,60 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			},
 		})
 	case corev1.SchemeGroupVersion.WithResource("nodes").String():
-		columns = append(columns, api.Column{
-			Name:     "Status",
-			Priority: 70,
-			Bind: func(listitem *gtk.ListItem, object client.Object) {
-				node := object.(*corev1.Node)
-				for _, cond := range node.Status.Conditions {
-					if cond.Type == corev1.NodeReady {
-						listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
+		columns = append(columns,
+			api.Column{
+				Name:     "Status",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					node := object.(*corev1.Node)
+					for _, cond := range node.Status.Conditions {
+						if cond.Type == corev1.NodeReady {
+							listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
+						}
 					}
-				}
+				},
 			},
-		})
+			api.Column{
+				Name:     "Pods",
+				Priority: 60,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pod := object.(*corev1.Node)
+					var pods corev1.PodList
+					e.List(ctx, &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", pod.Name)})
+					label := gtk.NewLabel(fmt.Sprintf("%d", len(pods.Items)))
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
+			},
+			api.Column{
+				Name:     "Memory",
+				Priority: 50,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					node := object.(*corev1.Node)
+					metrics := e.Metrics.Node(node.Name)
+					if metrics == nil {
+						return
+					}
+					bar := widget.NewResourceBar(metrics.Usage.Memory(), node.Status.Allocatable.Memory(), "")
+					bar.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(bar)
+				},
+			},
+			api.Column{
+				Name:     "CPU",
+				Priority: 40,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					node := object.(*corev1.Node)
+					metrics := e.Metrics.Node(node.Name)
+					if metrics == nil {
+						return
+					}
+					bar := widget.NewResourceBar(metrics.Usage.Cpu(), node.Status.Allocatable.Cpu(), "")
+					bar.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(bar)
+				},
+			},
+		)
 	}
 	return columns
 }
@@ -194,6 +222,12 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 				state = fmt.Sprintf("Waiting: %s", message)
 			}
 			props = append(props, &api.TextProperty{Name: "State", Value: state})
+
+			var restartCount int
+			for _, container := range object.Status.ContainerStatuses {
+				restartCount += int(container.RestartCount)
+			}
+			props = append(props, &api.TextProperty{Name: "Restarts", Value: fmt.Sprintf("%d", restartCount)})
 
 			props = append(props, &api.TextProperty{Name: "Image", Value: container.Image})
 
@@ -340,6 +374,12 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 		}})
 	case *corev1.Node:
 		infoProp := &api.GroupProperty{Name: "Info"}
+		mem := object.Status.Allocatable.Memory()
+		mem.RoundUp(resource.Mega)
+		mem.Format = resource.DecimalSI
+		cpu := object.Status.Allocatable.Cpu()
+		cpu.RoundUp(resource.Milli)
+		cpu.Format = resource.DecimalSI
 		infoProp.Children = append(infoProp.Children,
 			&api.TextProperty{
 				Name:  "Architecture",
@@ -360,6 +400,14 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 			&api.TextProperty{
 				Name:  "Operating system image",
 				Value: object.Status.NodeInfo.OSImage,
+			},
+			&api.TextProperty{
+				Name:  "Memory",
+				Value: fmt.Sprintf("%v", mem),
+			},
+			&api.TextProperty{
+				Name:  "CPU",
+				Value: fmt.Sprintf("%v", cpu),
 			},
 		)
 		props = append(props, infoProp)
