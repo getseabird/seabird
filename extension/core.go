@@ -236,8 +236,6 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 				props = append(props, &api.TextProperty{Name: "CPU", Value: fmt.Sprintf("%v", cpu)})
 
 				if mem = metrics.Usage.Memory(); mem != nil {
-					m, _ := mem.AsInt64()
-					mem = resource.NewQuantity(m, resource.DecimalSI)
 					mem.RoundUp(resource.Mega)
 					props = append(props, &api.TextProperty{
 						Name:  "Memory",
