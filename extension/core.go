@@ -232,11 +232,13 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 			if metrics != nil {
 				if cpu = metrics.Usage.Cpu(); cpu != nil {
 					cpu.RoundUp(resource.Milli)
+					cpu.Format = resource.DecimalSI
+					props = append(props, &api.TextProperty{Name: "CPU", Value: fmt.Sprintf("%v", cpu)})
 				}
-				props = append(props, &api.TextProperty{Name: "CPU", Value: fmt.Sprintf("%v", cpu)})
 
 				if mem = metrics.Usage.Memory(); mem != nil {
 					mem.RoundUp(resource.Mega)
+					mem.Format = resource.DecimalSI
 					props = append(props, &api.TextProperty{
 						Name:  "Memory",
 						Value: fmt.Sprintf("%v", mem),
