@@ -19,6 +19,7 @@ import (
 	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
+	"github.com/google/uuid"
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
@@ -41,12 +42,13 @@ func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *Deta
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	content.AddCSSClass("view")
 	d := DetailView{
-		NavigationPage: adw.NewNavigationPage(content, "Selection"),
+		NavigationPage: adw.NewNavigationPage(content, "Object"),
 		prefPage:       adw.NewPreferencesPage(),
 		behavior:       behavior,
 		expanded:       map[string]bool{},
 		ctx:            ctx,
 	}
+	d.SetTag(uuid.NewString())
 
 	clamp := d.prefPage.FirstChild().(*gtk.ScrolledWindow).FirstChild().(*gtk.Viewport).FirstChild().(*adw.Clamp)
 	clamp.SetMaximumSize(5000)
@@ -112,12 +114,9 @@ func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *Deta
 	ctxt.MustFrom[*gtk.Window](ctx).InsertActionGroup("detail", actionGroup)
 
 	onChange(ctx, d.behavior.SelectedObject, func(_ client.Object) {
-		for {
-			if nav, ok := d.Parent().(*adw.NavigationView); !ok || !nav.Pop() {
-				break
-			}
+		for d.Parent().(*adw.NavigationView).Pop() {
+			// empty
 		}
-
 		if editable.State().Boolean() {
 			editable.Activate(nil)
 		}
@@ -181,9 +180,15 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 						log.Print(err.Error())
 						return
 					}
-					dv := NewDetailView(d.ctx, d.behavior.NewDetailBehavior(d.ctx))
+					ctx, cancel := context.WithCancel(d.ctx)
+					dv := NewDetailView(ctx, d.behavior.NewDetailBehavior(ctx))
 					dv.behavior.SelectedObject.Update(obj)
 					d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
+					d.Parent().(*adw.NavigationView).ConnectPopped(func(page *adw.NavigationPage) {
+						if page.Tag() == dv.Tag() {
+							cancel()
+						}
+					})
 				})
 			}
 			return row
