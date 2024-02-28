@@ -2,14 +2,17 @@ package widget
 
 import (
 	"context"
+	"fmt"
 	"io"
 	"runtime"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/util"
+	"github.com/leaanthony/go-ansi-parser"
 	corev1 "k8s.io/api/core/v1"
 )
 
@@ -44,7 +47,21 @@ func NewLogPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, cont
 	if err != nil {
 		ShowErrorDialog(ctx, "Could not load logs", err)
 	} else {
-		buffer.SetText(string(logs))
+		if text, err := ansi.Parse(string(logs)); err != nil {
+			buffer.SetText(string(logs))
+		} else {
+			for _, text := range text {
+				var attr []string
+				if text.FgCol != nil {
+					attr = append(attr, fmt.Sprintf(`foreground="%s"`, text.FgCol.Hex))
+				}
+				if text.BgCol != nil {
+					attr = append(attr, fmt.Sprintf(`background="%s"`, text.BgCol.Hex))
+				}
+				buffer.InsertMarkup(buffer.EndIter(), fmt.Sprintf(`<span %s>%s</span>`, strings.Join(attr, " "), text.Label))
+			}
+		}
+
 	}
 
 	return &p
