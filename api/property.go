@@ -5,7 +5,6 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Property interface {
@@ -14,11 +13,11 @@ type Property interface {
 }
 
 type TextProperty struct {
-	ID     string
-	Name   string
-	Value  string
-	Source client.Object
-	Widget func(gtk.Widgetter, *adw.NavigationView)
+	ID        string
+	Name      string
+	Value     string
+	Reference *ObjectReference
+	Widget    func(gtk.Widgetter, *adw.NavigationView)
 }
 
 func (p *TextProperty) GetID() string {

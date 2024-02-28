@@ -3,6 +3,7 @@ package ui
 import (
 	"context"
 	"fmt"
+	"log"
 	"runtime"
 	"strings"
 
@@ -21,7 +22,6 @@ import (
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
-	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -113,7 +113,7 @@ func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *Deta
 
 	onChange(ctx, d.behavior.SelectedObject, func(_ client.Object) {
 		for {
-			if !d.Parent().(*adw.NavigationView).Pop() {
+			if nav, ok := d.Parent().(*adw.NavigationView); !ok || !nav.Pop() {
 				break
 			}
 		}
@@ -158,27 +158,31 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 			row.SetSubtitleLines(5)
 			row.SetSubtitle(prop.Value)
 
-			copy := gtk.NewButton()
-			copy.SetIconName("edit-copy-symbolic")
-			copy.AddCSSClass("flat")
-			copy.AddCSSClass("dim-label")
-			copy.SetVAlign(gtk.AlignCenter)
-			copy.ConnectClicked(func() {
-				gdk.DisplayGetDefault().Clipboard().SetText(prop.Value)
-			})
-			row.AddSuffix(copy)
 			if prop.Widget != nil {
 				prop.Widget(row, d.Parent().(*adw.NavigationView))
 			}
-			// TODO move to extension?
-			switch source := prop.Source.(type) {
-			case *corev1.Pod:
+			if prop.Reference == nil {
+				copy := gtk.NewButton()
+				copy.SetIconName("edit-copy-symbolic")
+				copy.AddCSSClass("flat")
+				copy.AddCSSClass("dim-label")
+				copy.SetVAlign(gtk.AlignCenter)
+				copy.ConnectClicked(func() {
+					gdk.DisplayGetDefault().Clipboard().SetText(prop.Value)
+				})
+				row.AddSuffix(copy)
+			} else {
 				row.SetActivatable(true)
 				row.SetSubtitleSelectable(false)
 				row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 				row.ConnectActivated(func() {
+					obj, err := prop.Reference.GetObject(d.ctx, d.behavior.Cluster)
+					if err != nil {
+						log.Print(err.Error())
+						return
+					}
 					dv := NewDetailView(d.ctx, d.behavior.NewDetailBehavior(d.ctx))
-					dv.behavior.SelectedObject.Update(source)
+					dv.behavior.SelectedObject.Update(obj)
 					d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
 				})
 			}

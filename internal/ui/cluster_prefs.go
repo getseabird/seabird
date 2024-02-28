@@ -319,7 +319,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 	}
 
 	if len(apiConfig.Contexts) == 0 {
-		widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", errors.New("No contexts found."))
+		widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", errors.New("no contexts found"))
 		return
 	}
 

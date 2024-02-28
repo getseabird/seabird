@@ -88,11 +88,11 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object,
 		// TODO should we also filter pods by owner? takes one more api call to fetch replicasets
 		for i, pod := range pods.Items {
 			prop.Children = append(prop.Children, &api.TextProperty{
-				ID:     fmt.Sprintf("pods.%d", i),
-				Source: &pod,
-				Value:  pod.Name,
+				ID:        fmt.Sprintf("pods.%d", i),
+				Reference: api.NewObjectReference(&pod),
+				Value:     pod.Name,
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
-					podWidget(pod, w, nv)
+					podWidget(ctx, pod, w, nv)
 				},
 			})
 		}
@@ -112,11 +112,11 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object,
 				continue
 			}
 			prop.Children = append(prop.Children, &api.TextProperty{
-				ID:     fmt.Sprintf("pods.%d", i),
-				Source: &pod,
-				Value:  pod.Name,
+				ID:        fmt.Sprintf("pods.%d", i),
+				Reference: api.NewObjectReference(&pod),
+				Value:     pod.Name,
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
-					podWidget(pod, w, nv)
+					podWidget(ctx, pod, w, nv)
 				},
 			})
 		}
@@ -126,7 +126,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object,
 	return props
 }
 
-func podWidget(pod v1.Pod, w gtk.Widgetter, nv *adw.NavigationView) {
+func podWidget(ctx context.Context, pod v1.Pod, w gtk.Widgetter, nv *adw.NavigationView) {
 	switch row := w.(type) {
 	case *adw.ActionRow:
 		for _, cond := range pod.Status.Conditions {

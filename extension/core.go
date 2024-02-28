@@ -417,11 +417,11 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 		e.List(ctx, &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", object.Name)})
 		for i, pod := range pods.Items {
 			podsProp.Children = append(podsProp.Children, &api.TextProperty{
-				ID:     fmt.Sprintf("pods.%d", i),
-				Source: &pod,
-				Value:  pod.Name,
+				ID:        fmt.Sprintf("pods.%d", i),
+				Reference: api.NewObjectReference(&pod),
+				Value:     pod.Name,
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
-					podWidget(pod, w, nv)
+					podWidget(ctx, pod, w, nv)
 				},
 			})
 		}

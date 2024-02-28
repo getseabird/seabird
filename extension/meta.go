@@ -72,7 +72,16 @@ func (e *Meta) CreateObjectProperties(ctx context.Context, object client.Object,
 	}
 	var owners []api.Property
 	for _, ref := range object.GetOwnerReferences() {
-		owners = append(owners, &api.TextProperty{Name: fmt.Sprintf("%s %s", ref.APIVersion, ref.Kind), Value: ref.Name})
+		owners = append(owners, &api.TextProperty{
+			Name:  fmt.Sprintf("%s %s", ref.APIVersion, ref.Kind),
+			Value: ref.Name,
+			Reference: &api.ObjectReference{
+				APIVersion: ref.APIVersion,
+				Kind:       ref.Kind,
+				Name:       ref.Name,
+				Namespace:  object.GetNamespace(),
+			},
+		})
 	}
 
 	props = append(props,

@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"log"
+	"reflect"
 	"time"
 
 	"github.com/getseabird/seabird/api"
@@ -27,28 +28,19 @@ func ObjectWatcher[T client.Object](ctx context.Context, cluster *api.Cluster, g
 	defer update()
 
 	var obj runtime.Object
-	switch gvr.String() {
-	case corev1.SchemeGroupVersion.WithResource("namespaces").String():
-		obj = &corev1.Namespace{}
-	case corev1.SchemeGroupVersion.WithResource("pods").String():
-		obj = &corev1.Pod{}
-	case corev1.SchemeGroupVersion.WithResource("configmaps").String():
-		obj = &corev1.ConfigMap{}
-	case corev1.SchemeGroupVersion.WithResource("secrets").String():
-		obj = &corev1.Secret{}
-	case corev1.SchemeGroupVersion.WithResource("services").String():
-		obj = &corev1.Service{}
-	case corev1.SchemeGroupVersion.WithResource("persistentvolumes").String():
-		obj = &corev1.PersistentVolume{}
-	case corev1.SchemeGroupVersion.WithResource("persistentvolumeclaims").String():
-		obj = &corev1.PersistentVolumeClaim{}
-	case corev1.SchemeGroupVersion.WithResource("nodes").String():
-		obj = &corev1.Node{}
-	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
-		obj = &appsv1.Deployment{}
-	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
-		obj = &appsv1.StatefulSet{}
-	default:
+	for _, r := range cluster.Resources {
+		if GVREquals(ResourceGVR(&r), gvr) {
+			for key, t := range cluster.Scheme.AllKnownTypes() {
+				if key.Group == r.Group && key.Version == r.Version && key.Kind == r.Kind {
+					obj = reflect.New(t).Interface().(runtime.Object)
+					break
+				}
+			}
+			break
+		}
+	}
+
+	if obj == nil {
 		go func() {
 			w, err := cluster.DynamicClient.Resource(gvr).Watch(ctx, metav1.ListOptions{})
 			if err != nil {
