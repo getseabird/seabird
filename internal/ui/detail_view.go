@@ -23,7 +23,6 @@ import (
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
-	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -295,12 +294,7 @@ func (d *DetailView) setSourceColorScheme() {
 }
 
 func (d *DetailView) showSaveDialog(object client.Object, current, next string) *adw.MessageDialog {
-	json, err := util.YamlToJson([]byte(next))
-	if err != nil {
-		return widget.ShowErrorDialog(d.ctx, "Error decoding object", err)
-	}
-	var obj unstructured.Unstructured
-	_, _, err = unstructured.UnstructuredJSONScheme.Decode(json, nil, &obj)
+	obj, err := util.YamlToUnstructured([]byte(next))
 	if err != nil {
 		return widget.ShowErrorDialog(d.ctx, "Error decoding object", err)
 	}

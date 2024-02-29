@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 
 	"gopkg.in/yaml.v2"
+	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 )
 
 func JsonToYaml(data []byte) ([]byte, error) {
@@ -50,4 +51,17 @@ func convertStringKeys(i any) any {
 		}
 	}
 	return i
+}
+
+func YamlToUnstructured(data []byte) (*unstructured.Unstructured, error) {
+	json, err := YamlToJson(data)
+	if err != nil {
+		return nil, err
+	}
+	var obj unstructured.Unstructured
+	_, _, err = unstructured.UnstructuredJSONScheme.Decode(json, nil, &obj)
+	if err != nil {
+		return nil, err
+	}
+	return &obj, nil
 }

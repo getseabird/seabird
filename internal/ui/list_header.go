@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/util"
+	"github.com/getseabird/seabird/widget"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
@@ -28,12 +29,24 @@ func NewListHeader(ctx context.Context, b *behavior.ListBehavior, breakpoint *ad
 		breakpoint.AddSetter(header, "show-start-title-buttons", true)
 	}
 
-	btn := gtk.NewButton()
-	btn.SetIconName("sidebar-show-symbolic")
-	btn.SetVisible(false)
-	btn.ConnectClicked(showSidebar)
-	header.PackStart(btn)
-	breakpoint.AddSetter(btn, "visible", true)
+	sidebarButton := gtk.NewButton()
+	sidebarButton.SetIconName("sidebar-show-symbolic")
+	sidebarButton.SetVisible(false)
+	sidebarButton.ConnectClicked(showSidebar)
+	header.PackStart(sidebarButton)
+	breakpoint.AddSetter(sidebarButton, "visible", true)
+
+	createButton := gtk.NewButton()
+	createButton.SetIconName("document-new-symbolic")
+	createButton.ConnectClicked(func() {
+		w, err := NewEditorWindow(ctx, b.SelectedResource.Value(), nil)
+		if err != nil {
+			widget.ShowErrorDialog(ctx, "Error loading editor", err)
+			return
+		}
+		w.Show()
+	})
+	header.PackEnd(createButton)
 
 	box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 	box.AddCSSClass("linked")

@@ -29,6 +29,8 @@ type ClusterWindow struct {
 func NewClusterWindow(ctx context.Context, app *gtk.Application, behavior *behavior.ClusterBehavior, cancel context.CancelFunc) *ClusterWindow {
 	window := widget.NewUniversalApplicationWindow(app)
 	ctx = ctxt.With[*gtk.Window](ctx, &window.Window)
+	ctx = ctxt.With[*api.Cluster](ctx, behavior.Cluster)
+
 	w := ClusterWindow{
 		ctx:                        ctx,
 		UniversalApplicationWindow: window,
