@@ -329,7 +329,7 @@ func (d *DetailView) showSaveDialog(object client.Object, current, next string) 
 
 	dialog.ConnectResponse(func(response string) {
 		if response == "save" {
-			if err := d.behavior.UpdateObject(&obj); err != nil {
+			if err := d.behavior.UpdateObject(obj); err != nil {
 				widget.ShowErrorDialog(d.ctx, "Error updating object", err)
 			}
 		}
