@@ -328,7 +328,13 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 	dialog.AddResponse("cancel", "Cancel")
 	dialog.AddResponse("confirm", "Confirm")
 	dialog.SetResponseAppearance("confirm", adw.ResponseSuggested)
-	box := dialog.Child().(*gtk.WindowHandle).Child().(*gtk.Box).FirstChild().(*gtk.Box)
+	root := dialog.Child().(*gtk.WindowHandle).Child().(*gtk.Box).FirstChild().(*gtk.Box)
+	sw := gtk.NewScrolledWindow()
+	sw.SetMinContentHeight(100)
+	root.Append(sw)
+	box := gtk.NewBox(gtk.OrientationVertical, 1)
+	box.SetVAlign(gtk.AlignCenter)
+	sw.SetChild(box)
 
 	var group *gtk.CheckButton
 	for i, context := range maps.Keys(apiConfig.Contexts) {
