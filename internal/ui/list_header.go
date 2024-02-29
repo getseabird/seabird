@@ -68,6 +68,12 @@ func NewListHeader(ctx context.Context, b *behavior.ListBehavior, breakpoint *ad
 	box.Append(kind)
 
 	entry := gtk.NewSearchEntry()
+	entry.SetObjectProperty("placeholder-text", b.Cluster.ClusterPreferences.Value().Name)
+	placeholder := entry.FirstChild().(*gtk.Image).NextSibling().(*gtk.Text).FirstChild().(*gtk.Label)
+	placeholder.AddCSSClass("heading")
+	entry.SetObjectProperty("placeholder-text", "")
+	breakpoint.AddSetter(entry, "placeholder-text", b.Cluster.ClusterPreferences.Value().Name)
+
 	entry.SetMaxWidthChars(50)
 	box.Append(entry)
 	entry.ConnectChanged(func() {
