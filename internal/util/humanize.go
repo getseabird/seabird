@@ -12,10 +12,10 @@ func HumanizeApproximateDuration(d time.Duration) string {
 		year  = 365 * day
 	)
 	if d >= year {
-		return fmt.Sprintf("%dy", d/year)
+		return fmt.Sprintf("%dY", d/year)
 	}
 	if d >= month {
-		return fmt.Sprintf("%dm", d/month)
+		return fmt.Sprintf("%dM", d/month)
 	}
 	if d >= day {
 		return fmt.Sprintf("%dd", d/day)
