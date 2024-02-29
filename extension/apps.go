@@ -33,17 +33,21 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					deployment := object.(*appsv1.Deployment)
-					for _, cond := range deployment.Status.Conditions {
-						if cond.Type == appsv1.DeploymentAvailable {
-							listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
-						}
+					listitem.SetChild(widget.NewStatusIcon(isReady(object)))
+				},
+				Compare: func(a, b client.Object) int {
+					if isReady(a) == isReady(b) {
+						return 0
 					}
+					if isReady(a) {
+						return 1
+					}
+					return -1
 				},
 			},
 			api.Column{
 				Name:     "Available",
-				Priority: 70,
+				Priority: 60,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
 					deployment := object.(*appsv1.Deployment)
 					label := gtk.NewLabel(fmt.Sprintf("%d/%d", deployment.Status.AvailableReplicas, deployment.Status.Replicas))
@@ -58,13 +62,21 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					statefulset := object.(*appsv1.StatefulSet)
-					listitem.SetChild(widget.NewStatusIcon(statefulset.Status.ReadyReplicas == statefulset.Status.Replicas))
+					listitem.SetChild(widget.NewStatusIcon(isReady(object)))
+				},
+				Compare: func(a, b client.Object) int {
+					if isReady(a) == isReady(b) {
+						return 0
+					}
+					if isReady(a) {
+						return 1
+					}
+					return -1
 				},
 			},
 			api.Column{
 				Name:     "Available",
-				Priority: 70,
+				Priority: 60,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
 					statefulSet := object.(*appsv1.StatefulSet)
 					label := gtk.NewLabel(fmt.Sprintf("%d/%d", statefulSet.Status.AvailableReplicas, statefulSet.Status.Replicas))

@@ -12,6 +12,7 @@ import (
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
+	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -39,12 +40,16 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					pod := object.(*corev1.Pod)
-					for _, cond := range pod.Status.Conditions {
-						if cond.Type == corev1.ContainersReady {
-							listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"))
-						}
+					listitem.SetChild(widget.NewStatusIcon(isReady(object)))
+				},
+				Compare: func(a, b client.Object) int {
+					if isReady(a) == isReady(b) {
+						return 0
 					}
+					if isReady(a) {
+						return 1
+					}
+					return -1
 				},
 			},
 		)
@@ -122,12 +127,16 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					node := object.(*corev1.Node)
-					for _, cond := range node.Status.Conditions {
-						if cond.Type == corev1.NodeReady {
-							listitem.SetChild(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
-						}
+					listitem.SetChild(widget.NewStatusIcon(isReady(object)))
+				},
+				Compare: func(a, b client.Object) int {
+					if isReady(a) == isReady(b) {
+						return 0
 					}
+					if isReady(a) {
+						return 1
+					}
+					return -1
 				},
 			},
 			api.Column{
@@ -429,4 +438,30 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 	}
 
 	return props
+}
+
+func isReady(object client.Object) bool {
+	switch object := object.(type) {
+	case *corev1.Pod:
+		for _, cond := range object.Status.Conditions {
+			if cond.Type == corev1.ContainersReady {
+				return cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"
+			}
+		}
+	case *corev1.Node:
+		for _, cond := range object.Status.Conditions {
+			if cond.Type == corev1.NodeReady {
+				return cond.Status == corev1.ConditionTrue
+			}
+		}
+	case *appsv1.Deployment:
+		for _, cond := range object.Status.Conditions {
+			if cond.Type == appsv1.DeploymentAvailable {
+				return cond.Status == corev1.ConditionTrue
+			}
+		}
+	case *appsv1.StatefulSet:
+		return object.Status.ReadyReplicas == object.Status.Replicas
+	}
+	return false
 }
