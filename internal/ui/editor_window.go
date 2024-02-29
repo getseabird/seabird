@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"fmt"
-	"log"
 	"slices"
 	"strings"
 
@@ -268,8 +267,6 @@ func loadSchema(ctx context.Context, resource *metav1.APIResource) (*openapi3.T,
 	if err != nil {
 		return nil, err
 	}
-
-	log.Println(string(bytes))
 
 	return openapi3.NewLoader().LoadFromData(bytes)
 }
