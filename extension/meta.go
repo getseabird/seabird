@@ -3,6 +3,7 @@ package extension
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -33,6 +34,9 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 			label.SetHAlign(gtk.AlignStart)
 			listitem.SetChild(label)
 		},
+		Compare: func(a, b client.Object) int {
+			return strings.Compare(a.GetName(), b.GetName())
+		},
 	})
 
 	if resource.Namespaced {
@@ -43,6 +47,9 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				label := gtk.NewLabel(object.GetNamespace())
 				label.SetHAlign(gtk.AlignStart)
 				listitem.SetChild(label)
+			},
+			Compare: func(a, b client.Object) int {
+				return strings.Compare(a.GetNamespace(), b.GetNamespace())
 			},
 		})
 	}
@@ -55,6 +62,9 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 			label := gtk.NewLabel(util.HumanizeApproximateDuration(duration))
 			label.SetHAlign(gtk.AlignStart)
 			listitem.SetChild(label)
+		},
+		Compare: func(a, b client.Object) int {
+			return a.GetCreationTimestamp().Compare(b.GetCreationTimestamp().Time)
 		},
 	})
 

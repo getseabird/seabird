@@ -5,6 +5,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
@@ -13,8 +14,6 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
-
-const GtkInvalidListPosition uint = 4294967295
 
 type ListView struct {
 	*gtk.Box
@@ -37,8 +36,9 @@ func NewListView(ctx context.Context, behavior *behavior.ListBehavior, header gt
 	l.AddCSSClass("view")
 	l.Append(header)
 
+	l.columnView = gtk.NewColumnView(nil)
 	l.selection = l.createModel()
-	l.columnView = gtk.NewColumnView(l.selection)
+	l.columnView.SetModel(l.selection)
 	l.columnView.SetMarginStart(16)
 	l.columnView.SetMarginEnd(16)
 	l.columnView.SetMarginBottom(16)
@@ -61,6 +61,9 @@ func NewListView(ctx context.Context, behavior *behavior.ListBehavior, header gt
 func (l *ListView) onObjectsChange(objects []client.Object) {
 	l.objects = objects
 
+	list := l.getModel()
+	list.Splice(0, list.NItems(), nil)
+
 	if l.columnType == nil || !util.ResourceEquals(l.columnType, l.behavior.SelectedResource.Value()) {
 		l.columnType = l.behavior.SelectedResource.Value()
 
@@ -74,9 +77,6 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 		for _, column := range l.columns {
 			l.columnView.AppendColumn(column)
 		}
-	} else {
-		list := l.selection.Model().Cast().(*gtk.StringList)
-		list.Splice(0, list.NItems(), nil)
 	}
 
 	filter := l.behavior.SearchFilter.Value()
@@ -84,14 +84,14 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 		if !filter.Test(o) {
 			continue
 		}
-		l.selection.Model().Cast().(*gtk.StringList).Append(strconv.Itoa(i))
+		l.getModel().Append(strconv.Itoa(i))
 		if o.GetUID() == l.selected {
 			l.selection.SetSelected(uint(i))
 		}
 	}
 
 	if len(l.objects) > 0 {
-		if selected := l.selection.Selected(); selected == GtkInvalidListPosition {
+		if selected := l.selection.Selected(); selected == gtk.InvalidListPosition {
 			l.selection.SetSelected(0)
 			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[0])
 		} else {
@@ -104,9 +104,9 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 }
 
 func (l *ListView) onSearchFilterChange(filter behavior.SearchFilter) {
-	list := l.selection.Model().Cast().(*gtk.StringList)
+	list := l.getModel()
 	list.Splice(0, list.NItems(), nil)
-	l.selection.SetSelected(GtkInvalidListPosition)
+	l.selection.SetSelected(gtk.InvalidListPosition)
 	for i, object := range l.behavior.Objects.Value() {
 		if filter.Test(object) {
 			list.Append(strconv.Itoa(i))
@@ -115,10 +115,10 @@ func (l *ListView) onSearchFilterChange(filter behavior.SearchFilter) {
 			l.selection.SetSelected(uint(i))
 		}
 	}
-	if list.NItems() > 0 && l.selection.Selected() == GtkInvalidListPosition {
+	if list.NItems() > 0 && l.selection.Selected() == gtk.InvalidListPosition {
 		l.selection.SetSelected(0)
 	}
-	if l.selection.Selected() != GtkInvalidListPosition {
+	if l.selection.Selected() != gtk.InvalidListPosition {
 		// SelectionChanged isn't triggered when calling SetSelected
 		l.selection.SelectionChanged(uint(l.selection.Selected()), 1)
 	} else {
@@ -146,6 +146,17 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 		})
 		column := gtk.NewColumnViewColumn(col.Name, &factory.ListItemFactory)
 		column.SetExpand(true)
+
+		if col.Compare != nil {
+			column.SetSorter(&gtk.NewCustomSorter(
+				glib.NewObjectComparer[*gtk.StringObject](func(a, b *gtk.StringObject) int {
+					ia, _ := strconv.Atoi(a.String())
+					ib, _ := strconv.Atoi(b.String())
+					return col.Compare(l.objects[ia], l.objects[ib])
+				}),
+			).Sorter)
+		}
+
 		gtkColumns = append(gtkColumns, column)
 	}
 
@@ -153,10 +164,11 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 }
 
 func (l *ListView) createModel() *gtk.SingleSelection {
-	selection := gtk.NewSingleSelection(gtk.NewStringList([]string{}))
+	model := gtk.NewSortListModel(gtk.NewStringList([]string{}), l.columnView.Sorter())
+	selection := gtk.NewSingleSelection(model)
 	selection.ConnectSelectionChanged(func(_, _ uint) {
 		selected := l.selection.Selected()
-		if selected == GtkInvalidListPosition {
+		if selected == gtk.InvalidListPosition {
 			return
 		}
 		i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
@@ -164,5 +176,10 @@ func (l *ListView) createModel() *gtk.SingleSelection {
 		l.selected = obj.GetUID()
 		l.behavior.RootDetailBehavior.SelectedObject.Update(obj)
 	})
+
 	return selection
+}
+
+func (l *ListView) getModel() *gtk.StringList {
+	return l.selection.Model().Cast().(*gtk.SortListModel).Model().Cast().(*gtk.StringList)
 }

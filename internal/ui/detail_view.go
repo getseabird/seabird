@@ -172,7 +172,6 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 				row.AddSuffix(copy)
 			} else {
 				row.SetActivatable(true)
-				row.SetSubtitleSelectable(false)
 				row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 				row.ConnectActivated(func() {
 					obj, err := prop.Reference.GetObject(d.ctx, d.behavior.Cluster)

@@ -2,6 +2,8 @@ module github.com/getseabird/seabird
 
 go 1.22.0
 
+replace github.com/diamondburned/gotk4/pkg => github.com/jgillich/gotk4/pkg v0.0.0-20240229122553-ce93f6c9ba91
+
 require (
 	github.com/NdoleStudio/lemonsqueezy-go v1.1.0
 	github.com/adrg/strutil v0.3.1

@@ -9,4 +9,5 @@ type Column struct {
 	Name     string
 	Priority int8
 	Bind     func(listitem *gtk.ListItem, object client.Object)
+	Compare  func(a, b client.Object) int
 }

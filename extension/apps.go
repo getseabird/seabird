@@ -11,7 +11,6 @@ import (
 	"github.com/getseabird/seabird/widget"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
-	v1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -83,7 +82,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object,
 	switch object := object.(type) {
 	case *appsv1.Deployment:
 		prop := &api.GroupProperty{Name: "Pods"}
-		var pods v1.PodList
+		var pods corev1.PodList
 		e.List(ctx, &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
 		// TODO should we also filter pods by owner? takes one more api call to fetch replicasets
 		for i, pod := range pods.Items {
@@ -99,7 +98,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object,
 		props = append(props, prop)
 	case *appsv1.StatefulSet:
 		prop := &api.GroupProperty{Name: "Pods"}
-		var pods v1.PodList
+		var pods corev1.PodList
 		e.List(ctx, &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
 		for i, pod := range pods.Items {
 			var ok bool
@@ -126,7 +125,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object,
 	return props
 }
 
-func podWidget(ctx context.Context, pod v1.Pod, w gtk.Widgetter, nv *adw.NavigationView) {
+func podWidget(ctx context.Context, pod corev1.Pod, w gtk.Widgetter, nv *adw.NavigationView) {
 	switch row := w.(type) {
 	case *adw.ActionRow:
 		for _, cond := range pod.Status.Conditions {
