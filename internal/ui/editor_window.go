@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -40,10 +41,15 @@ func NewEditorWindow(ctx context.Context, resource *metav1.APIResource, object c
 		rdns = "io.k8s.api.core"
 	}
 
+	ref := fmt.Sprintf("#/components/schemas/%s.%s.%s", rdns, resource.Version, resource.Kind)
+	if resolveRef(schema, ref) == nil {
+		return nil, errors.New("component schema not found")
+	}
+
 	w := EditorWindow{
 		UniversalWindow: widget.NewUniversalWindow(),
 		resource:        resource,
-		ref:             fmt.Sprintf("#/components/schemas/%s.%s.%s", rdns, resource.Version, resource.Kind),
+		ref:             ref,
 		schema:          schema,
 	}
 	w.SetTransientFor(ctxt.MustFrom[*gtk.Window](ctx))
