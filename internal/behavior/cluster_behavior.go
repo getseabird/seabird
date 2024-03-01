@@ -41,7 +41,14 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 		SearchFilter:     observer.NewProperty(SearchFilter{}),
 	}
 
-	util.ObjectWatcher(ctx, clusterApi, corev1.SchemeGroupVersion.WithResource("namespaces"), cluster.Namespaces)
+	var ns *metav1.APIResource
+	for _, r := range clusterApi.Resources {
+		if r.Group == corev1.SchemeGroupVersion.Group && r.Version == corev1.SchemeGroupVersion.Version && r.Name == "namespaces" {
+			ns = &r
+			break
+		}
+	}
+	util.ObjectWatcher(ctx, clusterApi, ns, cluster.Namespaces)
 
 	for _, new := range extension.Extensions {
 		cluster.Extensions = append(cluster.Extensions, new(clusterApi))

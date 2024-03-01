@@ -3,7 +3,7 @@ package util
 import (
 	"context"
 	"log"
-	"reflect"
+	"slices"
 	"time"
 
 	"github.com/getseabird/seabird/api"
@@ -11,48 +11,63 @@ import (
 	"github.com/zmwangx/debounce"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apiextensions-apiserver/pkg/apis/apiextensions"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/watch"
 	"k8s.io/client-go/tools/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func ObjectWatcher[T client.Object](ctx context.Context, cluster *api.Cluster, gvr schema.GroupVersionResource, prop observer.Property[[]T]) {
+func ObjectWatcher[T client.Object](ctx context.Context, cluster *api.Cluster, resource *metav1.APIResource, prop observer.Property[[]T]) {
 	objects := []T{}
+
+	if !slices.Contains(resource.Verbs, "watch") {
+		go func() {
+			for {
+				select {
+				case <-ctx.Done():
+					return
+				default:
+					list, err := cluster.DynamicClient.Resource(ResourceGVR(resource)).List(ctx, metav1.ListOptions{})
+					if err != nil {
+						log.Printf("list failed: %s", err.Error())
+						continue
+					}
+					for _, i := range list.Items {
+						objects = append(objects, client.Object(&i).(T))
+					}
+					prop.Update(objects)
+					time.Sleep(time.Minute)
+				}
+			}
+		}()
+		return
+	}
+
 	update, _ := debounce.Debounce(func() {
 		prop.Update(objects)
 	}, 100*time.Millisecond, debounce.WithMaxWait(time.Second))
 	defer update()
 
-	var obj runtime.Object
-	for _, r := range cluster.Resources {
-		if GVREquals(ResourceGVR(&r), gvr) {
-			for key, t := range cluster.Scheme.AllKnownTypes() {
-				if key.Group == r.Group && key.Version == r.Version && key.Kind == r.Kind {
-					obj = reflect.New(t).Interface().(runtime.Object)
-					break
-				}
-			}
-			break
-		}
+	obj, _ := cluster.Scheme.New(ResourceGVK(resource))
+
+	// TODO there's probably a better way? create rest client from scheme?
+	var getter cache.Getter
+	switch ResourceGVR(resource).GroupVersion().String() {
+	case corev1.SchemeGroupVersion.String():
+		getter = cluster.CoreV1().RESTClient()
+	case appsv1.SchemeGroupVersion.String():
+		getter = cluster.AppsV1().RESTClient()
+	case apiextensions.SchemeGroupVersion.String():
+		getter = cluster.ExtensionsV1beta1().RESTClient()
 	}
 
-	if obj == nil {
+	if obj == nil || getter == nil {
 		go func() {
-			w, err := cluster.DynamicClient.Resource(gvr).Watch(ctx, metav1.ListOptions{})
+			w, err := cluster.DynamicClient.Resource(ResourceGVR(resource)).Watch(ctx, metav1.ListOptions{})
 			if err != nil {
 				log.Printf("watch failed: %s", err.Error())
-				list, err := cluster.DynamicClient.Resource(gvr).List(ctx, metav1.ListOptions{})
-				if err != nil {
-					log.Printf("list failed: %s", err.Error())
-					return
-				}
-				for _, i := range list.Items {
-					objects = append(objects, client.Object(&i).(T))
-				}
 				return
 			}
 			for {
@@ -91,43 +106,34 @@ func ObjectWatcher[T client.Object](ctx context.Context, cluster *api.Cluster, g
 		return
 	}
 
-	var getter cache.Getter
-	switch (metav1.GroupVersion{Group: gvr.Group, Version: gvr.Version}).String() {
-	case corev1.SchemeGroupVersion.String():
-		getter = cluster.CoreV1().RESTClient()
-	case appsv1.SchemeGroupVersion.String():
-		getter = cluster.AppsV1().RESTClient()
-	}
-
-	watchlist := cache.NewListWatchFromClient(getter, gvr.Resource, corev1.NamespaceAll,
+	watchlist := cache.NewListWatchFromClient(getter, resource.Name, corev1.NamespaceAll,
 		fields.Everything())
-	_, controller := cache.NewInformer(watchlist, obj, 0,
-		cache.ResourceEventHandlerFuncs{
-			AddFunc: func(obj interface{}) {
-				objects = append(objects, obj.(T))
-				update()
-			},
-			DeleteFunc: func(o interface{}) {
-				obj := o.(client.Object)
-				for i, o := range objects {
-					if o.GetUID() == obj.GetUID() {
-						objects = append(objects[:i], objects[i+1:]...)
-						break
-					}
-				}
-				update()
-			},
-			UpdateFunc: func(oldObj, newObj interface{}) {
-				obj := newObj.(T)
-				for i, o := range objects {
-					if o.GetUID() == obj.GetUID() {
-						objects[i] = obj
-						break
-					}
-				}
-				update()
-			},
+	informer := cache.NewSharedInformer(watchlist, obj, 0)
+	informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			objects = append(objects, obj.(T))
+			update()
 		},
-	)
-	go controller.Run(ctx.Done())
+		DeleteFunc: func(o interface{}) {
+			obj := o.(client.Object)
+			for i, o := range objects {
+				if o.GetUID() == obj.GetUID() {
+					objects = append(objects[:i], objects[i+1:]...)
+					break
+				}
+			}
+			update()
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			obj := newObj.(T)
+			for i, o := range objects {
+				if o.GetUID() == obj.GetUID() {
+					objects[i] = obj
+					break
+				}
+			}
+			update()
+		},
+	})
+	go informer.Run(ctx.Done())
 }

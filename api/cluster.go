@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"slices"
 	"sort"
 
 	"github.com/imkira/go-observer/v2"
@@ -47,11 +48,6 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 		ExecProvider:    clusterPrefs.Value().Exec,
 	}
 
-	discoveryClient, err := discovery.NewDiscoveryClientForConfig(config)
-	if err != nil {
-		return nil, err
-	}
-
 	scheme := runtime.NewScheme()
 	corev1.AddToScheme(scheme)
 	apiextensionsv1.AddToScheme(scheme)
@@ -78,14 +74,14 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 		return nil, err
 	}
 
-	res, err := restmapper.GetAPIGroupResources(discoveryClient)
+	res, err := restmapper.GetAPIGroupResources(clientset.Discovery())
 	if err != nil {
 		return nil, err
 	}
 	mapper := restmapper.NewDiscoveryRESTMapper(res)
 
 	var resources []metav1.APIResource
-	preferredResources, err := discoveryClient.ServerPreferredResources()
+	preferredResources, err := clientset.Discovery().ServerPreferredResources()
 	if err != nil {
 		var groupDiscoveryFailed *discovery.ErrGroupDiscoveryFailed
 		if errors.As(err, &groupDiscoveryFailed) {
@@ -109,6 +105,11 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 			if res.Version == "" {
 				res.Version = gv.Version
 			}
+
+			if !slices.Contains(res.Verbs, "get") || !slices.Contains(res.Verbs, "list") {
+				continue
+			}
+
 			resources = append(resources, res)
 		}
 	}

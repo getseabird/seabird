@@ -34,5 +34,5 @@ func (b *ListBehavior) onSelectedResourceChange(resource *metav1.APIResource) {
 	}
 	var ctx context.Context
 	ctx, b.watchCancel = context.WithCancel(b.ctx)
-	util.ObjectWatcher(ctx, b.Cluster, util.ResourceGVR(resource), b.Objects)
+	util.ObjectWatcher(ctx, b.Cluster, resource, b.Objects)
 }

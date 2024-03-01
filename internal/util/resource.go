@@ -9,6 +9,10 @@ func ResourceGVR(resource *v1.APIResource) schema.GroupVersionResource {
 	return schema.GroupVersionResource{Group: resource.Group, Version: resource.Version, Resource: resource.Name}
 }
 
+func ResourceGVK(resource *v1.APIResource) schema.GroupVersionKind {
+	return schema.GroupVersionKind{Group: resource.Group, Version: resource.Version, Kind: resource.Kind}
+}
+
 func ResourceEquals(r1, r2 *v1.APIResource) bool {
 	if r1 == nil || r2 == nil {
 		return false
