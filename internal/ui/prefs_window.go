@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -87,7 +86,7 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 		})
 		row.SetTitle(cluster.Value().Name)
 		if kubeconfig := cluster.Value().Kubeconfig; kubeconfig != nil {
-			label := gtk.NewLabel(fmt.Sprintf("%v:%v", kubeconfig.Path, kubeconfig.Context))
+			label := gtk.NewLabel(kubeconfig.Path)
 			label.AddCSSClass("dim-label")
 			label.SetHAlign(gtk.AlignStart)
 			row.AddSuffix(label)

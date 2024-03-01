@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"errors"
-	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -115,7 +114,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 			row.SetActivatable(true)
 
 			if kubeconfig := c.Value().Kubeconfig; kubeconfig != nil {
-				label := gtk.NewLabel(fmt.Sprintf("%v:%v", kubeconfig.Path, kubeconfig.Context))
+				label := gtk.NewLabel(kubeconfig.Path)
 				label.AddCSSClass("dim-label")
 				label.SetHAlign(gtk.AlignStart)
 				row.AddSuffix(label)

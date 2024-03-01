@@ -266,6 +266,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 
 	load := adw.NewActionRow()
 	load.SetActivatable(true)
+	load.SetSensitive(p.prefs.Value().Kubeconfig == nil)
 	load.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 	load.SetTitle("Load kubeconfig")
 
@@ -283,6 +284,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 	if util.Index(p.behavior.Preferences.Value().Clusters, p.prefs) >= 0 {
 		delete := adw.NewActionRow()
 		delete.SetActivatable(true)
+		delete.SetSensitive(p.prefs.Value().Kubeconfig == nil)
 		delete.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 		delete.SetTitle("Delete")
 		delete.AddCSSClass("error")
