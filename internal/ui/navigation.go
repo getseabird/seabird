@@ -33,6 +33,7 @@ type Navigation struct {
 func NewNavigation(ctx context.Context, b *behavior.ClusterBehavior) *Navigation {
 	n := &Navigation{ToolbarView: adw.NewToolbarView(), behavior: b}
 	n.SetVExpand(true)
+	n.AddCSSClass("background")
 
 	header := adw.NewHeaderBar()
 	title := gtk.NewLabel(b.ClusterPreferences.Value().Name)
