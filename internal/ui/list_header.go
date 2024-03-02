@@ -33,11 +33,13 @@ func NewListHeader(ctx context.Context, b *behavior.ListBehavior, breakpoint *ad
 	sidebarButton.SetIconName("sidebar-show-symbolic")
 	sidebarButton.SetVisible(false)
 	sidebarButton.ConnectClicked(showSidebar)
+	sidebarButton.SetTooltipText("Show Sidebar")
 	header.PackStart(sidebarButton)
 	breakpoint.AddSetter(sidebarButton, "visible", true)
 
 	createButton := gtk.NewButton()
 	createButton.SetIconName("document-new-symbolic")
+	createButton.SetTooltipText("New Resource")
 	createButton.ConnectClicked(func() {
 		w, err := NewEditorWindow(ctx, b.SelectedResource.Value(), nil)
 		if err != nil {
@@ -87,10 +89,10 @@ func NewListHeader(ctx context.Context, b *behavior.ListBehavior, breakpoint *ad
 		}
 	})
 
-	button := gtk.NewMenuButton()
-	button.SetIconName("funnel-symbolic")
-	box.Append(button)
-
+	filterButton := gtk.NewMenuButton()
+	filterButton.SetIconName("funnel-symbolic")
+	filterButton.SetTooltipText("Filter")
+	box.Append(filterButton)
 	namespace := gio.NewMenu()
 	onChange(ctx, b.Namespaces, func(ns []*corev1.Namespace) {
 		namespace.RemoveAll()
@@ -101,7 +103,7 @@ func NewListHeader(ctx context.Context, b *behavior.ListBehavior, breakpoint *ad
 	model := gio.NewMenu()
 	model.AppendSection("Namespace", namespace)
 	popover := gtk.NewPopoverMenuFromModel(model)
-	button.SetPopover(popover)
+	filterButton.SetPopover(popover)
 
 	entry.ConnectSearchChanged(func() {
 		b.SearchFilter.Update(behavior.NewSearchFilter(entry.Text()))
