@@ -22,10 +22,10 @@ type LogPage struct {
 
 func NewLogPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, container string) *LogPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
-	box.AddCSSClass("view")
 	p := LogPage{NavigationPage: adw.NewNavigationPage(box, container)}
 
 	header := adw.NewHeaderBar()
+	header.SetShowStartTitleButtons(false)
 	header.SetShowEndTitleButtons(runtime.GOOS != "windows")
 	header.AddCSSClass("flat")
 	box.Append(header)

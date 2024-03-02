@@ -39,7 +39,7 @@ type DetailView struct {
 
 func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *DetailView {
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
-	content.AddCSSClass("view")
+	content.AddCSSClass("background")
 	d := DetailView{
 		NavigationPage: adw.NewNavigationPage(content, "Object"),
 		prefPage:       adw.NewPreferencesPage(),

@@ -60,7 +60,6 @@ func NewEditorWindow(ctx context.Context, resource *metav1.APIResource, object c
 	ctx = ctxt.With[*gtk.Window](ctx, w.Window)
 
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
-	content.AddCSSClass("view")
 
 	toast := adw.NewToastOverlay()
 	toast.SetChild(content)

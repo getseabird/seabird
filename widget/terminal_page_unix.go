@@ -28,7 +28,6 @@ type TerminalPage struct {
 
 func NewTerminalPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, container string) (w *TerminalPage) {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
-	box.AddCSSClass("view")
 	nav := adw.NewNavigationPage(box, container)
 	w = &TerminalPage{NavigationPage: nav}
 
@@ -37,6 +36,7 @@ func NewTerminalPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod,
 
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
+	header.SetShowStartTitleButtons(false)
 	box.Append(header)
 
 	terminal := vte.NewTerminal()
