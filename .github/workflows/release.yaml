@@ -164,7 +164,7 @@ jobs:
           go-version: stable
       - name: Install dependencies
         run: |
-          brew install --overwrite gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme create-dmg dylibbundler vte3
+          brew install --overwrite python gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme create-dmg dylibbundler vte3
       - name: Build
         run: |
           go run github.com/goreleaser/goreleaser@latest build -f build/darwin/.goreleaser.yaml --single-target --snapshot
