@@ -2,6 +2,7 @@ package ui
 
 import (
 	"context"
+	"log"
 	"sort"
 	"strconv"
 
@@ -139,9 +140,22 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 	var gtkColumns []*gtk.ColumnViewColumn
 	for _, col := range columns {
 		factory := gtk.NewSignalListItemFactory()
+		gvk := util.ResourceGVK(l.behavior.SelectedResource.Value()).String()
 		factory.ConnectBind(func(listitem *gtk.ListItem) {
 			idx, _ := strconv.Atoi(listitem.Item().Cast().(*gtk.StringObject).String())
 			object := l.objects[idx]
+
+			// Very fast resource switches (e.g. holding tab in the ui) can cause panics
+			// This is a safeguard to make sure we don't send the wrong type
+			// We should use the object as the model instead of the index once gotk supports subtyping
+			gvks, _, _ := l.behavior.Cluster.Scheme.ObjectKinds(object)
+			if len(gvks) == 1 {
+				if gvks[0].String() != gvk {
+					log.Printf("list bind error: expected '%s', got '%s'", gvk, gvks[0].String())
+					return
+				}
+			}
+
 			col.Bind(listitem, object)
 		})
 		column := gtk.NewColumnViewColumn(col.Name, &factory.ListItemFactory)
