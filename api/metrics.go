@@ -20,13 +20,13 @@ type Metrics struct {
 }
 
 func newMetrics(ctx context.Context, client client.Client, resources []metav1.APIResource) (*Metrics, error) {
-	if !metricsAPIAvailable(resources) {
-		return nil, errors.New("no compatible metrics API detected")
-	}
-
 	m := Metrics{
 		podMetrics:  observer.NewProperty([]metricsv1beta1.PodMetrics{}),
 		nodeMetrics: observer.NewProperty([]metricsv1beta1.NodeMetrics{}),
+	}
+
+	if !metricsAPIAvailable(resources) {
+		return &m, errors.New("no compatible metrics API detected")
 	}
 
 	go func() {

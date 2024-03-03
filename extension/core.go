@@ -52,53 +52,49 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					return -1
 				},
 			},
-		)
-
-		if e.Metrics != nil {
-			columns = append(columns,
-				api.Column{
-					Name:     "Memory",
-					Priority: 50,
-					Bind: func(listitem *gtk.ListItem, object client.Object) {
-						pod := object.(*corev1.Pod)
-						req := resource.NewQuantity(0, resource.DecimalSI)
-						for _, container := range pod.Spec.Containers {
-							if mem := container.Resources.Requests.Memory(); mem != nil {
-								req.Add(*mem)
-							}
+			api.Column{
+				Name:     "Memory",
+				Priority: 50,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pod := object.(*corev1.Pod)
+					req := resource.NewQuantity(0, resource.DecimalSI)
+					for _, container := range pod.Spec.Containers {
+						if mem := container.Resources.Requests.Memory(); mem != nil {
+							req.Add(*mem)
 						}
-						use, _ := e.Metrics.PodSum(types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace})
-						req.RoundUp(resource.Mega)
-						if use != nil {
-							use.RoundUp(resource.Mega)
-						}
-						bar := widget.NewResourceBar(use, req, "")
-						bar.SetHAlign(gtk.AlignStart)
-						listitem.SetChild(bar)
-					},
+					}
+					use, _ := e.Metrics.PodSum(types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace})
+					req.RoundUp(resource.Mega)
+					if use != nil {
+						use.RoundUp(resource.Mega)
+					}
+					bar := widget.NewResourceBar(use, req, "")
+					bar.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(bar)
 				},
-				api.Column{
-					Name:     "CPU",
-					Priority: 40,
-					Bind: func(listitem *gtk.ListItem, object client.Object) {
-						pod := object.(*corev1.Pod)
-						req := resource.NewQuantity(0, resource.DecimalSI)
-						for _, container := range pod.Spec.Containers {
-							if cpu := container.Resources.Requests.Cpu(); cpu != nil {
-								req.Add(*cpu)
-							}
+			},
+			api.Column{
+				Name:     "CPU",
+				Priority: 40,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pod := object.(*corev1.Pod)
+					req := resource.NewQuantity(0, resource.DecimalSI)
+					for _, container := range pod.Spec.Containers {
+						if cpu := container.Resources.Requests.Cpu(); cpu != nil {
+							req.Add(*cpu)
 						}
-						_, use := e.Metrics.PodSum(types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace})
-						req.RoundUp(resource.Milli)
-						if use != nil {
-							use.RoundUp(resource.Milli)
-						}
-						bar := widget.NewResourceBar(use, req, "")
-						bar.SetHAlign(gtk.AlignStart)
-						listitem.SetChild(bar)
-					},
-				})
-		}
+					}
+					_, use := e.Metrics.PodSum(types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace})
+					req.RoundUp(resource.Milli)
+					if use != nil {
+						use.RoundUp(resource.Milli)
+					}
+					bar := widget.NewResourceBar(use, req, "")
+					bar.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(bar)
+				},
+			},
+		)
 	case corev1.SchemeGroupVersion.WithResource("persistentvolumeclaims").String():
 		columns = append(columns, api.Column{
 			Name:     "Size",
@@ -189,11 +185,6 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 	case *corev1.Pod:
 		var containers []api.Property
 
-		var podMetrics *metricsv1beta1.PodMetrics
-		if e.Metrics != nil {
-			podMetrics = e.Metrics.Pod(types.NamespacedName{Name: object.Name, Namespace: object.Namespace})
-		}
-
 		for i, container := range object.Spec.Containers {
 			var props []api.Property
 			var status corev1.ContainerStatus
@@ -204,6 +195,7 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 				}
 			}
 
+			podMetrics := e.Metrics.Pod(types.NamespacedName{Name: object.Name, Namespace: object.Namespace})
 			var metrics *metricsv1beta1.ContainerMetrics
 			if podMetrics != nil {
 				for _, m := range podMetrics.Containers {
