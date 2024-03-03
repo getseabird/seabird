@@ -61,25 +61,25 @@ type Kubeconfig struct {
 }
 
 func LoadPreferences() (*Preferences, error) {
-	if _, err := os.Stat(prefsPath()); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			prefs := Preferences{basePreferences: &basePreferences{}}
-			prefs.Defaults()
-			return &prefs, nil
-		}
-		return nil, err
-	}
-
-	f, err := os.Open(prefsPath())
-	if err != nil {
-		return nil, err
-	}
 
 	var base basePreferences
-	if err := json.NewDecoder(f).Decode(&base); err != nil {
-		return nil, err
+	if _, err := os.Stat(prefsPath()); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			base := Preferences{basePreferences: &basePreferences{}}
+			base.Defaults()
+		} else {
+			return nil, err
+		}
+	} else {
+		f, err := os.Open(prefsPath())
+		if err != nil {
+			return nil, err
+		}
+		if err := json.NewDecoder(f).Decode(&base); err != nil {
+			return nil, err
+		}
+		base.Defaults()
 	}
-	base.Defaults()
 
 	for i := len(base.Clusters) - 1; i >= 0; i-- {
 		config := base.Clusters[i].Kubeconfig
@@ -114,6 +114,7 @@ func LoadPreferences() (*Preferences, error) {
 				}
 			}
 			prefs := ClusterPreferences{Kubeconfig: &Kubeconfig{Path: path, Context: context}}
+			prefs.Defaults()
 			if err := UpdateClusterPreferences(&prefs, path, context); err == nil {
 				base.Clusters = append(base.Clusters, prefs)
 			}
