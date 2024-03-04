@@ -6,6 +6,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"os/exec"
 	"runtime"
 	"strings"
 
@@ -123,6 +124,23 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 			spinner := widget.NewFallbackSpinner(gtk.NewImageFromIconName("go-next-symbolic"))
 			row.AddSuffix(spinner)
 			row.ConnectActivated(func() {
+				if ex := cluster.Value().Exec; ex != nil {
+					if _, err := exec.LookPath(ex.Command); err != nil {
+						dialog := adw.NewMessageDialog(&w.Window, "Credential plugin not found", err.Error())
+						dialog.AddResponse("cancel", "Cancel")
+						dialog.AddResponse("docs", "Open documentation")
+						dialog.SetResponseAppearance("docs", adw.ResponseSuggested)
+						dialog.ConnectResponse(func(response string) {
+							switch response {
+							case "docs":
+								gtk.ShowURI(&w.Window, "https://getseabird.github.io/docs/credential-plugins/", gdk.CURRENT_TIME)
+							}
+						})
+						dialog.Show()
+						return
+					}
+				}
+
 				spinner.Start()
 				go func() {
 					ctx, cancel := context.WithCancel(context.Background())
