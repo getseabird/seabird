@@ -64,10 +64,7 @@ func LoadPreferences() (*Preferences, error) {
 
 	var base basePreferences
 	if _, err := os.Stat(prefsPath()); err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			base := Preferences{basePreferences: &basePreferences{}}
-			base.Defaults()
-		} else {
+		if !errors.Is(err, os.ErrNotExist) {
 			return nil, err
 		}
 	} else {
@@ -78,8 +75,8 @@ func LoadPreferences() (*Preferences, error) {
 		if err := json.NewDecoder(f).Decode(&base); err != nil {
 			return nil, err
 		}
-		base.Defaults()
 	}
+	base.Defaults()
 
 	for i := len(base.Clusters) - 1; i >= 0; i-- {
 		config := base.Clusters[i].Kubeconfig
