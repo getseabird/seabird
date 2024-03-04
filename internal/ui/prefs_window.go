@@ -100,7 +100,3 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 
 	return page
 }
-
-func (p *PrefsWindow) other() gtk.Widgetter {
-	return gtk.NewLabel("other")
-}

@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"os/exec"
 	"runtime"
 	"strings"
 
@@ -124,27 +123,13 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 			spinner := widget.NewFallbackSpinner(gtk.NewImageFromIconName("go-next-symbolic"))
 			row.AddSuffix(spinner)
 			row.ConnectActivated(func() {
-				if ex := cluster.Value().Exec; ex != nil {
-					if _, err := exec.LookPath(ex.Command); err != nil {
-						dialog := adw.NewMessageDialog(&w.Window, "Credential plugin not found", err.Error())
-						dialog.AddResponse("cancel", "Cancel")
-						dialog.AddResponse("docs", "Open documentation")
-						dialog.SetResponseAppearance("docs", adw.ResponseSuggested)
-						dialog.ConnectResponse(func(response string) {
-							switch response {
-							case "docs":
-								gtk.ShowURI(&w.Window, "https://getseabird.github.io/docs/credential-plugins/", gdk.CURRENT_TIME)
-							}
-						})
-						dialog.Show()
-						return
-					}
+				if showClusterPrefsErrorDialog(w.ctx, cluster.Value()) {
+					return
 				}
 
 				spinner.Start()
 				go func() {
-					ctx, cancel := context.WithCancel(context.Background())
-					behavior, err := w.behavior.WithCluster(ctx, cluster)
+					behavior, err := w.behavior.WithCluster(w.ctx, cluster)
 					glib.IdleAdd(func() {
 						spinner.Stop()
 						if err != nil {
@@ -153,7 +138,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 						}
 						app := w.Application()
 						w.Close()
-						NewClusterWindow(w.ctx, app, behavior, cancel).Show()
+						NewClusterWindow(w.ctx, app, behavior).Show()
 					})
 				}()
 			})
@@ -194,7 +179,7 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 	content.Append(prefPage)
 
 	group := adw.NewPreferencesGroup()
-	group.SetDescription("There is no time limit for testing Seabird. With the purchase of a license, you receive priority support and help fund development.")
+	group.SetDescription("There is no time limit for testing Seabird. With the purchase of a subscription, you receive priority support and help fund development.")
 	prefPage.Add(group)
 
 	action := adw.NewActionRow()

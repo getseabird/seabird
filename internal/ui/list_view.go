@@ -11,28 +11,31 @@ import (
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/util"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"github.com/imkira/go-observer/v2"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ListView struct {
 	*gtk.Box
-	ctx        context.Context
-	behavior   *behavior.ListBehavior
-	selection  *gtk.SingleSelection
-	columnView *gtk.ColumnView
-	columns    []*gtk.ColumnViewColumn
-	columnType *v1.APIResource
-	objects    []client.Object
-	selected   types.UID
+	ctx         context.Context
+	watchCancel context.CancelFunc
+	objects     observer.Property[[]client.Object]
+	behavior    *behavior.ClusterBehavior
+	selection   *gtk.SingleSelection
+	columnView  *gtk.ColumnView
+	columns     []*gtk.ColumnViewColumn
+	columnType  *metav1.APIResource
+	selected    types.UID
 }
 
-func NewListView(ctx context.Context, behavior *behavior.ListBehavior, header gtk.Widgetter) *ListView {
+func NewListView(ctx context.Context, behavior *behavior.ClusterBehavior, header gtk.Widgetter) *ListView {
 	l := ListView{
 		ctx:      ctx,
-		Box:      gtk.NewBox(gtk.OrientationVertical, 0),
 		behavior: behavior,
+		Box:      gtk.NewBox(gtk.OrientationVertical, 0),
+		objects:  observer.NewProperty[[]client.Object](nil),
 	}
 	l.AddCSSClass("view")
 	l.Append(header)
@@ -53,15 +56,23 @@ func NewListView(ctx context.Context, behavior *behavior.ListBehavior, header gt
 	sw.SetChild(vp)
 	l.Append(sw)
 
-	onChange(ctx, l.behavior.Objects, l.onObjectsChange)
-	onChange(ctx, l.behavior.SearchFilter, l.onSearchFilterChange)
+	onChange(ctx, behavior.SelectedResource, l.onSelectedResourceChange)
+	onChange(ctx, l.objects, l.onObjectsChange)
+	onChange(ctx, behavior.SearchFilter, l.onSearchFilterChange)
 
 	return &l
 }
 
-func (l *ListView) onObjectsChange(objects []client.Object) {
-	l.objects = objects
+func (l *ListView) onSelectedResourceChange(resource *metav1.APIResource) {
+	if l.watchCancel != nil {
+		l.watchCancel()
+	}
+	var ctx context.Context
+	ctx, l.watchCancel = context.WithCancel(l.ctx)
+	util.ObjectWatcher(ctx, resource, l.objects)
+}
 
+func (l *ListView) onObjectsChange(objects []client.Object) {
 	list := l.getModel()
 	list.Splice(0, list.NItems(), nil)
 
@@ -91,13 +102,13 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 		}
 	}
 
-	if len(l.objects) > 0 {
+	if len(objects) > 0 {
 		if selected := l.selection.Selected(); selected == gtk.InvalidListPosition {
 			l.selection.SetSelected(0)
-			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[0])
+			l.behavior.RootDetailBehavior.SelectedObject.Update(objects[0])
 		} else {
 			i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
-			l.behavior.RootDetailBehavior.SelectedObject.Update(l.objects[i])
+			l.behavior.RootDetailBehavior.SelectedObject.Update(objects[i])
 		}
 	} else {
 		l.behavior.RootDetailBehavior.SelectedObject.Update(nil)
@@ -108,7 +119,7 @@ func (l *ListView) onSearchFilterChange(filter behavior.SearchFilter) {
 	list := l.getModel()
 	list.Splice(0, list.NItems(), nil)
 	l.selection.SetSelected(gtk.InvalidListPosition)
-	for i, object := range l.behavior.Objects.Value() {
+	for i, object := range l.objects.Value() {
 		if filter.Test(object) {
 			list.Append(strconv.Itoa(i))
 		}
@@ -143,7 +154,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 		gvk := util.ResourceGVK(l.behavior.SelectedResource.Value()).String()
 		factory.ConnectBind(func(listitem *gtk.ListItem) {
 			idx, _ := strconv.Atoi(listitem.Item().Cast().(*gtk.StringObject).String())
-			object := l.objects[idx]
+			object := l.objects.Value()[idx]
 
 			// Very fast resource switches (e.g. holding tab in the ui) can cause panics
 			// This is a safeguard to make sure we don't send the wrong type
@@ -166,7 +177,7 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 				glib.NewObjectComparer[*gtk.StringObject](func(a, b *gtk.StringObject) int {
 					ia, _ := strconv.Atoi(a.String())
 					ib, _ := strconv.Atoi(b.String())
-					return col.Compare(l.objects[ia], l.objects[ib])
+					return col.Compare(l.objects.Value()[ia], l.objects.Value()[ib])
 				}),
 			).Sorter)
 		}
@@ -186,7 +197,7 @@ func (l *ListView) createModel() *gtk.SingleSelection {
 			return
 		}
 		i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
-		obj := l.objects[i]
+		obj := l.objects.Value()[i]
 		l.selected = obj.GetUID()
 		l.behavior.RootDetailBehavior.SelectedObject.Update(obj)
 	})

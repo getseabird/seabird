@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/imkira/go-observer/v2"
 	"github.com/zmwangx/debounce"
 	appsv1 "k8s.io/api/apps/v1"
@@ -19,7 +20,8 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-func ObjectWatcher[T client.Object](ctx context.Context, cluster *api.Cluster, resource *metav1.APIResource, prop observer.Property[[]T]) {
+func ObjectWatcher[T client.Object](ctx context.Context, resource *metav1.APIResource, prop observer.Property[[]T]) {
+	cluster, _ := ctxt.From[*api.Cluster](ctx)
 	objects := []T{}
 
 	if !slices.Contains(resource.Verbs, "watch") {

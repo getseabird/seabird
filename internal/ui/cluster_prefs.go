@@ -232,11 +232,11 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		}
 		cluster.Defaults()
 
-		if err := p.validate(cluster); err != nil {
-			widget.ShowErrorDialog(p.ctx, "Validation failed", err)
+		if showClusterPrefsErrorDialog(p.ctx, cluster) {
 			spinner.Stop()
 			return
 		}
+
 		go func() {
 			_, err := p.behavior.WithCluster(p.ctx, observer.NewProperty(cluster))
 			glib.IdleAdd(func() {
@@ -351,7 +351,8 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 	}
 
 	dialog.ConnectResponse(func(response string) {
-		if response == "confirm" {
+		switch response {
+		case "confirm":
 			var context string
 			button := group
 			for {
@@ -369,14 +370,6 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 			p.prefs.Update(prefs)
 		}
 	})
-}
-
-func (p *ClusterPrefPage) validate(pref api.ClusterPreferences) error {
-	if len(pref.Name) == 0 {
-		return errors.New("name is required")
-	}
-
-	return nil
 }
 
 func (p *ClusterPrefPage) updateValues(prefs api.ClusterPreferences) {

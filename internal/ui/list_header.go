@@ -19,7 +19,7 @@ type ListHeader struct {
 	*adw.HeaderBar
 }
 
-func NewListHeader(ctx context.Context, b *behavior.ListBehavior, breakpoint *adw.Breakpoint, showSidebar func()) *ListHeader {
+func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint *adw.Breakpoint, showSidebar func()) *ListHeader {
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
 	header.SetShowEndTitleButtons(false)

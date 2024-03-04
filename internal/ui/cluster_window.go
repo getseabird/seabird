@@ -26,11 +26,11 @@ type ClusterWindow struct {
 	toastOverlay *adw.ToastOverlay
 }
 
-func NewClusterWindow(ctx context.Context, app *gtk.Application, behavior *behavior.ClusterBehavior, cancel context.CancelFunc) *ClusterWindow {
+func NewClusterWindow(ctx context.Context, app *gtk.Application, behavior *behavior.ClusterBehavior) *ClusterWindow {
 	window := widget.NewUniversalApplicationWindow(app)
 	ctx = ctxt.With[*gtk.Window](ctx, &window.Window)
 	ctx = ctxt.With[*api.Cluster](ctx, behavior.Cluster)
-
+	ctx, cancel := context.WithCancel(ctx)
 	w := ClusterWindow{
 		ctx:                        ctx,
 		UniversalApplicationWindow: window,
@@ -85,9 +85,8 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, behavior *behav
 	nav.SetSizeRequest(350, 350)
 	rpane.SetEndChild(nav)
 
-	listBehavior := behavior.NewListBehavior(ctx)
-	listHeader := NewListHeader(ctx, listBehavior, breakpoint, func() { splitView.SetShowSidebar(true) })
-	w.listView = NewListView(ctx, listBehavior, listHeader)
+	listHeader := NewListHeader(ctx, behavior, breakpoint, func() { splitView.SetShowSidebar(true) })
+	w.listView = NewListView(ctx, behavior, listHeader)
 	rpane.SetStartChild(w.listView)
 	sw, _ := w.listView.SizeRequest()
 	rpane.SetPosition(sw)
