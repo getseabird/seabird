@@ -37,8 +37,13 @@ func NewEditorWindow(ctx context.Context, resource *metav1.APIResource, object c
 	s := strings.Split(resource.Group, ".")
 	slices.Reverse(s)
 	rdns := strings.Join(s, ".")
-	if rdns == "" {
+	switch {
+	case resource.Group == "":
 		rdns = "io.k8s.api.core"
+	case resource.Group == "apps":
+		rdns = "io.k8s.api.apps"
+	case strings.HasSuffix(resource.Group, "k8s.io"):
+		rdns = strings.ReplaceAll(rdns, "io.k8s", "io.k8s.api")
 	}
 
 	ref := fmt.Sprintf("#/components/schemas/%s.%s.%s", rdns, resource.Version, resource.Kind)
