@@ -1,4 +1,4 @@
-package util
+package api
 
 import (
 	"context"
@@ -6,8 +6,8 @@ import (
 	"slices"
 	"time"
 
-	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/util"
 	"github.com/imkira/go-observer/v2"
 	"github.com/zmwangx/debounce"
 	appsv1 "k8s.io/api/apps/v1"
@@ -21,7 +21,7 @@ import (
 )
 
 func ObjectWatcher[T client.Object](ctx context.Context, resource *metav1.APIResource, prop observer.Property[[]T]) {
-	cluster, _ := ctxt.From[*api.Cluster](ctx)
+	cluster, _ := ctxt.From[*Cluster](ctx)
 	objects := []T{}
 
 	if !slices.Contains(resource.Verbs, "watch") {
@@ -31,7 +31,7 @@ func ObjectWatcher[T client.Object](ctx context.Context, resource *metav1.APIRes
 				case <-ctx.Done():
 					return
 				default:
-					list, err := cluster.DynamicClient.Resource(ResourceGVR(resource)).List(ctx, metav1.ListOptions{})
+					list, err := cluster.DynamicClient.Resource(util.ResourceGVR(resource)).List(ctx, metav1.ListOptions{})
 					if err != nil {
 						log.Printf("list failed: %s", err.Error())
 						continue
@@ -52,11 +52,11 @@ func ObjectWatcher[T client.Object](ctx context.Context, resource *metav1.APIRes
 	}, 100*time.Millisecond, debounce.WithMaxWait(time.Second))
 	defer update()
 
-	obj, _ := cluster.Scheme.New(ResourceGVK(resource))
+	obj, _ := cluster.Scheme.New(util.ResourceGVK(resource))
 
 	// TODO there's probably a better way? create rest client from scheme?
 	var getter cache.Getter
-	switch ResourceGVR(resource).GroupVersion().String() {
+	switch util.ResourceGVR(resource).GroupVersion().String() {
 	case corev1.SchemeGroupVersion.String():
 		getter = cluster.CoreV1().RESTClient()
 	case appsv1.SchemeGroupVersion.String():
@@ -67,7 +67,7 @@ func ObjectWatcher[T client.Object](ctx context.Context, resource *metav1.APIRes
 
 	if obj == nil || getter == nil {
 		go func() {
-			w, err := cluster.DynamicClient.Resource(ResourceGVR(resource)).Watch(ctx, metav1.ListOptions{})
+			w, err := cluster.DynamicClient.Resource(util.ResourceGVR(resource)).Watch(ctx, metav1.ListOptions{})
 			if err != nil {
 				log.Printf("watch failed: %s", err.Error())
 				return

@@ -5,24 +5,19 @@ import (
 	"fmt"
 	"log"
 	"runtime"
-	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
-	"github.com/diamondburned/gotk4/pkg/gio/v2"
-	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	"github.com/google/uuid"
-	"github.com/hexops/gotextdiff"
-	"github.com/hexops/gotextdiff/myers"
-	"github.com/hexops/gotextdiff/span"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -35,9 +30,10 @@ type DetailView struct {
 	sourceBuffer *gtksource.Buffer
 	sourceView   *gtksource.View
 	expanded     map[string]bool
+	editor       *editor.EditorWindow
 }
 
-func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *DetailView {
+func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior, editor *editor.EditorWindow) *DetailView {
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	content.AddCSSClass("background")
 	d := DetailView{
@@ -46,6 +42,7 @@ func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *Deta
 		behavior:       behavior,
 		expanded:       map[string]bool{},
 		ctx:            ctx,
+		editor:         editor,
 	}
 	d.SetTag(uuid.NewString())
 
@@ -61,6 +58,40 @@ func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *Deta
 		header.SetShowEndTitleButtons(false)
 	}
 
+	delete := gtk.NewButton()
+	delete.SetIconName("edit-delete-symbolic")
+	delete.SetTooltipText("Delete")
+	delete.ConnectClicked(func() {
+		selected := d.behavior.SelectedObject.Value()
+		dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](ctx), "Delete object?", selected.GetName())
+		defer dialog.Show()
+		dialog.AddResponse("cancel", "Cancel")
+		dialog.AddResponse("delete", "Delete")
+		dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
+		dialog.ConnectResponse(func(response string) {
+			switch response {
+			case "delete":
+				if err := behavior.DeleteObject(selected); err != nil {
+					widget.ShowErrorDialog(ctx, "Failed to delete object", err)
+				}
+			}
+		})
+	})
+	header.PackEnd(delete)
+
+	edit := gtk.NewButton()
+	edit.SetIconName("document-edit-symbolic")
+	edit.SetTooltipText("Edit")
+	edit.ConnectClicked(func() {
+		gvk := util.ResourceGVK(behavior.SelectedResource.Value())
+		if err := d.editor.AddPage(&gvk, behavior.SelectedObject.Value()); err != nil {
+			widget.ShowErrorDialog(d.ctx, "Error loading editor", err)
+		} else {
+			d.editor.Show()
+		}
+	})
+	header.PackEnd(edit)
+
 	stack := adw.NewViewStack()
 	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "info-outline-symbolic")
 	stack.AddTitledWithIcon(d.createSource(), "source", "Yaml", "code-symbolic")
@@ -71,53 +102,9 @@ func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior) *Deta
 	switcher.SetStack(stack)
 	header.SetTitleWidget(switcher)
 
-	editable := gio.NewSimpleActionStateful("editable", nil, glib.NewVariantBoolean(false))
-	save := gio.NewSimpleAction("save", nil)
-	save.SetEnabled(false)
-	editable.ConnectActivate(func(parameter *glib.Variant) {
-		isEditable := !d.sourceView.Editable()
-		d.sourceView.SetEditable(isEditable)
-		editable.SetState(glib.NewVariantBoolean(isEditable))
-		save.SetEnabled(isEditable)
-	})
-	save.ConnectActivate(func(parameter *glib.Variant) {
-		text := d.sourceBuffer.Text(d.sourceBuffer.StartIter(), d.sourceBuffer.EndIter(), true)
-		d.showSaveDialog(d.behavior.SelectedObject.Value(), d.behavior.Yaml.Value(), text)
-	})
-
-	// TODO should be local shortcuts, not global. how?
-
-	ctxt.MustFrom[*gtk.Window](ctx).Application().SetAccelsForAction("detail.editable", []string{"<Ctrl>E"})
-	ctxt.MustFrom[*gtk.Window](ctx).Application().SetAccelsForAction("detail.save", []string{"<Ctrl>S"})
-
-	delete := gio.NewSimpleAction("delete", nil)
-	delete.ConnectActivate(func(parameter *glib.Variant) {
-		selected := d.behavior.SelectedObject.Value()
-		dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](ctx), "Delete object?", selected.GetName())
-		defer dialog.Show()
-		dialog.AddResponse("cancel", "Cancel")
-		dialog.AddResponse("delete", "Delete")
-		dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
-		dialog.ConnectResponse(func(response string) {
-			if response == "delete" {
-				if err := behavior.DeleteObject(selected); err != nil {
-					widget.ShowErrorDialog(ctx, "Failed to delete object", err)
-				}
-			}
-		})
-	})
-	actionGroup := gio.NewSimpleActionGroup()
-	actionGroup.AddAction(editable)
-	actionGroup.AddAction(save)
-	actionGroup.AddAction(delete)
-	ctxt.MustFrom[*gtk.Window](ctx).InsertActionGroup("detail", actionGroup)
-
 	onChange(ctx, d.behavior.SelectedObject, func(_ client.Object) {
 		for d.Parent().(*adw.NavigationView).Pop() {
 			// empty
-		}
-		if editable.State().Boolean() {
-			editable.Activate(nil)
 		}
 	})
 	onChange(ctx, d.behavior.Yaml, func(yaml string) {
@@ -179,7 +166,7 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 						return
 					}
 					ctx, cancel := context.WithCancel(d.ctx)
-					dv := NewDetailView(ctx, d.behavior.NewDetailBehavior(ctx))
+					dv := NewDetailView(ctx, d.behavior.NewDetailBehavior(ctx), d.editor)
 					dv.behavior.SelectedObject.Update(obj)
 					d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
 					d.Parent().(*adw.NavigationView).ConnectPopped(func(page *adw.NavigationPage) {
@@ -281,59 +268,9 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	d.sourceView.SetMonospace(true)
 	scrolledWindow.SetChild(d.sourceView)
 
-	windowSection := gio.NewMenu()
-	windowSection.Append("Editable", "detail.editable")
-	windowSection.Append("Save", "detail.save")
-	d.sourceView.SetExtraMenu(windowSection)
-
 	return scrolledWindow
 }
 
 func (d *DetailView) setSourceColorScheme() {
 	util.SetSourceColorScheme(d.sourceBuffer)
-}
-
-func (d *DetailView) showSaveDialog(object client.Object, current, next string) *adw.MessageDialog {
-	obj, err := util.YamlToUnstructured([]byte(next))
-	if err != nil {
-		return widget.ShowErrorDialog(d.ctx, "Error decoding object", err)
-	}
-
-	dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](d.ctx), fmt.Sprintf("Saving %s", object.GetName()), "The following changes will be made")
-	dialog.AddResponse("cancel", "Cancel")
-	dialog.AddResponse("save", "Save")
-	dialog.SetResponseAppearance("save", adw.ResponseSuggested)
-	dialog.SetSizeRequest(600, 500)
-	defer dialog.Show()
-
-	box := dialog.Child().(*gtk.WindowHandle).Child().(*gtk.Box).FirstChild().(*gtk.Box)
-
-	box.FirstChild().(*gtk.Label).NextSibling().(*gtk.Label).SetVExpand(false)
-
-	edits := myers.ComputeEdits(span.URIFromPath(object.GetName()), current, next)
-
-	buf := gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("diff"))
-	buf.SetText(strings.TrimPrefix(fmt.Sprint(gotextdiff.ToUnified("", "", current, edits)), "--- \n+++ \n"))
-	util.SetSourceColorScheme(buf)
-	view := gtksource.NewViewWithBuffer(buf)
-	view.SetEditable(false)
-	view.SetWrapMode(gtk.WrapWord)
-	view.SetShowLineNumbers(false)
-	view.SetMonospace(true)
-
-	sw := gtk.NewScrolledWindow()
-	sw.SetChild(view)
-	sw.SetVExpand(true)
-
-	box.Append(sw)
-
-	dialog.ConnectResponse(func(response string) {
-		if response == "save" {
-			if err := d.behavior.UpdateObject(obj); err != nil {
-				widget.ShowErrorDialog(d.ctx, "Error updating object", err)
-			}
-		}
-	})
-
-	return dialog
 }

@@ -6,12 +6,9 @@ import (
 	"sort"
 
 	"github.com/getseabird/seabird/api"
-	"github.com/getseabird/seabird/internal/util"
 	"github.com/imkira/go-observer/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
-	"k8s.io/apimachinery/pkg/runtime"
-	"k8s.io/apimachinery/pkg/runtime/serializer"
 	"k8s.io/client-go/dynamic"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -51,19 +48,11 @@ func (b *DetailBehavior) onObjectChange(object client.Object) {
 		return
 	}
 
-	codec := unstructured.NewJSONFallbackEncoder(serializer.NewCodecFactory(b.Scheme).LegacyCodec(b.Scheme.PreferredVersionAllGroups()...))
-	objWithoutManagedFields := object.DeepCopyObject().(client.Object)
-	objWithoutManagedFields.SetManagedFields(nil)
-	encoded, err := runtime.Encode(codec, objWithoutManagedFields)
+	yaml, err := b.Cluster.Encoder.EncodeYAML(object)
 	if err != nil {
 		b.Yaml.Update(fmt.Sprintf("error: %v", err))
 	} else {
-		yaml, err := util.JsonToYaml(encoded)
-		if err != nil {
-			b.Yaml.Update(fmt.Sprintf("error: %v", err))
-		} else {
-			b.Yaml.Update(string(yaml))
-		}
+		b.Yaml.Update(string(yaml))
 	}
 
 	var props []api.Property

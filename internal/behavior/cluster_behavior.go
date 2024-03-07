@@ -6,7 +6,6 @@ import (
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/extension"
 	"github.com/getseabird/seabird/internal/ctxt"
-	"github.com/getseabird/seabird/internal/util"
 	"github.com/go-logr/logr"
 	"github.com/imkira/go-observer/v2"
 	corev1 "k8s.io/api/core/v1"
@@ -50,7 +49,7 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 			break
 		}
 	}
-	util.ObjectWatcher(ctx, ns, cluster.Namespaces)
+	api.ObjectWatcher(ctx, ns, cluster.Namespaces)
 
 	for _, new := range extension.Extensions {
 		cluster.Extensions = append(cluster.Extensions, new(clusterApi))

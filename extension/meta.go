@@ -6,8 +6,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
-	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/util"
@@ -119,15 +117,6 @@ func (e *Meta) CreateObjectProperties(ctx context.Context, object client.Object,
 					Name:     "Owners",
 					Children: owners,
 				},
-			},
-			Widget: func(w gtk.Widgetter, _ *adw.NavigationView) {
-				button := gtk.NewMenuButton()
-				button.SetIconName("view-more-symbolic")
-				button.AddCSSClass("flat")
-				model := gio.NewMenu()
-				model.Append("Delete", "detail.delete")
-				button.SetPopover(gtk.NewPopoverMenuFromModel(model))
-				w.(*adw.PreferencesGroup).SetHeaderSuffix(button)
 			},
 		})
 

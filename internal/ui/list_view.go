@@ -69,7 +69,7 @@ func (l *ListView) onSelectedResourceChange(resource *metav1.APIResource) {
 	}
 	var ctx context.Context
 	ctx, l.watchCancel = context.WithCancel(l.ctx)
-	util.ObjectWatcher(ctx, resource, l.objects)
+	api.ObjectWatcher(ctx, resource, l.objects)
 }
 
 func (l *ListView) onObjectsChange(objects []client.Object) {

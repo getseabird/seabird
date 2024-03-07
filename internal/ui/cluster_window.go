@@ -12,6 +12,7 @@ import (
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/widget"
 )
 
@@ -55,6 +56,8 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, behavior *behav
 		return false
 	})
 
+	editor := editor.NewEditorWindow(ctx)
+
 	breakpointBin := adw.NewBreakpointBin()
 	breakpointBin.SetSizeRequest(800, 500)
 	w.toastOverlay = adw.NewToastOverlay()
@@ -79,13 +82,13 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, behavior *behav
 	rpane.SetHExpand(true)
 	splitView.SetContent(rpane)
 
-	w.detailView = NewDetailView(ctx, behavior.NewRootDetailBehavior(ctx))
+	w.detailView = NewDetailView(ctx, behavior.NewRootDetailBehavior(ctx), editor)
 	nav := adw.NewNavigationView()
 	nav.Add(w.detailView.NavigationPage)
 	nav.SetSizeRequest(350, 350)
 	rpane.SetEndChild(nav)
 
-	listHeader := NewListHeader(ctx, behavior, breakpoint, func() { splitView.SetShowSidebar(true) })
+	listHeader := NewListHeader(ctx, behavior, breakpoint, func() { splitView.SetShowSidebar(true) }, editor)
 	w.listView = NewListView(ctx, behavior, listHeader)
 	rpane.SetStartChild(w.listView)
 	sw, _ := w.listView.SizeRequest()

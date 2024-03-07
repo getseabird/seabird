@@ -23,3 +23,7 @@ func ResourceEquals(r1, r2 *v1.APIResource) bool {
 func GVREquals(r1, r2 schema.GroupVersionResource) bool {
 	return r1.Group == r2.Group && r1.Version == r2.Version && r1.Resource == r2.Resource
 }
+
+func GVKEquals(r1, r2 schema.GroupVersionKind) bool {
+	return r1.Group == r2.Group && r1.Version == r2.Version && r1.Kind == r2.Kind
+}

@@ -37,6 +37,7 @@ type Cluster struct {
 	RESTMapper         meta.RESTMapper
 	DynamicClient      *dynamic.DynamicClient
 	Scheme             *runtime.Scheme
+	Encoder            *Encoder
 	Resources          []metav1.APIResource
 }
 
@@ -129,6 +130,7 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 		Clientset:          clientset,
 		RESTMapper:         mapper,
 		Scheme:             scheme,
+		Encoder:            &Encoder{Scheme: scheme},
 		ClusterPreferences: clusterPrefs,
 		DynamicClient:      dynamicClient,
 		Metrics:            metrics,

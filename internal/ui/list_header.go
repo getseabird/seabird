@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	corev1 "k8s.io/api/core/v1"
@@ -19,7 +20,7 @@ type ListHeader struct {
 	*adw.HeaderBar
 }
 
-func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint *adw.Breakpoint, showSidebar func()) *ListHeader {
+func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint *adw.Breakpoint, showSidebar func(), editor *editor.EditorWindow) *ListHeader {
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
 	header.SetShowEndTitleButtons(false)
@@ -41,12 +42,13 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 	createButton.SetIconName("document-new-symbolic")
 	createButton.SetTooltipText("New Resource")
 	createButton.ConnectClicked(func() {
-		w, err := NewEditorWindow(ctx, b.SelectedResource.Value(), nil)
+		gvk := util.ResourceGVK(b.SelectedResource.Value())
+		err := editor.AddPage(&gvk, nil)
 		if err != nil {
 			widget.ShowErrorDialog(ctx, "Error loading editor", err)
 			return
 		}
-		w.Show()
+		editor.Show()
 	})
 	header.PackEnd(createButton)
 
