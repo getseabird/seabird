@@ -111,7 +111,7 @@ func (w *ClusterWindow) createActions() {
 			return
 		}
 		prefs.Defaults()
-		NewWelcomeWindow(w.ctx, w.Application(), w.behavior.Behavior).Show()
+		NewWelcomeWindow(context.WithoutCancel(w.ctx), w.Application(), w.behavior.Behavior).Show()
 	})
 	w.AddAction(newWindow)
 	w.Application().SetAccelsForAction("win.newWindow", []string{"<Ctrl>N"})
