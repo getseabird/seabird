@@ -38,3 +38,10 @@ textview.sourceview>border>gutter {
 .monospace {
   font-family: 'Source Code Pro 10', Consolas, monospace;
 }
+
+dropdown.kind-dropdown>button {
+  padding-top: 2px;
+  padding-bottom: 2px;
+  padding-left: 7px;
+  padding-right: 7px;
+}
