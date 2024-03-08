@@ -7,7 +7,9 @@ import (
 	"github.com/imkira/go-observer/v2"
 )
 
+// Call function when prop changes, and also once initially
 func OnChange[T any](ctx context.Context, prop observer.Property[T], f func(T)) {
+	defer f(prop.Value())
 	go func() {
 		stream := prop.Observe()
 		for {

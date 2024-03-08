@@ -8,7 +8,9 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
@@ -85,7 +87,7 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 			b.SearchText.Update(entry.Text())
 		}
 	})
-	onChange(ctx, b.SearchText, func(txt string) {
+	common.OnChange(ctx, b.SearchText, func(txt string) {
 		if txt != entry.Text() {
 			entry.SetText(txt)
 		}
@@ -96,7 +98,7 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 	filterButton.SetTooltipText("Filter")
 	box.Append(filterButton)
 	namespace := gio.NewMenu()
-	onChange(ctx, b.Namespaces, func(ns []*corev1.Namespace) {
+	common.OnChange(ctx, b.Namespaces, func(ns []*corev1.Namespace) {
 		namespace.RemoveAll()
 		for _, ns := range ns {
 			namespace.Append(ns.GetName(), fmt.Sprintf("list.filterNamespace('%s')", ns.GetName()))
@@ -111,7 +113,7 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 		b.SearchFilter.Update(behavior.NewSearchFilter(entry.Text()))
 	})
 
-	onChange(ctx, b.SelectedResource, func(res *metav1.APIResource) {
+	common.OnChange(ctx, b.SelectedResource, func(res *metav1.APIResource) {
 		var idx uint
 		for i, r := range b.Resources {
 			if util.ResourceEquals(&r, res) {
@@ -120,6 +122,10 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 			}
 		}
 		kind.SetSelected(idx)
+	})
+
+	common.OnChange(ctx, b.ClusterPreferences, func(prefs api.ClusterPreferences) {
+		createButton.SetVisible(!prefs.ReadOnly)
 	})
 
 	return &ListHeader{header}

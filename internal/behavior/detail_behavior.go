@@ -6,6 +6,7 @@ import (
 	"sort"
 
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/imkira/go-observer/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -36,7 +37,7 @@ func (b *ClusterBehavior) NewDetailBehavior(ctx context.Context) *DetailBehavior
 		Properties:      observer.NewProperty[[]api.Property](nil),
 	}
 
-	onChange(ctx, d.SelectedObject, d.onObjectChange)
+	common.OnChange(ctx, d.SelectedObject, d.onObjectChange)
 
 	return &d
 }

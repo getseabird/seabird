@@ -14,6 +14,7 @@ import (
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
@@ -102,15 +103,22 @@ func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior, edito
 	switcher.SetStack(stack)
 	header.SetTitleWidget(switcher)
 
-	onChange(ctx, d.behavior.SelectedObject, func(_ client.Object) {
-		for d.Parent().(*adw.NavigationView).Pop() {
-			// empty
+	common.OnChange(ctx, d.behavior.ClusterPreferences, func(prefs api.ClusterPreferences) {
+		edit.SetVisible(!prefs.ReadOnly)
+		delete.SetVisible(!prefs.ReadOnly)
+	})
+	common.OnChange(ctx, d.behavior.SelectedObject, func(_ client.Object) {
+		switch parent := d.Parent().(type) {
+		case *adw.NavigationView:
+			for parent.Pop() {
+				// empty
+			}
 		}
 	})
-	onChange(ctx, d.behavior.Yaml, func(yaml string) {
+	common.OnChange(ctx, d.behavior.Yaml, func(yaml string) {
 		d.sourceBuffer.SetText(string(yaml))
 	})
-	onChange(ctx, d.behavior.Properties, d.onPropertiesChange)
+	common.OnChange(ctx, d.behavior.Properties, d.onPropertiesChange)
 
 	return &d
 }

@@ -112,7 +112,6 @@ func (w *EditorWindow) AddPage(gvk *schema.GroupVersionKind, object client.Objec
 		return err
 	}
 	tabpage := w.tabview.Append(page)
-	tabpage.SetTitle(title.Value())
 	tabpage.SetKeyword(uuid.NewString())
 	common.OnChange(w.ctx, title, tabpage.SetTitle)
 	w.tabview.SetSelectedPage(tabpage)

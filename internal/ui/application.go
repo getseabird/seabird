@@ -13,6 +13,7 @@ import (
 	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/icon"
 	"github.com/getseabird/seabird/internal/style"
+	"github.com/getseabird/seabird/internal/ui/common"
 )
 
 const ApplicationName = "Seabird"
@@ -43,8 +44,7 @@ func NewApplication(version string) (*Application, error) {
 		return nil, err
 	}
 
-	adw.StyleManagerGetDefault().SetColorScheme(b.Preferences.Value().ColorScheme)
-	onChange(ctx, b.Preferences, func(p api.Preferences) {
+	common.OnChange(ctx, b.Preferences, func(p api.Preferences) {
 		adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(p.ColorScheme))
 	})
 

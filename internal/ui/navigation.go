@@ -13,6 +13,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -80,11 +81,14 @@ func NewNavigation(ctx context.Context, b *behavior.ClusterBehavior) *Navigation
 	addFavouriteBin := adw.NewBin()
 	content.Append(addFavouriteBin)
 
-	onChange(ctx, b.ClusterPreferences, func(prefs api.ClusterPreferences) {
+	common.OnChange(ctx, b.ClusterPreferences, func(prefs api.ClusterPreferences) {
 		favouritesBin.SetChild(n.createFavourites(prefs))
 	})
 
-	onChange(ctx, b.SelectedResource, func(res *metav1.APIResource) {
+	common.OnChange(ctx, b.SelectedResource, func(res *metav1.APIResource) {
+		if res == nil {
+			return
+		}
 		var idx *int
 		for i, r := range b.ClusterPreferences.Value().Navigation.Favourites {
 			if util.ResourceGVR(res).String() == r.String() {

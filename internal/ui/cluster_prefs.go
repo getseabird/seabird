@@ -11,6 +11,7 @@ import (
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
@@ -31,6 +32,7 @@ type ClusterPrefPage struct {
 	ca         *adw.EntryRow
 	bearer     *adw.EntryRow
 	exec       *adw.ActionRow
+	readonly   *adw.SwitchRow
 	execDelete *gtk.Button
 	favourites *adw.Bin
 	actions    *adw.Bin
@@ -54,7 +56,7 @@ func NewClusterPrefPage(ctx context.Context, b *behavior.Behavior, prefs observe
 	box.Append(content)
 	content.SetChild(p.createContent())
 
-	onChange(ctx, p.prefs, func(prefs api.ClusterPreferences) {
+	common.OnChange(ctx, p.prefs, func(prefs api.ClusterPreferences) {
 		p.updateValues(prefs)
 		p.favourites.SetChild(p.createFavourites())
 		p.actions.SetChild(p.createActions())
@@ -74,6 +76,9 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.host = adw.NewEntryRow()
 	p.host.SetTitle("Host")
 	general.Add(p.host)
+	p.readonly = adw.NewSwitchRow()
+	p.readonly.SetTitle("Read-only")
+	general.Add(p.readonly)
 
 	auth := adw.NewExpanderRow()
 	general.Add(auth)
@@ -84,8 +89,6 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.key = adw.NewEntryRow()
 	p.key.SetTitle("Client key")
 	auth.AddRow(p.key)
-	p.ca = adw.NewEntryRow()
-	p.ca.SetTitle("CA certificate")
 	p.ca = adw.NewEntryRow()
 	p.ca.SetTitle("CA certificate")
 	auth.AddRow(p.ca)
@@ -223,6 +226,7 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		cluster := p.prefs.Value()
 		cluster.Name = p.name.Text()
 		cluster.Host = p.host.Text()
+		cluster.ReadOnly = p.readonly.Active()
 		cluster.TLS.CertData = []byte(p.cert.Text())
 		cluster.TLS.KeyData = []byte(p.key.Text())
 		cluster.TLS.CAData = []byte(p.ca.Text())
@@ -375,6 +379,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 func (p *ClusterPrefPage) updateValues(prefs api.ClusterPreferences) {
 	p.name.SetText(prefs.Name)
 	p.host.SetText(prefs.Host)
+	p.readonly.SetActive(prefs.ReadOnly)
 	p.cert.SetText(string(prefs.TLS.CertData))
 	p.key.SetText(string(prefs.TLS.KeyData))
 	p.ca.SetText(string(prefs.TLS.CAData))

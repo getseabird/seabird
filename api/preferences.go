@@ -50,6 +50,7 @@ type ClusterPreferences struct {
 	BearerToken string
 	TLS         rest.TLSClientConfig
 	Exec        *api.ExecConfig
+	ReadOnly    bool
 	Navigation  struct {
 		Favourites []schema.GroupVersionResource
 	}

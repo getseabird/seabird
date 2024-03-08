@@ -10,6 +10,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/behavior"
+	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/imkira/go-observer/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -56,14 +57,17 @@ func NewListView(ctx context.Context, behavior *behavior.ClusterBehavior, header
 	sw.SetChild(vp)
 	l.Append(sw)
 
-	onChange(ctx, behavior.SelectedResource, l.onSelectedResourceChange)
-	onChange(ctx, l.objects, l.onObjectsChange)
-	onChange(ctx, behavior.SearchFilter, l.onSearchFilterChange)
+	common.OnChange(ctx, behavior.SelectedResource, l.onSelectedResourceChange)
+	common.OnChange(ctx, l.objects, l.onObjectsChange)
+	common.OnChange(ctx, behavior.SearchFilter, l.onSearchFilterChange)
 
 	return &l
 }
 
 func (l *ListView) onSelectedResourceChange(resource *metav1.APIResource) {
+	if resource == nil {
+		return
+	}
 	if l.watchCancel != nil {
 		l.watchCancel()
 	}
@@ -73,11 +77,15 @@ func (l *ListView) onSelectedResourceChange(resource *metav1.APIResource) {
 }
 
 func (l *ListView) onObjectsChange(objects []client.Object) {
+	resource := l.behavior.SelectedResource.Value()
+	if resource == nil {
+		return
+	}
 	list := l.getModel()
 	list.Splice(0, list.NItems(), nil)
 
-	if l.columnType == nil || !util.ResourceEquals(l.columnType, l.behavior.SelectedResource.Value()) {
-		l.columnType = l.behavior.SelectedResource.Value()
+	if l.columnType == nil || !util.ResourceEquals(l.columnType, resource) {
+		l.columnType = resource
 
 		l.selection = l.createModel()
 		l.columnView.SetModel(l.selection)
