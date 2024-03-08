@@ -9,7 +9,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
-	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
@@ -20,9 +19,10 @@ import (
 
 type ListHeader struct {
 	*adw.HeaderBar
+	*common.ClusterState
 }
 
-func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint *adw.Breakpoint, showSidebar func(), editor *editor.EditorWindow) *ListHeader {
+func NewListHeader(ctx context.Context, state *common.ClusterState, breakpoint *adw.Breakpoint, showSidebar func(), editor *editor.EditorWindow) *ListHeader {
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
 	header.SetShowEndTitleButtons(false)
@@ -44,7 +44,7 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 	createButton.SetIconName("document-new-symbolic")
 	createButton.SetTooltipText("New Resource")
 	createButton.ConnectClicked(func() {
-		gvk := util.ResourceGVK(b.SelectedResource.Value())
+		gvk := util.ResourceGVK(state.SelectedResource.Value())
 		err := editor.AddPage(&gvk, nil)
 		if err != nil {
 			widget.ShowErrorDialog(ctx, "Error loading editor", err)
@@ -62,32 +62,32 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 	kind := gtk.NewDropDown(gtk.NewStringList([]string{}), gtk.NewPropertyExpression(gtk.GTypeStringObject, nil, "string"))
 	kind.SetEnableSearch(true)
 
-	for _, r := range b.Resources {
+	for _, r := range state.Resources {
 		kind.Model().Cast().(*gtk.StringList).Append(r.Kind)
 	}
 	kind.Connect("notify::selected-item", func() {
-		res := b.Resources[kind.Selected()]
-		if !util.ResourceEquals(b.SelectedResource.Value(), &res) {
-			b.SelectedResource.Update(&res)
+		res := state.Resources[kind.Selected()]
+		if !util.ResourceEquals(state.SelectedResource.Value(), &res) {
+			state.SelectedResource.Update(&res)
 		}
 	})
 	box.Append(kind)
 
 	entry := gtk.NewSearchEntry()
-	entry.SetObjectProperty("placeholder-text", b.Cluster.ClusterPreferences.Value().Name)
+	entry.SetObjectProperty("placeholder-text", state.ClusterPreferences.Value().Name)
 	placeholder := entry.FirstChild().(*gtk.Image).NextSibling().(*gtk.Text).FirstChild().(*gtk.Label)
 	placeholder.AddCSSClass("heading")
 	entry.SetObjectProperty("placeholder-text", "")
-	breakpoint.AddSetter(entry, "placeholder-text", b.Cluster.ClusterPreferences.Value().Name)
+	breakpoint.AddSetter(entry, "placeholder-text", state.ClusterPreferences.Value().Name)
 
 	entry.SetMaxWidthChars(50)
 	box.Append(entry)
 	entry.ConnectChanged(func() {
-		if entry.Text() != b.SearchText.Value() {
-			b.SearchText.Update(entry.Text())
+		if entry.Text() != state.SearchText.Value() {
+			state.SearchText.Update(entry.Text())
 		}
 	})
-	common.OnChange(ctx, b.SearchText, func(txt string) {
+	common.OnChange(ctx, state.SearchText, func(txt string) {
 		if txt != entry.Text() {
 			entry.SetText(txt)
 		}
@@ -98,7 +98,7 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 	filterButton.SetTooltipText("Filter")
 	box.Append(filterButton)
 	namespace := gio.NewMenu()
-	common.OnChange(ctx, b.Namespaces, func(ns []*corev1.Namespace) {
+	common.OnChange(ctx, state.Namespaces, func(ns []*corev1.Namespace) {
 		namespace.RemoveAll()
 		for _, ns := range ns {
 			namespace.Append(ns.GetName(), fmt.Sprintf("list.filterNamespace('%s')", ns.GetName()))
@@ -110,12 +110,12 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 	filterButton.SetPopover(popover)
 
 	entry.ConnectSearchChanged(func() {
-		b.SearchFilter.Update(behavior.NewSearchFilter(entry.Text()))
+		state.SearchFilter.Update(common.NewSearchFilter(entry.Text()))
 	})
 
-	common.OnChange(ctx, b.SelectedResource, func(res *metav1.APIResource) {
+	common.OnChange(ctx, state.SelectedResource, func(res *metav1.APIResource) {
 		var idx uint
-		for i, r := range b.Resources {
+		for i, r := range state.Resources {
 			if util.ResourceEquals(&r, res) {
 				idx = uint(i)
 				break
@@ -124,9 +124,9 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 		kind.SetSelected(idx)
 	})
 
-	common.OnChange(ctx, b.ClusterPreferences, func(prefs api.ClusterPreferences) {
+	common.OnChange(ctx, state.ClusterPreferences, func(prefs api.ClusterPreferences) {
 		createButton.SetVisible(!prefs.ReadOnly)
 	})
 
-	return &ListHeader{header}
+	return &ListHeader{HeaderBar: header, ClusterState: state}
 }

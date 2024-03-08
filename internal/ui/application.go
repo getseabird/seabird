@@ -10,7 +10,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
-	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/icon"
 	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
@@ -39,12 +38,12 @@ func NewApplication(version string) (*Application, error) {
 
 	ctx := context.Background()
 
-	b, err := behavior.NewBehavior()
+	state, err := common.NewState()
 	if err != nil {
 		return nil, err
 	}
 
-	common.OnChange(ctx, b.Preferences, func(p api.Preferences) {
+	common.OnChange(ctx, state.Preferences, func(p api.Preferences) {
 		adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(p.ColorScheme))
 	})
 
@@ -56,7 +55,7 @@ func NewApplication(version string) (*Application, error) {
 	}
 
 	a.ConnectActivate(func() {
-		NewWelcomeWindow(ctx, &a.Application.Application, b).Show()
+		NewWelcomeWindow(ctx, &a.Application.Application, state).Show()
 	})
 
 	return &a, nil

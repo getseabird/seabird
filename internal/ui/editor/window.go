@@ -37,7 +37,7 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 		UniversalWindow: widget.NewUniversalWindow(),
 		pages:           map[*adw.TabPage]*sourcePage{},
 	}
-	w.SetDefaultSize(1000, 600)
+	w.SetDefaultSize(1280, 720)
 	w.SetTitle("Editor")
 
 	w.ConnectCloseRequest(func() (ok bool) {

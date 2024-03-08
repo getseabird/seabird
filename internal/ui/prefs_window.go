@@ -6,22 +6,22 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
-	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/imkira/go-observer/v2"
 )
 
 type PrefsWindow struct {
 	*adw.PreferencesWindow
+	*common.State
 	ctx            context.Context
-	behavior       *behavior.ClusterBehavior
 	navigationView *adw.NavigationView
 }
 
-func NewPreferencesWindow(ctx context.Context, behavior *behavior.ClusterBehavior) *PrefsWindow {
+func NewPreferencesWindow(ctx context.Context, state *common.State) *PrefsWindow {
 	window := adw.NewPreferencesWindow()
 	ctx = ctxt.With[*gtk.Window](ctx, &window.Window.Window)
-	w := PrefsWindow{PreferencesWindow: window, behavior: behavior, ctx: ctx}
+	w := PrefsWindow{PreferencesWindow: window, State: state, ctx: ctx}
 
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	w.navigationView = adw.NewNavigationView()
@@ -56,14 +56,14 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	colorScheme.SetTitle("Color Scheme")
 	themes := gtk.NewStringList([]string{"Default", "Light", "Dark"})
 	colorScheme.SetModel(themes)
-	colorScheme.SetSelected(uint(w.behavior.Preferences.Value().ColorScheme))
+	colorScheme.SetSelected(uint(w.Preferences.Value().ColorScheme))
 	colorScheme.Connect("notify::selected-item", func() {
-		prefs := w.behavior.Preferences.Value()
+		prefs := w.Preferences.Value()
 		prefs.ColorScheme = adw.ColorScheme(colorScheme.Selected())
 		if prefs.ColorScheme == adw.ColorSchemePreferLight {
 			prefs.ColorScheme = adw.ColorSchemeForceDark
 		}
-		w.behavior.Preferences.Update(prefs)
+		w.Preferences.Update(prefs)
 	})
 	general.Add(colorScheme)
 
@@ -73,16 +73,16 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	addCluster.AddCSSClass("flat")
 	addCluster.SetIconName("list-add")
 	addCluster.ConnectClicked(func() {
-		page := NewClusterPrefPage(w.ctx, w.behavior.Behavior, observer.NewProperty(api.ClusterPreferences{}))
+		page := NewClusterPrefPage(w.ctx, w.State, observer.NewProperty(api.ClusterPreferences{}))
 		w.navigationView.Push(page.NavigationPage)
 	})
 
 	clusters.SetHeaderSuffix(addCluster)
-	for _, cluster := range w.behavior.Preferences.Value().Clusters {
+	for _, cluster := range w.Preferences.Value().Clusters {
 		row := adw.NewActionRow()
 		row.SetActivatable(true)
 		row.ConnectActivated(func() {
-			w.navigationView.Push(NewClusterPrefPage(w.ctx, w.behavior.Behavior, cluster).NavigationPage)
+			w.navigationView.Push(NewClusterPrefPage(w.ctx, w.State, cluster).NavigationPage)
 		})
 		row.SetTitle(cluster.Value().Name)
 		if kubeconfig := cluster.Value().Kubeconfig; kubeconfig != nil {

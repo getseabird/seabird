@@ -9,7 +9,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
-	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
@@ -21,9 +20,9 @@ import (
 
 type ClusterPrefPage struct {
 	*adw.NavigationPage
+	*common.State
 	ctx        context.Context
 	content    *adw.Bin
-	behavior   *behavior.Behavior
 	prefs      observer.Property[api.ClusterPreferences]
 	name       *adw.EntryRow
 	host       *adw.EntryRow
@@ -38,14 +37,14 @@ type ClusterPrefPage struct {
 	actions    *adw.Bin
 }
 
-func NewClusterPrefPage(ctx context.Context, b *behavior.Behavior, prefs observer.Property[api.ClusterPreferences]) *ClusterPrefPage {
+func NewClusterPrefPage(ctx context.Context, state *common.State, prefs observer.Property[api.ClusterPreferences]) *ClusterPrefPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	content := adw.NewBin()
 	p := ClusterPrefPage{
 		ctx:            ctx,
+		State:          state,
 		NavigationPage: adw.NewNavigationPage(box, "Cluster"),
 		content:        content,
-		behavior:       b,
 		prefs:          prefs,
 	}
 
@@ -114,7 +113,7 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.favourites.SetChild(p.createFavourites())
 	group := adw.NewPreferencesGroup()
 	group.Add(p.favourites)
-	if util.Index(p.behavior.Preferences.Value().Clusters, p.prefs) >= 0 {
+	if util.Index(p.Preferences.Value().Clusters, p.prefs) >= 0 {
 		page.Add(group)
 	}
 
@@ -180,7 +179,7 @@ func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
 		sw.SetChild(pp)
 		content.Append(sw)
 
-		cluster, _ := p.behavior.WithCluster(p.ctx, p.prefs)
+		cluster, _ := p.NewClusterState(p.ctx, p.prefs)
 		for _, r := range cluster.Resources {
 			res := r
 			exists := false
@@ -242,7 +241,7 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		}
 
 		go func() {
-			_, err := p.behavior.WithCluster(p.ctx, observer.NewProperty(cluster))
+			_, err := p.NewClusterState(p.ctx, observer.NewProperty(cluster))
 			glib.IdleAdd(func() {
 				defer spinner.Stop()
 				if err != nil {
@@ -250,10 +249,10 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 					return
 				}
 				p.prefs.Update(cluster)
-				if util.Index(p.behavior.Preferences.Value().Clusters, p.prefs) < 0 {
-					prefs := p.behavior.Preferences.Value()
+				if util.Index(p.Preferences.Value().Clusters, p.prefs) < 0 {
+					prefs := p.Preferences.Value()
 					prefs.Clusters = append(prefs.Clusters, p.prefs)
-					p.behavior.Preferences.Update(prefs)
+					p.Preferences.Update(prefs)
 				}
 
 				p.Parent().(*adw.NavigationView).Pop()
@@ -285,7 +284,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 	})
 	group.Add(load)
 
-	if util.Index(p.behavior.Preferences.Value().Clusters, p.prefs) >= 0 {
+	if util.Index(p.Preferences.Value().Clusters, p.prefs) >= 0 {
 		delete := adw.NewActionRow()
 		delete.SetActivatable(true)
 		delete.SetSensitive(p.prefs.Value().Kubeconfig == nil)
@@ -300,10 +299,10 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 			dialog.Show()
 			dialog.ConnectResponse(func(response string) {
 				if response == "delete" {
-					prefs := p.behavior.Preferences.Value()
+					prefs := p.Preferences.Value()
 					if i := util.Index(prefs.Clusters, p.prefs); i >= 0 {
 						prefs.Clusters = append(prefs.Clusters[:i], prefs.Clusters[i+1:]...)
-						p.behavior.Preferences.Update(prefs)
+						p.Preferences.Update(prefs)
 						p.Parent().(*adw.NavigationView).Pop()
 					}
 				}

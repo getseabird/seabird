@@ -1,4 +1,4 @@
-package behavior
+package common
 
 import (
 	"strings"

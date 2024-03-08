@@ -12,7 +12,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
-	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	appsv1 "k8s.io/api/apps/v1"
@@ -26,18 +25,18 @@ import (
 
 type Navigation struct {
 	*adw.ToolbarView
-	behavior *behavior.ClusterBehavior
-	list     *gtk.ListBox
-	rows     []*gtk.ListBoxRow
+	*common.ClusterState
+	list *gtk.ListBox
+	rows []*gtk.ListBoxRow
 }
 
-func NewNavigation(ctx context.Context, b *behavior.ClusterBehavior) *Navigation {
-	n := &Navigation{ToolbarView: adw.NewToolbarView(), behavior: b}
+func NewNavigation(ctx context.Context, state *common.ClusterState) *Navigation {
+	n := &Navigation{ToolbarView: adw.NewToolbarView(), ClusterState: state}
 	n.SetVExpand(true)
 	n.AddCSSClass("background")
 
 	header := adw.NewHeaderBar()
-	title := gtk.NewLabel(b.ClusterPreferences.Value().Name)
+	title := gtk.NewLabel(n.ClusterPreferences.Value().Name)
 	title.SetEllipsize(pango.EllipsizeEnd)
 	title.AddCSSClass("heading")
 	header.SetTitleWidget(title)
@@ -81,16 +80,16 @@ func NewNavigation(ctx context.Context, b *behavior.ClusterBehavior) *Navigation
 	addFavouriteBin := adw.NewBin()
 	content.Append(addFavouriteBin)
 
-	common.OnChange(ctx, b.ClusterPreferences, func(prefs api.ClusterPreferences) {
+	common.OnChange(ctx, n.ClusterPreferences, func(prefs api.ClusterPreferences) {
 		favouritesBin.SetChild(n.createFavourites(prefs))
 	})
 
-	common.OnChange(ctx, b.SelectedResource, func(res *metav1.APIResource) {
+	common.OnChange(ctx, n.SelectedResource, func(res *metav1.APIResource) {
 		if res == nil {
 			return
 		}
 		var idx *int
-		for i, r := range b.ClusterPreferences.Value().Navigation.Favourites {
+		for i, r := range n.ClusterPreferences.Value().Navigation.Favourites {
 			if util.ResourceGVR(res).String() == r.String() {
 				idx = ptr.To(i)
 				break
@@ -105,7 +104,7 @@ func NewNavigation(ctx context.Context, b *behavior.ClusterBehavior) *Navigation
 		}
 	})
 
-	favouritesBin.SetChild(n.createFavourites(b.ClusterPreferences.Value()))
+	favouritesBin.SetChild(n.createFavourites(n.ClusterPreferences.Value()))
 	if len(n.rows) > 0 {
 		n.list.SelectRow(n.rows[0])
 	}
@@ -127,9 +126,9 @@ func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox
 			return
 		}
 
-		for _, res := range n.behavior.Resources {
-			if util.GVREquals(util.ResourceGVR(&res), gvr) && !util.ResourceEquals(n.behavior.SelectedResource.Value(), &res) {
-				n.behavior.SelectedResource.Update(&res)
+		for _, res := range n.Resources {
+			if util.GVREquals(util.ResourceGVR(&res), gvr) && !util.ResourceEquals(n.SelectedResource.Value(), &res) {
+				n.SelectedResource.Update(&res)
 				break
 			}
 		}
@@ -139,7 +138,7 @@ func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox
 
 	for _, gvr := range prefs.Navigation.Favourites {
 		var resource *metav1.APIResource
-		for _, r := range n.behavior.Resources {
+		for _, r := range n.Resources {
 			if r.Group == gvr.Group && r.Version == gvr.Version && r.Name == gvr.Resource {
 				resource = &r
 				break
@@ -187,7 +186,7 @@ func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox
 		n.list.Append(row)
 		n.rows = append(n.rows, row)
 
-		if res := n.behavior.SelectedResource.Value(); res != nil && util.GVREquals(util.ResourceGVR(res), gvr) {
+		if res := n.SelectedResource.Value(); res != nil && util.GVREquals(util.ResourceGVR(res), gvr) {
 			n.list.SelectRow(row)
 		}
 	}
@@ -209,9 +208,9 @@ func (n *Navigation) createAddFavourite(res *metav1.APIResource) *gtk.Box {
 	row.SetChild(box)
 	list.Append(row)
 	list.ConnectRowSelected(func(row *gtk.ListBoxRow) {
-		v := n.behavior.ClusterPreferences.Value()
+		v := n.ClusterPreferences.Value()
 		v.Navigation.Favourites = append(v.Navigation.Favourites, util.ResourceGVR(res))
-		n.behavior.ClusterPreferences.Update(v)
+		n.ClusterPreferences.Update(v)
 		content.Hide()
 	})
 	content.Append(list)

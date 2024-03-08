@@ -1,4 +1,4 @@
-package behavior
+package common
 
 import (
 	"context"
@@ -10,21 +10,38 @@ import (
 	"github.com/imkira/go-observer/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
 
-type ClusterBehavior struct {
-	*Behavior
-	*api.Cluster
-	Extensions         []extension.Extension
-	Namespaces         observer.Property[[]*corev1.Namespace]
-	SelectedResource   observer.Property[*metav1.APIResource]
-	SearchText         observer.Property[string]
-	SearchFilter       observer.Property[SearchFilter]
-	RootDetailBehavior *DetailBehavior
+type State struct {
+	Preferences observer.Property[api.Preferences]
 }
 
-func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Property[api.ClusterPreferences]) (*ClusterBehavior, error) {
+type ClusterState struct {
+	*State
+	*api.Cluster
+	Extensions       []extension.Extension
+	Namespaces       observer.Property[[]*corev1.Namespace]
+	SelectedResource observer.Property[*metav1.APIResource]
+	SearchText       observer.Property[string]
+	SearchFilter     observer.Property[SearchFilter]
+	SelectedObject   observer.Property[client.Object]
+}
+
+func NewState() (*State, error) {
+	prefs, err := api.LoadPreferences()
+	if err != nil {
+		return nil, err
+	}
+	prefs.Defaults()
+
+	return &State{
+		Preferences: observer.NewProperty(*prefs),
+	}, nil
+}
+
+func (s *State) NewClusterState(ctx context.Context, clusterPrefs observer.Property[api.ClusterPreferences]) (*ClusterState, error) {
 	logf.SetLogger(logr.Discard())
 
 	clusterApi, err := api.NewCluster(ctx, clusterPrefs)
@@ -33,13 +50,14 @@ func (b *Behavior) WithCluster(ctx context.Context, clusterPrefs observer.Proper
 	}
 	ctx = ctxt.With[*api.Cluster](ctx, clusterApi)
 
-	cluster := ClusterBehavior{
-		Behavior:         b,
+	cluster := ClusterState{
+		State:            s,
 		Cluster:          clusterApi,
 		Namespaces:       observer.NewProperty([]*corev1.Namespace{}),
 		SelectedResource: observer.NewProperty[*metav1.APIResource](nil),
 		SearchText:       observer.NewProperty(""),
 		SearchFilter:     observer.NewProperty(SearchFilter{}),
+		SelectedObject:   observer.NewProperty[client.Object](nil),
 	}
 
 	var ns *metav1.APIResource

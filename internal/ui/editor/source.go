@@ -57,6 +57,7 @@ func newSourcePage(ctx context.Context, gvk *schema.GroupVersionKind, object cli
 	}
 
 	paned := gtk.NewPaned(gtk.OrientationHorizontal)
+	paned.SetPosition(640)
 
 	util.SetSourceColorScheme(buf)
 	source := gtksource.NewViewWithBuffer(buf)
@@ -69,13 +70,11 @@ func newSourcePage(ctx context.Context, gvk *schema.GroupVersionKind, object cli
 
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetChild(source)
-	scrolledWindow.SetSizeRequest(500, -1)
+	scrolledWindow.SetSizeRequest(200, -1)
 	paned.SetStartChild(scrolledWindow)
-	sw, _ := scrolledWindow.SizeRequest()
-	paned.SetPosition(sw)
 
 	nav := adw.NewNavigationView()
-	nav.SetSizeRequest(500, -1)
+	nav.SetSizeRequest(200, -1)
 	paned.SetEndChild(nav)
 
 	page := &sourcePage{

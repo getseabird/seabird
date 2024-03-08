@@ -15,29 +15,29 @@ import (
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
-	"github.com/getseabird/seabird/internal/behavior"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
 )
 
 type WelcomeWindow struct {
 	*widget.UniversalApplicationWindow
-	ctx      context.Context
-	content  *adw.Bin
-	behavior *behavior.Behavior
-	nav      *adw.NavigationView
-	toast    *adw.ToastOverlay
+	*common.State
+	ctx     context.Context
+	content *adw.Bin
+	nav     *adw.NavigationView
+	toast   *adw.ToastOverlay
 }
 
-func NewWelcomeWindow(ctx context.Context, app *gtk.Application, behavior *behavior.Behavior) *WelcomeWindow {
+func NewWelcomeWindow(ctx context.Context, app *gtk.Application, state *common.State) *WelcomeWindow {
 	window := widget.NewUniversalApplicationWindow(app)
 	ctx = ctxt.With[*gtk.Window](ctx, &window.Window)
 	w := WelcomeWindow{
 		ctx:                        ctx,
 		UniversalApplicationWindow: window,
 		content:                    adw.NewBin(),
-		behavior:                   behavior,
+		State:                      state,
 	}
 	w.SetApplication(app)
 	w.SetIconName("seabird")
@@ -50,7 +50,7 @@ func NewWelcomeWindow(ctx context.Context, app *gtk.Application, behavior *behav
 
 	var h glib.SignalHandle
 	h = w.ConnectCloseRequest(func() bool {
-		prefs := behavior.Preferences.Value()
+		prefs := w.Preferences.Value()
 		if err := prefs.Save(); err != nil {
 			d := widget.ShowErrorDialog(ctx, "Could not save preferences", err)
 			d.ConnectUnrealize(func() {
@@ -82,8 +82,8 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	page := adw.NewPreferencesPage()
 	box.Append(page)
 
-	if clusters := w.behavior.Preferences.Value().Clusters; len(clusters) > 0 {
-		if w.behavior.Preferences.Value().License == nil {
+	if clusters := w.Preferences.Value().Clusters; len(clusters) > 0 {
+		if w.Preferences.Value().License == nil {
 			banner := adw.NewBanner("Your free trial expires in ∞ days")
 			banner.SetRevealed(true)
 			banner.SetButtonLabel("Purchase")
@@ -101,13 +101,13 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		add.AddCSSClass("flat")
 		add.SetIconName("list-add")
 		add.ConnectClicked(func() {
-			pref := NewClusterPrefPage(w.ctx, w.behavior, observer.NewProperty(api.ClusterPreferences{}))
+			pref := NewClusterPrefPage(w.ctx, w.State, observer.NewProperty(api.ClusterPreferences{}))
 			w.nav.Push(pref.NavigationPage)
 		})
 
 		group.SetHeaderSuffix(add)
 
-		for i, c := range w.behavior.Preferences.Value().Clusters {
+		for i, c := range w.Preferences.Value().Clusters {
 			cluster := c
 			row := adw.NewActionRow()
 			row.SetTitle(cluster.Value().Name)
@@ -129,7 +129,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 
 				spinner.Start()
 				go func() {
-					behavior, err := w.behavior.WithCluster(w.ctx, cluster)
+					state, err := w.NewClusterState(w.ctx, cluster)
 					glib.IdleAdd(func() {
 						spinner.Stop()
 						if err != nil {
@@ -138,7 +138,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 						}
 						app := w.Application()
 						w.Close()
-						NewClusterWindow(w.ctx, app, behavior).Show()
+						NewClusterWindow(w.ctx, app, state).Show()
 					})
 				}()
 			})
@@ -154,7 +154,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		status.SetDescription("Connect to a cluster to get started.")
 		btn := gtk.NewButton()
 		btn.ConnectClicked(func() {
-			pref := NewClusterPrefPage(w.ctx, w.behavior, observer.NewProperty(api.ClusterPreferences{}))
+			pref := NewClusterPrefPage(w.ctx, w.State, observer.NewProperty(api.ClusterPreferences{}))
 			w.nav.Push(pref.NavigationPage)
 		})
 		btn.SetHAlign(gtk.AlignCenter)
@@ -179,7 +179,7 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 	content.Append(prefPage)
 
 	group := adw.NewPreferencesGroup()
-	group.SetDescription("There is no time limit for testing Seabird. With the purchase of a subscription, you receive priority support and help fund development.")
+	group.SetDescription("There is no time limit for testing Seabird. With the purchase of a subscription, you receive extended support and help fund development.")
 	prefPage.Add(group)
 
 	action := adw.NewActionRow()
@@ -202,13 +202,13 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 			err = errors.New(http.StatusText(raw.HTTPResponse.StatusCode))
 			widget.ShowErrorDialog(w.ctx, "Could not activate license", err)
 		case res.Activated:
-			prefs := w.behavior.Preferences.Value()
+			prefs := w.Preferences.Value()
 			prefs.License = &api.License{
 				ID:        res.Instance.ID,
 				Key:       res.LicenseKey.Key,
 				ExpiresAt: res.LicenseKey.ExpiresAt,
 			}
-			w.behavior.Preferences.Update(prefs)
+			w.Preferences.Update(prefs)
 			w.toast.AddToast(adw.NewToast("License activated. Thank you!"))
 			w.nav.Pop()
 		default:
