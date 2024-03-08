@@ -48,7 +48,7 @@ func NewListHeader(ctx context.Context, b *behavior.ClusterBehavior, breakpoint 
 			widget.ShowErrorDialog(ctx, "Error loading editor", err)
 			return
 		}
-		editor.Show()
+		editor.Present()
 	})
 	header.PackEnd(createButton)
 

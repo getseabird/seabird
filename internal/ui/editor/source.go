@@ -69,11 +69,13 @@ func newSourcePage(ctx context.Context, gvk *schema.GroupVersionKind, object cli
 
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetChild(source)
-	scrolledWindow.SetSizeRequest(200, -1)
+	scrolledWindow.SetSizeRequest(500, -1)
 	paned.SetStartChild(scrolledWindow)
+	sw, _ := scrolledWindow.SizeRequest()
+	paned.SetPosition(sw)
 
 	nav := adw.NewNavigationView()
-	nav.SetSizeRequest(200, -1)
+	nav.SetSizeRequest(500, -1)
 	paned.SetEndChild(nav)
 
 	page := &sourcePage{
@@ -108,6 +110,8 @@ func newSourcePage(ctx context.Context, gvk *schema.GroupVersionKind, object cli
 			if page.gvk == nil || !util.GVKEquals(*page.gvk, gvk) {
 				page.updateKind(gvk)
 			}
+
+			page.object = obj
 		})
 
 		// TODO highlight errors in sourceview
@@ -151,7 +155,7 @@ func (page *sourcePage) updateKind(gvk schema.GroupVersionKind) error {
 		return errors.New("component schema not found")
 	}
 
-	page.nav.Replace([]*adw.NavigationPage{newDocumentationPage(page.schema, page.ref)})
+	page.nav.Replace([]*adw.NavigationPage{newDocumentationPage(page.schema, page.ref, nil)})
 
 	return nil
 }

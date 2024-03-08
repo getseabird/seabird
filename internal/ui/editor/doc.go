@@ -2,31 +2,53 @@ package editor
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getkin/kin-openapi/openapi3"
+	"golang.org/x/exp/maps"
 )
 
-func newDocumentationPage(t *openapi3.T, ref string) *adw.NavigationPage {
+func newDocumentationPage(t *openapi3.T, ref string, breadcrumbs []string) *adw.NavigationPage {
 	schema := resolveRef(t, ref)
 
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	page := adw.NewNavigationPage(content, refName(ref))
 
-	header := adw.NewHeaderBar()
-	header.AddCSSClass("flat")
-	header.SetShowStartTitleButtons(false)
-	header.SetShowEndTitleButtons(false)
-	content.Append(header)
-
 	prefs := adw.NewPreferencesPage()
 	content.Append(prefs)
 	group := adw.NewPreferencesGroup()
+
+	header := gtk.NewBox(gtk.OrientationHorizontal, 0)
+	header.AddCSSClass("linked")
+	header.SetMarginBottom(12)
+	group.FirstChild().(*gtk.Box).Prepend(header)
+	for i, b := range breadcrumbs {
+		btn := gtk.NewToggleButtonWithLabel(b)
+		btn.ConnectClicked(func() {
+			for range len(breadcrumbs) - i {
+				page.Parent().(*adw.NavigationView).Pop()
+			}
+		})
+		btn.FirstChild().(*gtk.Label).SetEllipsize(pango.EllipsizeEnd)
+		header.Append(btn)
+	}
+	title := gtk.NewToggleButtonWithLabel(page.Title())
+	title.SetActive(true)
+	title.ConnectClicked(func() { title.SetActive(true) })
+	title.FirstChild().(*gtk.Label).SetEllipsize(pango.EllipsizeEnd)
+	header.Append(title)
+
+	group.SetTitle(page.Title())
 	group.SetDescription(schema.Value.Description)
 	prefs.Add(group)
 
-	for prop, schema := range schema.Value.Properties {
+	keys := maps.Keys(schema.Value.Properties)
+	slices.Sort(keys)
+	for _, prop := range keys {
+		schema := schema.Value.Properties[prop]
 		var required bool
 		for _, r := range schema.Value.Required {
 			if prop == r {
@@ -56,7 +78,7 @@ func newDocumentationPage(t *openapi3.T, ref string) *adw.NavigationPage {
 			row.SetActivatable(true)
 			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 			row.ConnectActivated(func() {
-				page.Parent().(*adw.NavigationView).Push(newDocumentationPage(t, inner.Ref))
+				page.Parent().(*adw.NavigationView).Push(newDocumentationPage(t, inner.Ref, append(breadcrumbs, page.Title())))
 			})
 		}
 		title := fmt.Sprintf("%s %s", prop, vtype)

@@ -7,12 +7,14 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
+	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
+	"github.com/google/uuid"
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
@@ -27,14 +29,14 @@ type EditorWindow struct {
 	tabview *adw.TabView
 	toast   *adw.ToastOverlay
 	save    *gtk.Button
+	pages   map[*adw.TabPage]*sourcePage
 }
 
 func NewEditorWindow(ctx context.Context) *EditorWindow {
 	w := EditorWindow{
 		UniversalWindow: widget.NewUniversalWindow(),
+		pages:           map[*adw.TabPage]*sourcePage{},
 	}
-	w.SetTransientFor(ctxt.MustFrom[*gtk.Window](ctx))
-	w.SetModal(true)
 	w.SetDefaultSize(1000, 600)
 	w.SetTitle("Editor")
 
@@ -68,6 +70,16 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 	w.tabview = adw.NewTabView()
 	toolbar.SetContent(w.tabview)
 
+	w.tabview.ConnectClosePage(func(page *adw.TabPage) (ok bool) {
+		for p := range w.pages {
+			if p.Keyword() == page.Keyword() {
+				delete(w.pages, p)
+				break
+			}
+		}
+		return !gdk.EVENT_STOP
+	})
+
 	tabbar := adw.NewTabBar()
 	tabbar.SetView(w.tabview)
 	toolbar.AddTopBar(tabbar)
@@ -83,6 +95,17 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 }
 
 func (w *EditorWindow) AddPage(gvk *schema.GroupVersionKind, object client.Object) error {
+	if object != nil {
+		for tp, p := range w.pages {
+			if p.object == nil {
+				continue
+			}
+			if p.object.GetUID() == object.GetUID() {
+				w.tabview.SetSelectedPage(tp)
+				return nil
+			}
+		}
+	}
 	title := observer.NewProperty[string]("New Object")
 	page, err := newSourcePage(w.ctx, gvk, object, title)
 	if err != nil {
@@ -90,8 +113,10 @@ func (w *EditorWindow) AddPage(gvk *schema.GroupVersionKind, object client.Objec
 	}
 	tabpage := w.tabview.Append(page)
 	tabpage.SetTitle(title.Value())
+	tabpage.SetKeyword(uuid.NewString())
 	common.OnChange(w.ctx, title, tabpage.SetTitle)
 	w.tabview.SetSelectedPage(tabpage)
+	w.pages[tabpage] = page
 	return nil
 }
 

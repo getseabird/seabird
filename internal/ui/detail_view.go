@@ -87,7 +87,7 @@ func NewDetailView(ctx context.Context, behavior *behavior.DetailBehavior, edito
 		if err := d.editor.AddPage(&gvk, behavior.SelectedObject.Value()); err != nil {
 			widget.ShowErrorDialog(d.ctx, "Error loading editor", err)
 		} else {
-			d.editor.Show()
+			d.editor.Present()
 		}
 	})
 	header.PackEnd(edit)
