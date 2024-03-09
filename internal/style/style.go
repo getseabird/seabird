@@ -2,6 +2,7 @@ package style
 
 import (
 	"embed"
+	"os"
 	"runtime"
 
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
@@ -11,9 +12,32 @@ import (
 //go:embed *.css
 var fs embed.FS
 
-func Load() {
+type Style string
+
+const (
+	Darwin  Style = "darwin"
+	Windows Style = "windows"
+	GNOME   Style = "gnome"
+)
+
+func Get() Style {
+	if style := os.Getenv("SEABIRD_STYLE"); style != "" {
+		return Style(style)
+	}
+
 	switch runtime.GOOS {
 	case "darwin":
+		return Darwin
+	case "windows":
+		return Windows
+	default:
+		return GNOME
+	}
+}
+
+func Load() {
+	switch Get() {
+	case Darwin:
 		gtk.StyleContextAddProviderForDisplay(gdk.DisplayGetDefault(), getProvider("darwin.css"), gtk.STYLE_PROVIDER_PRIORITY_APPLICATION)
 		dark := getProvider("darwin-dark.css")
 		light := getProvider("darwin-light.css")
@@ -21,7 +45,7 @@ func Load() {
 		gtk.SettingsGetDefault().NotifyProperty("gtk-application-prefer-dark-theme", func() {
 			addProviderWithColors(dark, light)
 		})
-	case "windows":
+	case Windows:
 		dark := getProvider("windows-dark.css")
 		light := getProvider("windows-light.css")
 		addProviderWithColors(dark, light)

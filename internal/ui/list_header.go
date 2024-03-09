@@ -3,13 +3,13 @@ package ui
 import (
 	"context"
 	"fmt"
-	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
@@ -29,8 +29,8 @@ func NewListHeader(ctx context.Context, state *common.ClusterState, breakpoint *
 	header.AddCSSClass("flat")
 	header.SetShowEndTitleButtons(false)
 	header.SetShowStartTitleButtons(false)
-	switch runtime.GOOS {
-	case "darwin":
+	switch style.Get() {
+	case style.Darwin:
 		breakpoint.AddSetter(header, "show-start-title-buttons", true)
 	}
 

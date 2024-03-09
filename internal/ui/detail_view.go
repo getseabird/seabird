@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log"
-	"runtime"
 	"sort"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -14,6 +13,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
@@ -54,8 +54,8 @@ func NewDetailView(ctx context.Context, state *common.ClusterState, editor *edit
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
 	content.Append(header)
-	switch runtime.GOOS {
-	case "windows", "darwin":
+	switch style.Get() {
+	case style.Windows, style.Darwin:
 		header.SetShowStartTitleButtons(false)
 		header.SetShowEndTitleButtons(false)
 	}

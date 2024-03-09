@@ -4,7 +4,6 @@ import (
 	"context"
 	"log"
 	"os"
-	"runtime"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -25,10 +24,10 @@ type Application struct {
 func NewApplication(version string) (*Application, error) {
 	gtk.Init()
 
-	switch runtime.GOOS {
-	case "windows":
+	switch style.Get() {
+	case style.Windows:
 		os.Setenv("GTK_CSD", "0")
-	case "darwin":
+	case style.Darwin:
 		gtk.SettingsGetDefault().SetObjectProperty("gtk-decoration-layout", "close,minimize,maximize")
 	}
 

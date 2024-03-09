@@ -1,10 +1,9 @@
 package widget
 
 import (
-	"runtime"
-
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/getseabird/seabird/internal/style"
 )
 
 // Adwaita makes client side decorations mandatory, which causes some problems on the Windows platform
@@ -16,8 +15,8 @@ type UniversalApplicationWindow struct {
 }
 
 func NewUniversalApplicationWindow(app *gtk.Application) *UniversalApplicationWindow {
-	switch runtime.GOOS {
-	case "windows":
+	switch style.Get() {
+	case style.Windows:
 		w := gtk.NewApplicationWindow(app)
 		w.SetDecorated(true)
 		return &UniversalApplicationWindow{ApplicationWindow: w}

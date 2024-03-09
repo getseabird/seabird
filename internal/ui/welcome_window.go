@@ -6,7 +6,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"runtime"
 	"strings"
 
 	"github.com/NdoleStudio/lemonsqueezy-go"
@@ -16,6 +15,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
@@ -74,7 +74,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	w.nav.Add(adw.NewNavigationPage(box, ApplicationName))
 
-	if runtime.GOOS != "windows" {
+	if style.Get() != style.Windows {
 		header := gtk.NewHeaderBar()
 		box.Append(header)
 	}

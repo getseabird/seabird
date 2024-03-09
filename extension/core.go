@@ -3,13 +3,13 @@ package extension
 import (
 	"context"
 	"fmt"
-	"runtime"
 	"strconv"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	appsv1 "k8s.io/api/apps/v1"
@@ -312,7 +312,7 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 						})
 						row.AddRow(logs)
 
-						if runtime.GOOS != "windows" {
+						if style.Get() != style.Windows {
 							exec := adw.NewActionRow()
 							exec.SetActivatable(true)
 							exec.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))

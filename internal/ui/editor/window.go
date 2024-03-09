@@ -11,6 +11,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
@@ -59,6 +60,11 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 	content.Append(toolbar)
 
 	header := adw.NewHeaderBar()
+	switch style.Get() {
+	case style.Windows:
+		header.SetShowTitle(false)
+		header.SetShowEndTitleButtons(false)
+	}
 	toolbar.AddTopBar(header)
 
 	w.save = gtk.NewButton()

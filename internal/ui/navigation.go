@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"runtime"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -12,6 +11,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	appsv1 "k8s.io/api/apps/v1"
@@ -41,8 +41,8 @@ func NewNavigation(ctx context.Context, state *common.ClusterState) *Navigation 
 	title.AddCSSClass("heading")
 	header.SetTitleWidget(title)
 	header.SetShowEndTitleButtons(false)
-	switch runtime.GOOS {
-	case "darwin":
+	switch style.Get() {
+	case style.Darwin:
 	default:
 		header.SetShowStartTitleButtons(false)
 	}
