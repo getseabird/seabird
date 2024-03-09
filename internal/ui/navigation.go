@@ -157,17 +157,28 @@ func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox
 		}
 		row.SetName(string(json))
 		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
+		box.SetMarginTop(4)
+		box.SetMarginBottom(4)
 		box.Append(n.resIcon(gvr))
+		vbox := gtk.NewBox(gtk.OrientationVertical, 2)
+		vbox.SetVAlign(gtk.AlignCenter)
+		box.Append(vbox)
 		label := gtk.NewLabel(resource.Kind)
-		if len(resource.Kind) > 12 && len(resource.ShortNames) > 0 {
+		if len(resource.Kind) > 15 && len(resource.ShortNames) > 0 {
 			label.SetText(strings.ToUpper(resource.ShortNames[0]))
 		}
+		label.SetHAlign(gtk.AlignStart)
 		label.SetEllipsize(pango.EllipsizeEnd)
-		box.Append(label)
+		vbox.Append(label)
 		label = gtk.NewLabel(resource.Group)
+		if resource.Group == "" {
+			label.SetText("k8s.io")
+		}
+		label.SetHAlign(gtk.AlignStart)
+		label.AddCSSClass("caption")
 		label.AddCSSClass("dim-label")
 		label.SetEllipsize(pango.EllipsizeEnd)
-		box.Append(label)
+		vbox.Append(label)
 		row.SetChild(box)
 
 		// TODO add right click menu with an option to remove favourite
