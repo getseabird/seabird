@@ -43,6 +43,7 @@ func NewNavigation(ctx context.Context, state *common.ClusterState) *Navigation 
 	header.SetShowEndTitleButtons(false)
 	switch style.Get() {
 	case style.Darwin:
+		header.SetShowTitle(false)
 	default:
 		header.SetShowStartTitleButtons(false)
 	}

@@ -67,9 +67,8 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 	splitView := adw.NewOverlaySplitView()
 	splitView.SetEnableHideGesture(true)
 	splitView.SetEnableShowGesture(true)
-	splitView.SetMinSidebarWidth(150)
-	splitView.SetMaxSidebarWidth(200)
-	splitView.SetSidebarWidthFraction(0.1)
+	splitView.SetMinSidebarWidth(175)
+	splitView.SetMaxSidebarWidth(175)
 	w.toastOverlay.SetChild(splitView)
 
 	breakpoint := adw.NewBreakpoint(adw.BreakpointConditionParse("max-width: 1500sp"))

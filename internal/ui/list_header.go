@@ -109,7 +109,9 @@ func NewListHeader(ctx context.Context, state *common.ClusterState, breakpoint *
 	entry.SetObjectProperty("placeholder-text", state.ClusterPreferences.Value().Name)
 	placeholder := entry.FirstChild().(*gtk.Image).NextSibling().(*gtk.Text).FirstChild().(*gtk.Label)
 	placeholder.AddCSSClass("heading")
-	entry.SetObjectProperty("placeholder-text", "")
+	if style.Get() != style.Darwin {
+		entry.SetObjectProperty("placeholder-text", "")
+	}
 	breakpoint.AddSetter(entry, "placeholder-text", state.ClusterPreferences.Value().Name)
 
 	entry.SetMaxWidthChars(50)
