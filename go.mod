@@ -5,7 +5,7 @@ go 1.22.0
 replace github.com/diamondburned/gotk4/pkg => github.com/jgillich/gotk4/pkg v0.0.0-20240229122553-ce93f6c9ba91
 
 require (
-	github.com/NdoleStudio/lemonsqueezy-go v1.2.0
+	github.com/NdoleStudio/lemonsqueezy-go v1.2.1
 	github.com/adrg/strutil v0.3.1
 	github.com/creack/pty v1.1.21
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc
