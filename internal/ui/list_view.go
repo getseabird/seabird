@@ -13,7 +13,6 @@ import (
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/imkira/go-observer/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -27,7 +26,6 @@ type ListView struct {
 	columnView  *gtk.ColumnView
 	columns     []*gtk.ColumnViewColumn
 	columnType  *metav1.APIResource
-	selected    types.UID
 }
 
 func NewListView(ctx context.Context, state *common.ClusterState, header gtk.Widgetter) *ListView {
@@ -104,19 +102,14 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 			continue
 		}
 		l.getModel().Append(strconv.Itoa(i))
-		if o.GetUID() == l.selected {
-			l.selection.SetSelected(uint(i))
+		if selected := l.SelectedObject.Value(); selected != nil && o.GetUID() == selected.GetUID() {
+			l.selection.SetSelected(l.getModel().NItems() - 1)
 		}
 	}
 
-	if len(objects) > 0 {
-		if selected := l.selection.Selected(); selected == gtk.InvalidListPosition {
-			l.selection.SetSelected(0)
-			l.SelectedObject.Update(objects[0])
-		} else {
-			i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
-			l.SelectedObject.Update(objects[i])
-		}
+	if l.selection.Selected() != gtk.InvalidListPosition {
+		// SelectionChanged isn't triggered when calling SetSelected
+		l.selection.SelectionChanged(uint(l.selection.Selected()), 1)
 	} else {
 		l.SelectedObject.Update(nil)
 	}
@@ -130,12 +123,9 @@ func (l *ListView) onSearchFilterChange(filter common.SearchFilter) {
 		if filter.Test(object) {
 			list.Append(strconv.Itoa(i))
 		}
-		if object.GetUID() == l.selected {
-			l.selection.SetSelected(uint(i))
+		if selected := l.SelectedObject.Value(); selected != nil && object.GetUID() == selected.GetUID() {
+			l.selection.SetSelected(list.NItems() - 1)
 		}
-	}
-	if list.NItems() > 0 && l.selection.Selected() == gtk.InvalidListPosition {
-		l.selection.SetSelected(0)
 	}
 	if l.selection.Selected() != gtk.InvalidListPosition {
 		// SelectionChanged isn't triggered when calling SetSelected
@@ -205,7 +195,6 @@ func (l *ListView) createModel() *gtk.SingleSelection {
 		}
 		i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
 		obj := l.objects.Value()[i]
-		l.selected = obj.GetUID()
 		l.SelectedObject.Update(obj)
 	})
 
