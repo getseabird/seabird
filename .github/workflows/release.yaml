@@ -118,7 +118,8 @@ jobs:
 
           $exe = $project.FilesComponent.FindFileBySourcePath("${{ github.workspace }}\dist\seabird_windows_amd64_v1\seabird.exe")
           $shortcut = $project.ShortcutsComponent.CreateFileShortcut($project.PredefinedFolders.ShortcutFolder, $exe)
-          $shortcut.Target.Name = "Seabird"
+          $shortcut.Target.Name = "tmp.exe" # workaround "file already exists"
+          $shortcut.Target.Name = "Seabird.exe"
 
           $project.BuildComponent.Builds[0].OutputFolder = "${{ github.workspace }}\dist"
           $project.BuildComponent.Builds[0].PackageName = "seabird_windows_amd64"
