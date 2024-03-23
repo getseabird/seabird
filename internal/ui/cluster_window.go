@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -23,8 +24,9 @@ type ClusterWindow struct {
 	cancel       context.CancelFunc
 	navigation   *Navigation
 	listView     *ListView
-	detailView   *DetailView
+	objectView   *ObjectView
 	toastOverlay *adw.ToastOverlay
+	overlay      *adw.OverlaySplitView
 }
 
 func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.ClusterState) *ClusterWindow {
@@ -58,46 +60,39 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 
 	editor := editor.NewEditorWindow(ctx)
 
-	breakpointBin := adw.NewBreakpointBin()
-	breakpointBin.SetSizeRequest(800, 500)
 	w.toastOverlay = adw.NewToastOverlay()
-	breakpointBin.SetChild(w.toastOverlay)
-	w.SetContent(breakpointBin)
+	w.SetContent(w.toastOverlay)
 
-	splitView := adw.NewOverlaySplitView()
-	splitView.SetEnableHideGesture(true)
-	splitView.SetEnableShowGesture(true)
-	splitView.SetMinSidebarWidth(175)
-	splitView.SetMaxSidebarWidth(175)
-	w.toastOverlay.SetChild(splitView)
+	content := gtk.NewBox(gtk.OrientationHorizontal, 0)
+	w.toastOverlay.SetChild(content)
 
-	breakpoint := adw.NewBreakpoint(adw.BreakpointConditionParse("max-width: 1500sp"))
-	breakpoint.AddSetter(splitView, "collapsed", true)
-	breakpointBin.AddBreakpoint(breakpoint)
+	// replace split view with sheet dialog? in adw 1.5
+	// https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1-latest/class.Dialog.html
+	w.overlay = adw.NewOverlaySplitView()
+	w.overlay.SetEnableHideGesture(true)
+	w.overlay.SetEnableShowGesture(true)
+	w.overlay.SetCollapsed(true)
+	w.overlay.SetSidebarPosition(gtk.PackEnd)
+	w.overlay.NotifyProperty("show-sidebar", w.resizeOverlay)
 
-	rpane := gtk.NewPaned(gtk.OrientationHorizontal)
-	rpane.SetShrinkStartChild(false)
-	rpane.SetShrinkEndChild(false)
-	rpane.SetHExpand(true)
-	splitView.SetContent(rpane)
+	w.objectView = NewDetailView(ctx, w.ClusterState, editor)
+	objectViewNav := adw.NewNavigationView()
+	objectViewNav.Add(w.objectView.NavigationPage)
+	objectViewNav.SetHExpand(true)
+	objectViewNav.SetSizeRequest(400, 0)
+	w.overlay.SetSidebar(objectViewNav)
 
-	w.detailView = NewDetailView(ctx, w.ClusterState, editor)
-	nav := adw.NewNavigationView()
-	nav.Add(w.detailView.NavigationPage)
-	nav.SetSizeRequest(350, 350)
-	rpane.SetEndChild(nav)
-
-	listHeader := NewListHeader(ctx, w.ClusterState, breakpoint, func() { splitView.SetShowSidebar(true) }, editor)
-	w.listView = NewListView(ctx, w.ClusterState, listHeader)
-	rpane.SetStartChild(w.listView)
-	sw, _ := w.listView.SizeRequest()
-	rpane.SetPosition(sw)
+	listHeader := NewListHeader(ctx, w.ClusterState, editor)
+	w.listView = NewListView(ctx, w.ClusterState, listHeader, w.overlay)
+	w.overlay.SetContent(w.listView)
 
 	w.navigation = NewNavigation(ctx, w.ClusterState)
-	splitView.SetSidebar(w.navigation)
+	w.navigation.SetSizeRequest(250, 250)
+
+	content.Append(w.navigation)
+	content.Append(w.overlay)
 
 	w.createActions()
-
 	return &w
 }
 
@@ -146,4 +141,18 @@ func (w *ClusterWindow) createActions() {
 	actionGroup := gio.NewSimpleActionGroup()
 	actionGroup.AddAction(filterNamespace)
 	w.InsertActionGroup("list", actionGroup)
+}
+
+func (w *ClusterWindow) resizeOverlay() {
+	w.overlay.SetMaxSidebarWidth(float64(w.Width()-w.navigation.Width()) - 200)
+	// Workaround for lack of window resize signals
+	// could probably use size_allocate when subclassing is available
+	go func() {
+		time.Sleep(250 * time.Millisecond)
+		glib.IdleAdd(func() {
+			if w.overlay.ShowSidebar() {
+				w.resizeOverlay()
+			}
+		})
+	}()
 }

@@ -6,6 +6,7 @@ import (
 	"sort"
 	"strconv"
 
+	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
@@ -22,28 +23,38 @@ type ListView struct {
 	ctx         context.Context
 	watchCancel context.CancelFunc
 	objects     observer.Property[[]client.Object]
-	selection   *gtk.SingleSelection
+	model       *gtk.StringList
 	columnView  *gtk.ColumnView
 	columns     []*gtk.ColumnViewColumn
 	columnType  *metav1.APIResource
+	splitView   *adw.OverlaySplitView
 }
 
-func NewListView(ctx context.Context, state *common.ClusterState, header gtk.Widgetter) *ListView {
+func NewListView(ctx context.Context, state *common.ClusterState, header gtk.Widgetter, splitView *adw.OverlaySplitView) *ListView {
 	l := ListView{
 		ClusterState: state,
 		ctx:          ctx,
 		Box:          gtk.NewBox(gtk.OrientationVertical, 0),
 		objects:      observer.NewProperty[[]client.Object](nil),
+		splitView:    splitView,
 	}
 	l.AddCSSClass("view")
 	l.Append(header)
 
 	l.columnView = gtk.NewColumnView(nil)
-	l.selection = l.createModel()
-	l.columnView.SetModel(l.selection)
+	l.model = gtk.NewStringList([]string{})
+	l.columnView.SetModel(gtk.NewNoSelection(gtk.NewSortListModel(l.model, l.columnView.Sorter())))
+	l.columnView.SetSingleClickActivate(true)
 	l.columnView.SetMarginStart(16)
 	l.columnView.SetMarginEnd(16)
 	l.columnView.SetMarginBottom(16)
+
+	l.columnView.ConnectActivate(func(position uint) {
+		i, _ := strconv.Atoi(l.model.Item(position).Cast().(*gtk.StringObject).String())
+		obj := l.objects.Value()[i]
+		l.SelectedObject.Update(obj)
+		l.splitView.SetShowSidebar(true)
+	})
 
 	sw := gtk.NewScrolledWindow()
 	sw.SetHExpand(true)
@@ -71,6 +82,7 @@ func (l *ListView) onSelectedResourceChange(resource *metav1.APIResource) {
 	var ctx context.Context
 	ctx, l.watchCancel = context.WithCancel(l.ctx)
 	api.ObjectWatcher(ctx, resource, l.objects)
+	l.splitView.SetShowSidebar(false)
 }
 
 func (l *ListView) onObjectsChange(objects []client.Object) {
@@ -78,14 +90,10 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 	if resource == nil {
 		return
 	}
-	list := l.getModel()
-	list.Splice(0, list.NItems(), nil)
+	l.model.Splice(0, l.model.NItems(), nil)
 
 	if l.columnType == nil || !util.ResourceEquals(l.columnType, resource) {
 		l.columnType = resource
-
-		l.selection = l.createModel()
-		l.columnView.SetModel(l.selection)
 
 		for _, column := range l.columns {
 			l.columnView.RemoveColumn(column)
@@ -101,37 +109,17 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 		if !filter.Test(o) {
 			continue
 		}
-		l.getModel().Append(strconv.Itoa(i))
-		if selected := l.SelectedObject.Value(); selected != nil && o.GetUID() == selected.GetUID() {
-			l.selection.SetSelected(l.getModel().NItems() - 1)
-		}
+		l.model.Append(strconv.Itoa(i))
 	}
 
-	if l.selection.Selected() != gtk.InvalidListPosition {
-		// SelectionChanged isn't triggered when calling SetSelected
-		l.selection.SelectionChanged(uint(l.selection.Selected()), 1)
-	} else {
-		l.SelectedObject.Update(nil)
-	}
 }
 
 func (l *ListView) onSearchFilterChange(filter common.SearchFilter) {
-	list := l.getModel()
-	list.Splice(0, list.NItems(), nil)
-	l.selection.SetSelected(gtk.InvalidListPosition)
+	l.model.Splice(0, l.model.NItems(), nil)
 	for i, object := range l.objects.Value() {
 		if filter.Test(object) {
-			list.Append(strconv.Itoa(i))
+			l.model.Append(strconv.Itoa(i))
 		}
-		if selected := l.SelectedObject.Value(); selected != nil && object.GetUID() == selected.GetUID() {
-			l.selection.SetSelected(list.NItems() - 1)
-		}
-	}
-	if l.selection.Selected() != gtk.InvalidListPosition {
-		// SelectionChanged isn't triggered when calling SetSelected
-		l.selection.SelectionChanged(uint(l.selection.Selected()), 1)
-	} else {
-		l.SelectedObject.Update(nil)
 	}
 }
 
@@ -163,7 +151,6 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 					return
 				}
 			}
-
 			col.Bind(listitem, object)
 		})
 		column := gtk.NewColumnViewColumn(col.Name, &factory.ListItemFactory)
@@ -183,24 +170,4 @@ func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
 	}
 
 	return gtkColumns
-}
-
-func (l *ListView) createModel() *gtk.SingleSelection {
-	model := gtk.NewSortListModel(gtk.NewStringList([]string{}), l.columnView.Sorter())
-	selection := gtk.NewSingleSelection(model)
-	selection.ConnectSelectionChanged(func(_, _ uint) {
-		selected := l.selection.Selected()
-		if selected == gtk.InvalidListPosition {
-			return
-		}
-		i, _ := strconv.Atoi(l.selection.ListModel.Item(selected).Cast().(*gtk.StringObject).String())
-		obj := l.objects.Value()[i]
-		l.SelectedObject.Update(obj)
-	})
-
-	return selection
-}
-
-func (l *ListView) getModel() *gtk.StringList {
-	return l.selection.Model().Cast().(*gtk.SortListModel).Model().Cast().(*gtk.StringList)
 }
