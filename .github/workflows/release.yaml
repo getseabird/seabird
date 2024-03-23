@@ -110,17 +110,22 @@ jobs:
       - name: Use Advinst Automation
         shell: pwsh
         run: |
-          $aip = join-path $env:GITHUB_WORKSPACE "build\windows\installer.aip"
           $advinst = new-object -com advancedinstaller
+
+          $aip = join-path $env:GITHUB_WORKSPACE "build\windows\installer.aip"
           $project = $advinst.LoadProject($aip)
           $project.FilesComponent.AddFolderContent($project.PredefinedFolders.ApplicationFolder, "${{ github.workspace }}\dist\seabird_windows_amd64_v1")
+
           $exe = $project.FilesComponent.FindFileBySourcePath("${{ github.workspace }}\dist\seabird_windows_amd64_v1\seabird.exe")
-          $project.ShortcutsComponent.CreateFileShortcut($project.PredefinedFolders.ShortcutFolder, $exe)
+          $shortcut = $project.ShortcutsComponent.CreateFileShortcut($project.PredefinedFolders.ShortcutFolder, $exe)
+          $shortcut.Target.Name = "Seabird.exe"
+
           $project.BuildComponent.Builds[0].OutputFolder = "${{ github.workspace }}\dist"
           $project.BuildComponent.Builds[0].PackageName = "seabird_windows_amd64"
           $tag = git describe --tags --abbrev=0
           $project.ProductDetails.Version = $tag.replace('v', '')
           $project.ProductDetails.ProductCode.GenerateAll()
+
           $project.Build()
       - uses: actions/upload-artifact@v4
         with:
