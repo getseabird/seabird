@@ -23,7 +23,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type DetailView struct {
+type ObjectView struct {
 	*adw.NavigationPage
 	*common.ClusterState
 	ctx          context.Context
@@ -35,10 +35,10 @@ type DetailView struct {
 	editor       *editor.EditorWindow
 }
 
-func NewDetailView(ctx context.Context, state *common.ClusterState, editor *editor.EditorWindow) *DetailView {
+func NewDetailView(ctx context.Context, state *common.ClusterState, editor *editor.EditorWindow) *ObjectView {
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
 	content.AddCSSClass("background")
-	d := DetailView{
+	d := ObjectView{
 		NavigationPage: adw.NewNavigationPage(content, "Object"),
 		ClusterState:   state,
 		prefPage:       adw.NewPreferencesPage(),
@@ -61,7 +61,7 @@ func NewDetailView(ctx context.Context, state *common.ClusterState, editor *edit
 	}
 
 	delete := gtk.NewButton()
-	delete.SetIconName("edit-delete-symbolic")
+	delete.SetIconName("user-trash-symbolic")
 	delete.SetTooltipText("Delete")
 	delete.ConnectClicked(func() {
 		selected := d.SelectedObject.Value()
@@ -142,7 +142,7 @@ func NewDetailView(ctx context.Context, state *common.ClusterState, editor *edit
 	return &d
 }
 
-func (d *DetailView) updateProperties(properties []api.Property) {
+func (d *ObjectView) updateProperties(properties []api.Property) {
 	for _, g := range d.groups {
 		d.prefPage.Remove(g)
 	}
@@ -155,7 +155,7 @@ func (d *DetailView) updateProperties(properties []api.Property) {
 	}
 }
 
-func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) gtk.Widgetter {
+func (d *ObjectView) renderObjectProperty(level, index int, prop api.Property) gtk.Widgetter {
 	switch prop := prop.(type) {
 	case *api.TextProperty:
 		switch level {
@@ -294,7 +294,7 @@ func (d *DetailView) renderObjectProperty(level, index int, prop api.Property) g
 	return nil
 }
 
-func (d *DetailView) createSource() *gtk.ScrolledWindow {
+func (d *ObjectView) createSource() *gtk.ScrolledWindow {
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetVExpand(true)
 
@@ -311,6 +311,6 @@ func (d *DetailView) createSource() *gtk.ScrolledWindow {
 	return scrolledWindow
 }
 
-func (d *DetailView) setSourceColorScheme() {
+func (d *ObjectView) setSourceColorScheme() {
 	util.SetSourceColorScheme(d.sourceBuffer)
 }

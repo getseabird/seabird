@@ -24,23 +24,14 @@ type ListHeader struct {
 	*common.ClusterState
 }
 
-func NewListHeader(ctx context.Context, state *common.ClusterState, breakpoint *adw.Breakpoint, showSidebar func(), editor *editor.EditorWindow) *ListHeader {
+func NewListHeader(ctx context.Context, state *common.ClusterState, editor *editor.EditorWindow) *ListHeader {
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
-	header.SetShowEndTitleButtons(false)
 	header.SetShowStartTitleButtons(false)
 	switch style.Get() {
-	case style.Darwin:
-		breakpoint.AddSetter(header, "show-start-title-buttons", true)
+	case style.Windows:
+		header.SetShowEndTitleButtons(false)
 	}
-
-	sidebarButton := gtk.NewButton()
-	sidebarButton.SetIconName("sidebar-show-symbolic")
-	sidebarButton.SetVisible(false)
-	sidebarButton.ConnectClicked(showSidebar)
-	sidebarButton.SetTooltipText("Show Sidebar")
-	header.PackStart(sidebarButton)
-	breakpoint.AddSetter(sidebarButton, "visible", true)
 
 	createButton := gtk.NewButton()
 	createButton.SetIconName("document-new-symbolic")
@@ -54,10 +45,12 @@ func NewListHeader(ctx context.Context, state *common.ClusterState, breakpoint *
 		}
 		editor.Present()
 	})
-	header.PackEnd(createButton)
+	header.PackStart(createButton)
 
 	box := gtk.NewBox(gtk.OrientationHorizontal, 0)
 	box.AddCSSClass("linked")
+	box.SetMarginStart(32)
+	box.SetMarginEnd(32)
 	header.SetTitleWidget(box)
 
 	// TODO expression triggers G_IS_OBJECT (object) assertion fails
@@ -106,15 +99,7 @@ func NewListHeader(ctx context.Context, state *common.ClusterState, breakpoint *
 	box.Append(kind)
 
 	entry := gtk.NewSearchEntry()
-	entry.SetObjectProperty("placeholder-text", state.ClusterPreferences.Value().Name)
-	placeholder := entry.FirstChild().(*gtk.Image).NextSibling().(*gtk.Text).FirstChild().(*gtk.Label)
-	placeholder.AddCSSClass("heading")
-	if style.Get() != style.Darwin {
-		entry.SetObjectProperty("placeholder-text", "")
-	}
-	breakpoint.AddSetter(entry, "placeholder-text", state.ClusterPreferences.Value().Name)
-
-	entry.SetMaxWidthChars(50)
+	entry.SetMaxWidthChars(75)
 	box.Append(entry)
 	entry.ConnectChanged(func() {
 		if entry.Text() != state.SearchText.Value() {

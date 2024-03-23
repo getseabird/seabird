@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"log"
-	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -165,9 +164,6 @@ func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox
 		vbox.SetVAlign(gtk.AlignCenter)
 		box.Append(vbox)
 		label := gtk.NewLabel(resource.Kind)
-		if len(resource.Kind) > 15 && len(resource.ShortNames) > 0 {
-			label.SetText(strings.ToUpper(resource.ShortNames[0]))
-		}
 		label.SetHAlign(gtk.AlignStart)
 		label.SetEllipsize(pango.EllipsizeEnd)
 		vbox.Append(label)
