@@ -115,7 +115,7 @@ jobs:
           $project = $advinst.LoadProject($aip)
           $project.FilesComponent.AddFolderContent($project.PredefinedFolders.ApplicationFolder, "${{ github.workspace }}\dist\seabird_windows_amd64_v1")
           $exe = $project.FilesComponent.FindFileBySourcePath("${{ github.workspace }}\dist\seabird_windows_amd64_v1\seabird.exe")
-          $project.ShortcutComponent.CreateFileShorcut($project.PredefinedFolders.ShortcutFolder, $exe)
+          $project.ShortcutsComponent.CreateFileShorcut($project.PredefinedFolders.ShortcutFolder, $exe)
           $project.BuildComponent.Builds[0].OutputFolder = "${{ github.workspace }}\dist"
           $project.BuildComponent.Builds[0].PackageName = "seabird_windows_amd64"
           $tag = git describe --tags --abbrev=0
