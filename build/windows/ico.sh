@@ -1,6 +1,4 @@
 #!/bin/bash
-for size in 16 32 48 128 256; do
-    flatpak run org.inkscape.Inkscape -o $size.png -w $size -h $size ../../icon/seabird.svg
-done
-convert 16.png 32.png 48.png 128.png 256.png -colors 256 icon.ico
+flatpak run org.inkscape.Inkscape -o 256.png -w 256 -h 256 ../../internal/icon/seabird.svg
+convert -define icon:auto-resize=256,96,48,32,24,16 256.png -colors 256 icon.ico
 rm *.png
