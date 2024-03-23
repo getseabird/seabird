@@ -171,6 +171,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: stable
+          # TODO cache causes build failures when dependencies update
+          # https://github.com/getseabird/seabird/actions/runs/8399899927/job/23006582810
+          cache: false
       - name: Install dependencies
         run: |
           brew install --force --overwrite gtk4 pkg-config gobject-introspection gtksourceview5 libadwaita hicolor-icon-theme adwaita-icon-theme create-dmg dylibbundler vte3 || true # https://github.com/actions/setup-python/issues/577
