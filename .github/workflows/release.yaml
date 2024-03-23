@@ -118,6 +118,7 @@ jobs:
 
           $exe = $project.FilesComponent.FindFileBySourcePath("${{ github.workspace }}\dist\seabird_windows_amd64_v1\seabird.exe")
           $shortcut = $project.ShortcutsComponent.CreateFileShortcut($project.PredefinedFolders.ShortcutFolder, $exe)
+          $shortcut.Name = "tmp" # Can't rename from lowercase: "A file with the same name already exists in this folder"
           $shortcut.Name = "Seabird"
 
           $project.BuildComponent.Builds[0].OutputFolder = "${{ github.workspace }}\dist"
