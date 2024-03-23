@@ -173,6 +173,10 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 	navPage := adw.NewNavigationPage(content, "Purchase Seabird")
 
 	header := adw.NewHeaderBar()
+	switch style.Get() {
+	case style.Windows:
+		header.SetShowEndTitleButtons(false)
+	}
 	content.Append(header)
 
 	prefPage := adw.NewPreferencesPage()
