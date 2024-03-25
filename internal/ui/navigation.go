@@ -3,10 +3,15 @@ package ui
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
+	"slices"
+	"strconv"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
+	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
@@ -19,7 +24,6 @@ import (
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
-	"k8s.io/utils/ptr"
 )
 
 type Navigation struct {
@@ -32,7 +36,7 @@ type Navigation struct {
 func NewNavigation(ctx context.Context, state *common.ClusterState) *Navigation {
 	n := &Navigation{ToolbarView: adw.NewToolbarView(), ClusterState: state}
 	n.SetVExpand(true)
-	n.AddCSSClass("background")
+	n.AddCSSClass("sidebar-pane")
 
 	header := adw.NewHeaderBar()
 	title := gtk.NewLabel(n.ClusterPreferences.Value().Name)
@@ -74,46 +78,69 @@ func NewNavigation(ctx context.Context, state *common.ClusterState) *Navigation 
 	sw.SetChild(content)
 	n.SetContent(sw)
 
-	favouritesBin := adw.NewBin()
-	favouritesBin.SetVExpand(false)
-	content.Append(favouritesBin)
-	addFavouriteBin := adw.NewBin()
-	content.Append(addFavouriteBin)
+	listBin := adw.NewBin()
+	listBin.SetVExpand(false)
+	content.Append(listBin)
 
 	common.OnChange(ctx, n.ClusterPreferences, func(prefs api.ClusterPreferences) {
-		favouritesBin.SetChild(n.createFavourites(prefs))
+		listBin.SetChild(n.createList(prefs))
 	})
 
-	common.OnChange(ctx, n.SelectedResource, func(res *metav1.APIResource) {
-		if res == nil {
-			return
-		}
-		var idx *int
-		for i, r := range n.ClusterPreferences.Value().Navigation.Favourites {
-			if util.ResourceGVR(res).String() == r.String() {
-				idx = ptr.To(i)
-				break
-			}
-		}
-		if idx != nil {
-			n.list.SelectRow(n.rows[*idx])
-			addFavouriteBin.SetChild(nil)
-		} else {
-			n.list.SelectRow(nil)
-			addFavouriteBin.SetChild(n.createAddFavourite(res))
-		}
-	})
-
-	favouritesBin.SetChild(n.createFavourites(n.ClusterPreferences.Value()))
+	listBin.SetChild(n.createList(n.ClusterPreferences.Value()))
 	if len(n.rows) > 0 {
 		n.list.SelectRow(n.rows[0])
 	}
 
+	// TODO actions should be able to use "u" for uint but I can't get it to work
+	actionGroup := gio.NewSimpleActionGroup()
+	pin := gio.NewSimpleAction("pin", glib.NewVariantType("s"))
+	pin.ConnectActivate(func(idx *glib.Variant) {
+		id, _ := strconv.Atoi(idx.String())
+		prefs := n.ClusterPreferences.Value()
+		prefs.Navigation.Favourites = append(prefs.Navigation.Favourites, util.ResourceGVR(&n.Resources[id]))
+		n.ClusterPreferences.Update(prefs)
+	})
+	actionGroup.AddAction(pin)
+	unpin := gio.NewSimpleAction("unpin", glib.NewVariantType("s"))
+	unpin.ConnectActivate(func(idx *glib.Variant) {
+		id, _ := strconv.Atoi(idx.String())
+		prefs := n.ClusterPreferences.Value()
+		for i, f := range prefs.Navigation.Favourites {
+			if util.GVREquals(f, util.ResourceGVR(&n.Resources[id])) {
+				prefs.Navigation.Favourites = slices.Delete(prefs.Navigation.Favourites, i, i+1)
+				n.ClusterPreferences.Update(prefs)
+				break
+			}
+		}
+	})
+	actionGroup.AddAction(unpin)
+	n.InsertActionGroup("navigation", actionGroup)
+
 	return n
 }
 
-func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox {
+func (n *Navigation) createList(prefs api.ClusterPreferences) *gtk.ListBox {
 	n.list = gtk.NewListBox()
+	n.list.SetHeaderFunc(func(row, before *gtk.ListBoxRow) {
+		switch {
+		case row.Index() == 0:
+			label := gtk.NewLabel("Favourites")
+			label.AddCSSClass("caption-heading")
+			label.SetHAlign(gtk.AlignStart)
+			r := gtk.NewListBoxRow()
+			r.SetChild(label)
+			r.SetSensitive(false)
+			row.SetHeader(r)
+		case row.Index() == len(prefs.Navigation.Favourites):
+			label := gtk.NewLabel("Resources")
+			label.AddCSSClass("caption-heading")
+			label.SetHAlign(gtk.AlignStart)
+			r := gtk.NewListBoxRow()
+			r.SetChild(label)
+			r.SetSensitive(false)
+			row.SetHeader(r)
+		}
+	})
 	n.list.AddCSSClass("dim-label")
 	n.list.AddCSSClass("navigation-sidebar")
 	n.list.ConnectRowSelected(func(row *gtk.ListBoxRow) {
@@ -125,7 +152,6 @@ func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox
 			log.Printf("failed to unmarshal gvr: %v", err)
 			return
 		}
-
 		for _, res := range n.Resources {
 			if util.GVREquals(util.ResourceGVR(&res), gvr) && !util.ResourceEquals(n.SelectedResource.Value(), &res) {
 				n.SelectedResource.Update(&res)
@@ -136,96 +162,81 @@ func (n *Navigation) createFavourites(prefs api.ClusterPreferences) *gtk.ListBox
 
 	n.rows = nil
 
-	for _, gvr := range prefs.Navigation.Favourites {
-		var resource *metav1.APIResource
-		for _, r := range n.Resources {
-			if r.Group == gvr.Group && r.Version == gvr.Version && r.Name == gvr.Resource {
-				resource = &r
-				break
+	var favs int
+	for i, resource := range n.Resources {
+		var fav bool
+		for _, f := range prefs.Navigation.Favourites {
+			if util.GVREquals(f, util.ResourceGVR(&resource)) {
+				favs++
+				fav = true
 			}
 		}
-		if resource == nil {
-			log.Printf("ignoring unknown resource %s", gvr.String())
-			n.rows = append(n.rows, nil)
-			continue
+		row := createResourceRow(&resource, i, fav)
+		if fav && len(n.rows) > 0 {
+			n.rows = slices.Insert(n.rows, favs-1, row)
+		} else {
+			n.rows = append(n.rows, row)
 		}
+	}
 
-		row := gtk.NewListBoxRow()
-		json, err := json.Marshal(gvr)
-		if err != nil {
-			panic(err)
-		}
-		row.SetName(string(json))
-		box := gtk.NewBox(gtk.OrientationHorizontal, 8)
-		box.SetMarginTop(4)
-		box.SetMarginBottom(4)
-		box.Append(n.resIcon(gvr))
-		vbox := gtk.NewBox(gtk.OrientationVertical, 2)
-		vbox.SetVAlign(gtk.AlignCenter)
-		box.Append(vbox)
-		label := gtk.NewLabel(resource.Kind)
-		label.SetHAlign(gtk.AlignStart)
-		label.SetEllipsize(pango.EllipsizeEnd)
-		vbox.Append(label)
-		label = gtk.NewLabel(resource.Group)
-		if resource.Group == "" {
-			label.SetText("k8s.io")
-		}
-		label.SetHAlign(gtk.AlignStart)
-		label.AddCSSClass("caption")
-		label.AddCSSClass("dim-label")
-		label.SetEllipsize(pango.EllipsizeEnd)
-		vbox.Append(label)
-		row.SetChild(box)
-
-		// TODO add right click menu with an option to remove favourite
-		// gesture := gtk.NewGestureClick()
-		// gesture.SetButton(gdk.BUTTON_SECONDARY)
-		// gesture.ConnectPressed(func(nPress int, x, y float64) {
-		// 	log.Printf("pressed")
-		// 	// model := gtk.NewStringList([]string{})
-		// 	popover := gtk.NewPopoverMenuFromModel(nil)
-		// 	popover.SetChild(gtk.NewLabel("popover"))
-		// 	row.FirstChild().(*gtk.Box).Append(popover)
-		// 	popover.Show()
-		// })
-		// row.AddController(gesture)
-
+	for _, row := range n.rows {
 		n.list.Append(row)
-		n.rows = append(n.rows, row)
-
-		if res := n.SelectedResource.Value(); res != nil && util.GVREquals(util.ResourceGVR(res), gvr) {
-			n.list.SelectRow(row)
-		}
 	}
 
 	return n.list
 }
 
-func (n *Navigation) createAddFavourite(res *metav1.APIResource) *gtk.Box {
-	content := gtk.NewBox(gtk.OrientationVertical, 0)
-	content.Append(gtk.NewSeparator(gtk.OrientationHorizontal))
-	list := gtk.NewListBox()
-	list.AddCSSClass("dim-label")
-	list.AddCSSClass("navigation-sidebar")
+func createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.ListBoxRow {
+	gvr := util.ResourceGVR(resource)
+
 	row := gtk.NewListBoxRow()
-	row.AddCSSClass("accent")
+	json, err := json.Marshal(gvr)
+	if err != nil {
+		panic(err)
+	}
+	row.SetName(string(json))
 	box := gtk.NewBox(gtk.OrientationHorizontal, 8)
-	box.Append(gtk.NewImageFromIconName("list-add"))
-	box.Append(gtk.NewLabel(res.Kind))
+	box.SetMarginTop(4)
+	box.SetMarginBottom(4)
+	box.Append(resourceImage(gvr))
+	vbox := gtk.NewBox(gtk.OrientationVertical, 2)
+	vbox.SetVAlign(gtk.AlignCenter)
+	box.Append(vbox)
+	label := gtk.NewLabel(resource.Kind)
+	label.SetHAlign(gtk.AlignStart)
+	label.SetEllipsize(pango.EllipsizeEnd)
+	vbox.Append(label)
+	label = gtk.NewLabel(resource.Group)
+	if resource.Group == "" {
+		label.SetText("k8s.io")
+	}
+	label.SetHAlign(gtk.AlignStart)
+	label.AddCSSClass("caption")
+	label.AddCSSClass("dim-label")
+	label.SetEllipsize(pango.EllipsizeEnd)
+	vbox.Append(label)
 	row.SetChild(box)
-	list.Append(row)
-	list.ConnectRowSelected(func(row *gtk.ListBoxRow) {
-		v := n.ClusterPreferences.Value()
-		v.Navigation.Favourites = append(v.Navigation.Favourites, util.ResourceGVR(res))
-		n.ClusterPreferences.Update(v)
-		content.Hide()
+
+	gesture := gtk.NewGestureClick()
+	gesture.SetButton(gdk.BUTTON_SECONDARY)
+	gesture.ConnectPressed(func(nPress int, x, y float64) {
+		menu := gio.NewMenu()
+		if fav {
+			menu.Append("Move to Resources", fmt.Sprintf("navigation.unpin('%d')", idx))
+		} else {
+			menu.Append("Move to Favourites", fmt.Sprintf("navigation.pin('%d')", idx))
+		}
+		popover := gtk.NewPopoverMenuFromModel(menu)
+		popover.SetHasArrow(false)
+		row.FirstChild().(*gtk.Box).Append(popover)
+		popover.Show()
 	})
-	content.Append(list)
-	return content
+	row.AddController(gesture)
+
+	return row
 }
 
-func (n *Navigation) resIcon(gvk schema.GroupVersionResource) *gtk.Image {
+func resourceImage(gvk schema.GroupVersionResource) *gtk.Image {
 	switch gvk.Group {
 	case corev1.GroupName:
 		{

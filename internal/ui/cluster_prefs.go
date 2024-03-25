@@ -33,7 +33,6 @@ type ClusterPrefPage struct {
 	exec       *adw.ActionRow
 	readonly   *adw.SwitchRow
 	execDelete *gtk.Button
-	favourites *adw.Bin
 	actions    *adw.Bin
 }
 
@@ -57,7 +56,6 @@ func NewClusterPrefPage(ctx context.Context, state *common.State, prefs observer
 
 	common.OnChange(ctx, p.prefs, func(prefs api.ClusterPreferences) {
 		p.updateValues(prefs)
-		p.favourites.SetChild(p.createFavourites())
 		p.actions.SetChild(p.createActions())
 	})
 
@@ -109,110 +107,13 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 
 	p.updateValues(p.prefs.Value())
 
-	p.favourites = adw.NewBin()
-	p.favourites.SetChild(p.createFavourites())
-	group := adw.NewPreferencesGroup()
-	group.Add(p.favourites)
-	if util.Index(p.Preferences.Value().Clusters, p.prefs) >= 0 {
-		page.Add(group)
-	}
-
 	p.actions = adw.NewBin()
 	p.actions.SetChild(p.createActions())
-	group = adw.NewPreferencesGroup()
+	group := adw.NewPreferencesGroup()
 	group.Add(p.actions)
 	page.Add(group)
 
 	return page
-}
-
-func (p *ClusterPrefPage) createFavourites() *adw.PreferencesGroup {
-	group := adw.NewPreferencesGroup()
-	group.SetTitle("Favourites")
-	group.SetHeaderSuffix(p.createFavouritesAddButton())
-
-	for i, fav := range p.prefs.Value().Navigation.Favourites {
-		idx := i
-		row := adw.NewActionRow()
-		row.AddCSSClass("property")
-		if fav.Group == "" {
-			row.SetTitle(fav.Version)
-		} else {
-			row.SetTitle(fmt.Sprintf("%s/%s", fav.Group, fav.Version))
-		}
-		row.SetSubtitle(fav.Resource)
-
-		remove := gtk.NewButton()
-		remove.AddCSSClass("flat")
-		remove.SetIconName("user-trash-symbolic")
-		remove.ConnectClicked(func() {
-			v := p.prefs.Value()
-			v.Navigation.Favourites = append(p.prefs.Value().Navigation.Favourites[:idx], p.prefs.Value().Navigation.Favourites[idx+1:]...)
-			p.prefs.Update(v)
-		})
-		row.AddSuffix(remove)
-		group.Add(row)
-	}
-
-	return group
-}
-
-func (p *ClusterPrefPage) createFavouritesAddButton() *gtk.Button {
-	button := gtk.NewButton()
-	button.AddCSSClass("flat")
-	button.SetIconName("list-add")
-	button.ConnectClicked(func() {
-		content := gtk.NewBox(gtk.OrientationVertical, 0)
-		page := adw.NewNavigationPage(content, "Add Resource")
-		p.Parent().(*adw.NavigationView).Push(page)
-
-		header := adw.NewHeaderBar()
-		header.SetShowEndTitleButtons(false)
-		content.Append(header)
-
-		group := adw.NewPreferencesGroup()
-		group.SetTitle("Select Resource")
-		pp := adw.NewPreferencesPage()
-		pp.SetVExpand(true)
-		pp.Add(group)
-		sw := gtk.NewScrolledWindow()
-		sw.SetChild(pp)
-		content.Append(sw)
-
-		cluster, _ := p.NewClusterState(p.ctx, p.prefs)
-		for _, r := range cluster.Resources {
-			res := r
-			exists := false
-			for _, fav := range p.prefs.Value().Navigation.Favourites {
-				if util.ResourceGVR(&res).String() == fav.String() {
-					exists = true
-				}
-			}
-			if exists {
-				continue
-			}
-
-			row := adw.NewActionRow()
-			row.AddCSSClass("property")
-			if res.Group == "" {
-				row.SetTitle(res.Version)
-			} else {
-				row.SetTitle(fmt.Sprintf("%s/%s", res.Group, res.Version))
-			}
-			row.SetSubtitle(res.Name)
-			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-			row.SetActivatable(true)
-			row.ConnectActivated(func() {
-				v := p.prefs.Value()
-				v.Navigation.Favourites = append(p.prefs.Value().Navigation.Favourites, util.ResourceGVR(&res))
-				p.prefs.Update(v)
-				p.Parent().(*adw.NavigationView).Pop()
-			})
-			group.Add(row)
-		}
-	})
-
-	return button
 }
 
 func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
