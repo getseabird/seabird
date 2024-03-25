@@ -42,7 +42,7 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 	}
 	w.SetIconName("seabird")
 	w.SetTitle(fmt.Sprintf("%s - %s", w.ClusterPreferences.Value().Name, ApplicationName))
-	w.SetDefaultSize(1280, 720)
+	w.SetDefaultSize(1000, 600)
 
 	var h glib.SignalHandle
 	h = w.ConnectCloseRequest(func() bool {

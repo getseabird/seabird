@@ -7,7 +7,6 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
@@ -15,8 +14,6 @@ import (
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	corev1 "k8s.io/api/core/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
 type ListHeader struct {
@@ -53,51 +50,6 @@ func NewListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	box.SetMarginEnd(32)
 	header.SetTitleWidget(box)
 
-	// TODO expression triggers G_IS_OBJECT (object) assertion fails
-	kind := gtk.NewDropDown(gtk.NewStringList([]string{}), gtk.NewPropertyExpression(gtk.GTypeStringObject, nil, "string"))
-	kind.SetEnableSearch(true)
-	kind.AddCSSClass("kind-dropdown")
-	factory := gtk.NewSignalListItemFactory()
-	factory.ConnectSetup(func(listitem *gtk.ListItem) {
-		box := gtk.NewBox(gtk.OrientationVertical, 0)
-		label := gtk.NewLabel("")
-		label.AddCSSClass("caption-heading")
-		label.SetHAlign(gtk.AlignStart)
-		box.Append(label)
-		label = gtk.NewLabel("")
-		label.AddCSSClass("caption")
-		label.AddCSSClass("dim-label")
-		label.SetHAlign(gtk.AlignStart)
-		label.SetEllipsize(pango.EllipsizeEnd)
-		box.Append(label)
-		listitem.SetChild(box)
-	})
-	factory.ConnectBind(func(listitem *gtk.ListItem) {
-		str := listitem.Item().Cast().(*gtk.StringObject).String()
-		gk := schema.ParseGroupKind(str)
-		label := listitem.Child().(*gtk.Box).FirstChild().(*gtk.Label)
-		label.SetText(gk.Kind)
-		if gk.Group == "" {
-			gk.Group = "k8s.io"
-		}
-		label.NextSibling().(*gtk.Label).SetText(gk.Group)
-	})
-	factory.ConnectTeardown(func(listitem *gtk.ListItem) {
-		listitem.SetChild(nil)
-	})
-	kind.SetFactory(&factory.ListItemFactory)
-
-	for _, r := range state.Resources {
-		kind.Model().Cast().(*gtk.StringList).Append(schema.GroupKind{Group: r.Group, Kind: r.Kind}.String())
-	}
-	kind.Connect("notify::selected-item", func() {
-		res := state.Resources[kind.Selected()]
-		if !util.ResourceEquals(state.SelectedResource.Value(), &res) {
-			state.SelectedResource.Update(&res)
-		}
-	})
-	box.Append(kind)
-
 	entry := gtk.NewSearchEntry()
 	entry.SetMaxWidthChars(75)
 	box.Append(entry)
@@ -130,17 +82,6 @@ func NewListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 
 	entry.ConnectSearchChanged(func() {
 		state.SearchFilter.Update(common.NewSearchFilter(entry.Text()))
-	})
-
-	common.OnChange(ctx, state.SelectedResource, func(res *metav1.APIResource) {
-		var idx uint
-		for i, r := range state.Resources {
-			if util.ResourceEquals(&r, res) {
-				idx = uint(i)
-				break
-			}
-		}
-		kind.SetSelected(idx)
 	})
 
 	common.OnChange(ctx, state.ClusterPreferences, func(prefs api.ClusterPreferences) {
