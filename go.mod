@@ -5,7 +5,7 @@ go 1.22.0
 replace github.com/diamondburned/gotk4/pkg => github.com/jgillich/gotk4/pkg v0.0.0-20240229122553-ce93f6c9ba91
 
 require (
-	github.com/NdoleStudio/lemonsqueezy-go v1.2.1
+	github.com/NdoleStudio/lemonsqueezy-go v1.2.2
 	github.com/adrg/strutil v0.3.1
 	github.com/creack/pty v1.1.21
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc
@@ -26,7 +26,6 @@ require (
 	k8s.io/apimachinery v0.29.3
 	k8s.io/client-go v0.29.3
 	k8s.io/metrics v0.29.3
-	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	nhooyr.io/websocket v1.8.10
 	sigs.k8s.io/controller-runtime v0.17.2
 )
@@ -74,6 +73,7 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240209001042-7a0d5b415232 // indirect
+	k8s.io/utils v0.0.0-20240102154912-e7106e64919e // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect
