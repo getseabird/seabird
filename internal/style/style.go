@@ -35,6 +35,16 @@ func Get() Style {
 	}
 }
 
+func Eq(styles ...Style) bool {
+	s := Get()
+	for _, style := range styles {
+		if s == style {
+			return true
+		}
+	}
+	return false
+}
+
 func Load() {
 	switch Get() {
 	case Darwin:

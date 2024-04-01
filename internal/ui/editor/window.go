@@ -61,11 +61,8 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 	content.Append(toolbar)
 
 	header := adw.NewHeaderBar()
-	switch style.Get() {
-	case style.Windows:
-		header.SetShowTitle(false)
-		header.SetShowEndTitleButtons(false)
-	}
+	header.SetShowTitle(!style.Eq(style.Windows))
+	header.SetShowEndTitleButtons(!style.Eq(style.Windows))
 	toolbar.AddTopBar(header)
 
 	w.save = gtk.NewButton()

@@ -74,7 +74,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	w.nav.Add(adw.NewNavigationPage(box, ApplicationName))
 
-	if style.Get() != style.Windows {
+	if !style.Eq(style.Windows) {
 		header := gtk.NewHeaderBar()
 		box.Append(header)
 	}
@@ -173,10 +173,7 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 	navPage := adw.NewNavigationPage(content, "Purchase Seabird")
 
 	header := adw.NewHeaderBar()
-	switch style.Get() {
-	case style.Windows:
-		header.SetShowEndTitleButtons(false)
-	}
+	header.SetShowEndTitleButtons(!style.Eq(style.Windows))
 	content.Append(header)
 
 	prefPage := adw.NewPreferencesPage()

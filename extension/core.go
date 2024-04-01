@@ -313,7 +313,7 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 						})
 						row.AddRow(logs)
 
-						if style.Get() != style.Windows {
+						if !style.Eq(style.Windows) {
 							exec := adw.NewActionRow()
 							exec.SetActivatable(true)
 							exec.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))

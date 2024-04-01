@@ -58,11 +58,8 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
 	content.Append(header)
-	switch style.Get() {
-	case style.Windows, style.Darwin:
-		header.SetShowStartTitleButtons(false)
-		header.SetShowEndTitleButtons(false)
-	}
+	header.SetShowStartTitleButtons(!style.Eq(style.Windows, style.Darwin))
+	header.SetShowEndTitleButtons(!style.Eq(style.Windows, style.Darwin))
 
 	delete := gtk.NewButton()
 	delete.SetIconName("user-trash-symbolic")

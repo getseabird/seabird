@@ -63,12 +63,7 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 	title.AddCSSClass("heading")
 	header.SetTitleWidget(title)
 	header.SetShowEndTitleButtons(false)
-	switch style.Get() {
-	case style.Darwin:
-		header.SetShowTitle(false)
-	default:
-		header.SetShowStartTitleButtons(false)
-	}
+	header.SetShowStartTitleButtons(style.Eq(style.Darwin))
 
 	button := gtk.NewMenuButton()
 	button.SetIconName("open-menu-symbolic")

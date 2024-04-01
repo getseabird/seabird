@@ -27,7 +27,7 @@ func NewLogPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, cont
 
 	header := adw.NewHeaderBar()
 	header.SetShowStartTitleButtons(false)
-	header.SetShowEndTitleButtons(style.Get() != style.Windows)
+	header.SetShowEndTitleButtons(!style.Eq(style.Windows))
 	header.AddCSSClass("flat")
 	box.Append(header)
 
