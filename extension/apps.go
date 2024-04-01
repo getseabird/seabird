@@ -12,6 +12,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/tools/reference"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -98,9 +99,10 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object,
 		e.List(ctx, &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
 		// TODO should we also filter pods by owner? takes one more api call to fetch replicasets
 		for i, pod := range pods.Items {
+			ref, _ := reference.GetReference(e.Scheme, &pod)
 			prop.Children = append(prop.Children, &api.TextProperty{
 				ID:        fmt.Sprintf("pods.%d", i),
-				Reference: api.NewObjectReference(&pod),
+				Reference: ref,
 				Value:     pod.Name,
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
 					podWidget(ctx, pod, w, nv)
@@ -122,9 +124,10 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object,
 			if !ok {
 				continue
 			}
+			ref, _ := reference.GetReference(e.Scheme, &pod)
 			prop.Children = append(prop.Children, &api.TextProperty{
 				ID:        fmt.Sprintf("pods.%d", i),
-				Reference: api.NewObjectReference(&pod),
+				Reference: ref,
 				Value:     pod.Name,
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
 					podWidget(ctx, pod, w, nv)

@@ -33,22 +33,26 @@ type ObjectView struct {
 	sourceView   *gtksource.View
 	expanded     map[string]bool
 	editor       *editor.EditorWindow
+	navView      *adw.NavigationView
+	navigation   *Navigation
 }
 
-func NewDetailView(ctx context.Context, state *common.ClusterState, editor *editor.EditorWindow) *ObjectView {
+func NewObjectView(ctx context.Context, state *common.ClusterState, editor *editor.EditorWindow, navView *adw.NavigationView, navigation *Navigation) *ObjectView {
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
-	content.AddCSSClass("background")
-	d := ObjectView{
+	content.AddCSSClass("view")
+	o := ObjectView{
 		NavigationPage: adw.NewNavigationPage(content, "Object"),
 		ClusterState:   state,
 		prefPage:       adw.NewPreferencesPage(),
 		expanded:       map[string]bool{},
 		ctx:            ctx,
 		editor:         editor,
+		navView:        navView,
+		navigation:     navigation,
 	}
-	d.SetTag(uuid.NewString())
+	o.SetTag(uuid.NewString())
 
-	clamp := d.prefPage.FirstChild().(*gtk.ScrolledWindow).FirstChild().(*gtk.Viewport).FirstChild().(*adw.Clamp)
+	clamp := o.prefPage.FirstChild().(*gtk.ScrolledWindow).FirstChild().(*gtk.Viewport).FirstChild().(*adw.Clamp)
 	clamp.SetMaximumSize(5000)
 
 	header := adw.NewHeaderBar()
@@ -64,7 +68,7 @@ func NewDetailView(ctx context.Context, state *common.ClusterState, editor *edit
 	delete.SetIconName("user-trash-symbolic")
 	delete.SetTooltipText("Delete")
 	delete.ConnectClicked(func() {
-		selected := d.SelectedObject.Value()
+		selected := o.SelectedObject.Value()
 		dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](ctx), "Delete object?", selected.GetName())
 		defer dialog.Show()
 		dialog.AddResponse("cancel", "Cancel")
@@ -73,7 +77,7 @@ func NewDetailView(ctx context.Context, state *common.ClusterState, editor *edit
 		dialog.ConnectResponse(func(response string) {
 			switch response {
 			case "delete":
-				if err := d.Delete(ctx, selected); err != nil {
+				if err := o.Delete(ctx, selected); err != nil {
 					widget.ShowErrorDialog(ctx, "Failed to delete object", err)
 				}
 			}
@@ -85,18 +89,30 @@ func NewDetailView(ctx context.Context, state *common.ClusterState, editor *edit
 	edit.SetIconName("document-edit-symbolic")
 	edit.SetTooltipText("Edit")
 	edit.ConnectClicked(func() {
-		gvk := util.ResourceGVK(d.SelectedResource.Value())
-		if err := d.editor.AddPage(&gvk, d.SelectedObject.Value()); err != nil {
-			widget.ShowErrorDialog(d.ctx, "Error loading editor", err)
+		gvk := o.SelectedObject.Value().GetObjectKind().GroupVersionKind()
+		if err := o.editor.AddPage(&gvk, o.SelectedObject.Value()); err != nil {
+			widget.ShowErrorDialog(o.ctx, "Error loading editor", err)
 		} else {
-			d.editor.Present()
+			o.editor.Present()
 		}
 	})
 	header.PackEnd(edit)
 
+	pin := gtk.NewToggleButton()
+	pin.SetIconName("view-pin-symbolic")
+	pin.SetTooltipText("Pin")
+	pin.ConnectClicked(func() {
+		if pin.Active() {
+			o.navigation.AddPin(o.SelectedObject.Value())
+		} else {
+			o.navigation.RemovePin(o.SelectedObject.Value())
+		}
+	})
+	header.PackStart(pin)
+
 	stack := adw.NewViewStack()
-	stack.AddTitledWithIcon(d.prefPage, "properties", "Properties", "info-outline-symbolic")
-	stack.AddTitledWithIcon(d.createSource(), "source", "Yaml", "code-symbolic")
+	stack.AddTitledWithIcon(o.prefPage, "properties", "Properties", "info-outline-symbolic")
+	stack.AddTitledWithIcon(o.createSource(), "source", "Yaml", "code-symbolic")
 	content.Append(stack)
 
 	switcher := adw.NewViewSwitcher()
@@ -104,58 +120,75 @@ func NewDetailView(ctx context.Context, state *common.ClusterState, editor *edit
 	switcher.SetStack(stack)
 	header.SetTitleWidget(switcher)
 
-	common.OnChange(ctx, d.ClusterPreferences, func(prefs api.ClusterPreferences) {
+	common.OnChange(ctx, o.ClusterPreferences, func(prefs api.ClusterPreferences) {
 		edit.SetVisible(!prefs.ReadOnly)
 		delete.SetVisible(!prefs.ReadOnly)
-	})
-	common.OnChange(ctx, d.SelectedObject, func(object client.Object) {
-		switch parent := d.Parent().(type) {
-		case *adw.NavigationView:
-			for parent.Pop() {
-				// empty
+
+		if object := o.SelectedObject.Value(); object != nil {
+			pinned := false
+			for _, p := range prefs.Navigation.Pins {
+				if p.UID == object.GetUID() {
+					pinned = true
+					break
+				}
 			}
+			pin.SetActive(pinned)
+		}
+	})
+	common.OnChange(ctx, o.SelectedObject, func(object client.Object) {
+		for o.navView.Pop() {
+			// empty
 		}
 
 		if object == nil {
-			d.sourceBuffer.SetText("")
-			d.updateProperties([]api.Property{})
+			o.sourceBuffer.SetText("")
+			o.updateProperties([]api.Property{})
 			return
 		}
 
-		yaml, err := d.Encoder.EncodeYAML(object)
+		yaml, err := o.Encoder.EncodeYAML(object)
 		if err != nil {
-			d.sourceBuffer.SetText(fmt.Sprintf("error: %v", err))
+			o.sourceBuffer.SetText(fmt.Sprintf("error: %v", err))
 		} else {
-			d.sourceBuffer.SetText(string(yaml))
+			o.sourceBuffer.SetText(string(yaml))
 		}
 
 		var props []api.Property
-		for _, ext := range d.Extensions {
+		for _, ext := range o.Extensions {
 			props = ext.CreateObjectProperties(ctx, object, props)
 		}
 		sort.Slice(props, func(i, j int) bool {
 			return props[i].GetPriority() > props[j].GetPriority()
 		})
-		d.updateProperties(props)
+		o.updateProperties(props)
+
+		pinned := false
+		for _, p := range o.ClusterPreferences.Value().Navigation.Pins {
+			if p.UID == object.GetUID() {
+				pinned = true
+				break
+			}
+		}
+		pin.SetActive(pinned)
 	})
 
-	return &d
+	return &o
 }
 
-func (d *ObjectView) updateProperties(properties []api.Property) {
-	for _, g := range d.groups {
-		d.prefPage.Remove(g)
+func (o *ObjectView) updateProperties(properties []api.Property) {
+	for _, g := range o.groups {
+		o.prefPage.Remove(g)
 	}
-	d.groups = nil
+	o.groups = nil
 
 	for i, prop := range properties {
-		group := d.renderObjectProperty(0, i, prop).(*adw.PreferencesGroup)
-		d.groups = append(d.groups, group)
-		d.prefPage.Add(group)
+		group := o.renderObjectProperty(0, i, prop).(*adw.PreferencesGroup)
+		o.groups = append(o.groups, group)
+		o.prefPage.Add(group)
 	}
 }
 
-func (d *ObjectView) renderObjectProperty(level, index int, prop api.Property) gtk.Widgetter {
+func (o *ObjectView) renderObjectProperty(level, index int, prop api.Property) gtk.Widgetter {
 	switch prop := prop.(type) {
 	case *api.TextProperty:
 		switch level {
@@ -171,9 +204,7 @@ func (d *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 			row.SetSubtitle(prop.Value)
 
 			if prop.Widget != nil {
-				if parent, ok := d.Parent().(*adw.NavigationView); ok {
-					prop.Widget(row, parent)
-				}
+				prop.Widget(row, o.navView)
 			}
 			if prop.Reference == nil {
 				copy := gtk.NewButton()
@@ -189,17 +220,17 @@ func (d *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 				row.SetActivatable(true)
 				row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
 				row.ConnectActivated(func() {
-					obj, err := prop.Reference.GetObject(d.ctx, d.Cluster)
+					obj, err := o.GetReference(o.ctx, *prop.Reference)
 					if err != nil {
 						log.Print(err.Error())
 						return
 					}
-					ctx, cancel := context.WithCancel(d.ctx)
-					state := *d.ClusterState
+					ctx, cancel := context.WithCancel(o.ctx)
+					state := *o.ClusterState
 					state.SelectedObject = observer.NewProperty[client.Object](obj)
-					dv := NewDetailView(ctx, &state, d.editor)
-					d.Parent().(*adw.NavigationView).Push(dv.NavigationPage)
-					d.Parent().(*adw.NavigationView).ConnectPopped(func(page *adw.NavigationPage) {
+					dv := NewObjectView(ctx, &state, o.editor, o.navView, o.navigation)
+					o.navView.Push(dv.NavigationPage)
+					o.navView.ConnectPopped(func(page *adw.NavigationPage) {
 						if page.Tag() == dv.Tag() {
 							cancel()
 						}
@@ -227,9 +258,7 @@ func (d *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 			box.Append(label)
 
 			if prop.Widget != nil {
-				if parent, ok := d.Parent().(*adw.NavigationView); ok {
-					prop.Widget(box, parent)
-				}
+				prop.Widget(box, o.navView)
 			}
 			return box
 		}
@@ -240,32 +269,28 @@ func (d *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 			group := adw.NewPreferencesGroup()
 			group.SetTitle(prop.Name)
 			for i, child := range prop.Children {
-				group.Add(d.renderObjectProperty(level+1, i, child))
+				group.Add(o.renderObjectProperty(level+1, i, child))
 			}
 			if prop.Widget != nil {
-				if parent, ok := d.Parent().(*adw.NavigationView); ok {
-					prop.Widget(group, parent)
-				}
+				prop.Widget(group, o.navView)
 			}
 			return group
 		case 1:
 			row := adw.NewExpanderRow()
-			id := fmt.Sprintf("%s-%d-%d", util.ResourceGVR(d.SelectedResource.Value()).String(), level, index)
-			if e, ok := d.expanded[id]; ok && e {
+			id := fmt.Sprintf("%s-%d-%d", o.SelectedObject.Value().GetObjectKind().GroupVersionKind().String(), level, index)
+			if e, ok := o.expanded[id]; ok && e {
 				row.SetExpanded(true)
 			}
 			row.Connect("state-flags-changed", func() {
-				d.expanded[id] = row.Expanded()
+				o.expanded[id] = row.Expanded()
 			})
 			row.SetTitle(prop.Name)
 			for i, child := range prop.Children {
-				row.AddRow(d.renderObjectProperty(level+1, i, child))
+				row.AddRow(o.renderObjectProperty(level+1, i, child))
 			}
 			row.SetSensitive(len(prop.Children) > 0)
 			if prop.Widget != nil {
-				if parent, ok := d.Parent().(*adw.NavigationView); ok {
-					prop.Widget(row, parent)
-				}
+				prop.Widget(row, o.navView)
 			}
 			return row
 		case 2:
@@ -279,13 +304,11 @@ func (d *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 			box.SetSelectionMode(gtk.SelectionNone)
 			row.FirstChild().(*gtk.Box).FirstChild().(*gtk.Box).NextSibling().(*gtk.Image).NextSibling().(*gtk.Box).Append(box)
 			for i, child := range prop.Children {
-				box.Insert(d.renderObjectProperty(level+1, i, child), -1)
+				box.Insert(o.renderObjectProperty(level+1, i, child), -1)
 				// prop.Value += fmt.Sprintf("%s: %s\n", child.Name, child.Value)
 			}
 			if prop.Widget != nil {
-				if parent, ok := d.Parent().(*adw.NavigationView); ok {
-					prop.Widget(row, parent)
-				}
+				prop.Widget(row, o.navView)
 			}
 			return row
 		}
@@ -294,23 +317,23 @@ func (d *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 	return nil
 }
 
-func (d *ObjectView) createSource() *gtk.ScrolledWindow {
+func (o *ObjectView) createSource() *gtk.ScrolledWindow {
 	scrolledWindow := gtk.NewScrolledWindow()
 	scrolledWindow.SetVExpand(true)
 
-	d.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
-	d.setSourceColorScheme()
-	gtk.SettingsGetDefault().NotifyProperty("gtk-application-prefer-dark-theme", d.setSourceColorScheme)
-	d.sourceView = gtksource.NewViewWithBuffer(d.sourceBuffer)
-	d.sourceView.SetEditable(false)
-	d.sourceView.SetWrapMode(gtk.WrapWord)
-	d.sourceView.SetShowLineNumbers(true)
-	d.sourceView.SetMonospace(true)
-	scrolledWindow.SetChild(d.sourceView)
+	o.sourceBuffer = gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
+	o.setSourceColorScheme()
+	gtk.SettingsGetDefault().NotifyProperty("gtk-application-prefer-dark-theme", o.setSourceColorScheme)
+	o.sourceView = gtksource.NewViewWithBuffer(o.sourceBuffer)
+	o.sourceView.SetEditable(false)
+	o.sourceView.SetWrapMode(gtk.WrapWord)
+	o.sourceView.SetShowLineNumbers(true)
+	o.sourceView.SetMonospace(true)
+	scrolledWindow.SetChild(o.sourceView)
 
 	return scrolledWindow
 }
 
-func (d *ObjectView) setSourceColorScheme() {
-	util.SetSourceColorScheme(d.sourceBuffer)
+func (o *ObjectView) setSourceColorScheme() {
+	util.SetSourceColorScheme(o.sourceBuffer)
 }

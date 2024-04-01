@@ -9,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/util"
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -83,10 +84,11 @@ func (e *Meta) CreateObjectProperties(ctx context.Context, object client.Object,
 		owners = append(owners, &api.TextProperty{
 			Name:  fmt.Sprintf("%s %s", ref.APIVersion, ref.Kind),
 			Value: ref.Name,
-			Reference: &api.ObjectReference{
+			Reference: &corev1.ObjectReference{
 				APIVersion: ref.APIVersion,
 				Kind:       ref.Kind,
 				Name:       ref.Name,
+				UID:        ref.UID,
 				Namespace:  object.GetNamespace(),
 			},
 		})

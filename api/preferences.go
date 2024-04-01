@@ -53,6 +53,7 @@ type ClusterPreferences struct {
 	ReadOnly    bool
 	Navigation  struct {
 		Favourites []schema.GroupVersionResource
+		Pins       []corev1.ObjectReference
 	}
 }
 
