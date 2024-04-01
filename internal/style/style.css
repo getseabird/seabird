@@ -31,7 +31,7 @@ levelbar block.lb-normal {
 /* Replace fixed background color with var */
 textview.sourceview>text,
 textview.sourceview>border>gutter {
-  background-color: @window_bg_color;
+  background-color: @view_bg_color;
 }
 
 /* Windows defaults to the awful Courier New monospace font */

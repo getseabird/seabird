@@ -1,4 +1,4 @@
-package ui
+package list
 
 import (
 	"context"
@@ -21,7 +21,7 @@ type ListHeader struct {
 	*common.ClusterState
 }
 
-func NewListHeader(ctx context.Context, state *common.ClusterState, editor *editor.EditorWindow) *ListHeader {
+func newListHeader(ctx context.Context, state *common.ClusterState, editor *editor.EditorWindow) *ListHeader {
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
 	header.SetShowStartTitleButtons(false)

@@ -18,6 +18,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/reference"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -417,9 +418,10 @@ func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object,
 		var pods corev1.PodList
 		e.List(ctx, &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", object.Name)})
 		for i, pod := range pods.Items {
+			ref, _ := reference.GetReference(e.Scheme, &pod)
 			podsProp.Children = append(podsProp.Children, &api.TextProperty{
 				ID:        fmt.Sprintf("pods.%d", i),
-				Reference: api.NewObjectReference(&pod),
+				Reference: ref,
 				Value:     pod.Name,
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
 					podWidget(ctx, pod, w, nv)

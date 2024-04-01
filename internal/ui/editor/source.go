@@ -57,6 +57,8 @@ func newSourcePage(ctx context.Context, gvk *schema.GroupVersionKind, object cli
 	}
 
 	paned := gtk.NewPaned(gtk.OrientationHorizontal)
+	paned.SetShrinkStartChild(false)
+	paned.SetShrinkEndChild(false)
 	paned.SetPosition(640)
 
 	util.SetSourceColorScheme(buf)

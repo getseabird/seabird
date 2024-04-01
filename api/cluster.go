@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"log"
+	"reflect"
 	"slices"
 	"sort"
 
@@ -18,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/discovery"
 	"k8s.io/client-go/dynamic"
 	"k8s.io/client-go/kubernetes"
@@ -139,4 +141,21 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 	}
 
 	return &cluster, nil
+}
+
+func (cluster *Cluster) GetReference(ctx context.Context, ref corev1.ObjectReference) (client.Object, error) {
+	var object client.Object
+	gvk := schema.FromAPIVersionAndKind(ref.APIVersion, ref.Kind).String()
+	for key, t := range cluster.Scheme.AllKnownTypes() {
+		if key.String() == gvk {
+			object = reflect.New(t).Interface().(client.Object)
+			break
+		}
+	}
+
+	if err := cluster.Get(ctx, types.NamespacedName{Namespace: ref.Namespace, Name: ref.Name}, object); err != nil {
+		return nil, err
+	}
+
+	return object, nil
 }

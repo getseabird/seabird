@@ -1,24 +1,28 @@
-package ui
+package list
 
 import (
 	"context"
+	"fmt"
 	"log"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ui/common"
+	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/imkira/go-observer/v2"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
-type ListView struct {
-	*gtk.Box
+type List struct {
+	*adw.ToolbarView
 	*common.ClusterState
 	ctx         context.Context
 	watchCancel context.CancelFunc
@@ -27,19 +31,20 @@ type ListView struct {
 	columnView  *gtk.ColumnView
 	columns     []*gtk.ColumnViewColumn
 	columnType  *metav1.APIResource
-	splitView   *adw.OverlaySplitView
+	overlay     *adw.OverlaySplitView
 }
 
-func NewListView(ctx context.Context, state *common.ClusterState, header gtk.Widgetter, splitView *adw.OverlaySplitView) *ListView {
-	l := ListView{
+func NewList(ctx context.Context, state *common.ClusterState, overlay *adw.OverlaySplitView, editor *editor.EditorWindow) *List {
+	l := List{
+		ToolbarView:  adw.NewToolbarView(),
 		ClusterState: state,
 		ctx:          ctx,
-		Box:          gtk.NewBox(gtk.OrientationVertical, 0),
 		objects:      observer.NewProperty[[]client.Object](nil),
-		splitView:    splitView,
+		overlay:      overlay,
 	}
+
 	l.AddCSSClass("view")
-	l.Append(header)
+	l.AddTopBar(newListHeader(ctx, state, editor))
 
 	l.columnView = gtk.NewColumnView(nil)
 	l.model = gtk.NewStringList([]string{})
@@ -53,7 +58,7 @@ func NewListView(ctx context.Context, state *common.ClusterState, header gtk.Wid
 		i, _ := strconv.Atoi(l.model.Item(position).Cast().(*gtk.StringObject).String())
 		obj := l.objects.Value()[i]
 		l.SelectedObject.Update(obj)
-		l.splitView.SetShowSidebar(true)
+		l.overlay.SetShowSidebar(true)
 	})
 
 	sw := gtk.NewScrolledWindow()
@@ -63,16 +68,25 @@ func NewListView(ctx context.Context, state *common.ClusterState, header gtk.Wid
 	vp := gtk.NewViewport(nil, nil)
 	vp.SetChild(l.columnView)
 	sw.SetChild(vp)
-	l.Append(sw)
+	l.SetContent(sw)
 
 	common.OnChange(ctx, l.SelectedResource, l.onSelectedResourceChange)
 	common.OnChange(ctx, l.objects, l.onObjectsChange)
 	common.OnChange(ctx, l.SearchFilter, l.onSearchFilterChange)
 
+	filterNamespace := gio.NewSimpleAction("filterNamespace", glib.NewVariantType("s"))
+	filterNamespace.ConnectActivate(func(parameter *glib.Variant) {
+		text := strings.Trim(fmt.Sprintf("%s ns:%s", l.SearchText.Value(), parameter.String()), " ")
+		l.SearchText.Update(text)
+	})
+	actionGroup := gio.NewSimpleActionGroup()
+	actionGroup.AddAction(filterNamespace)
+	l.InsertActionGroup("list", actionGroup)
+
 	return &l
 }
 
-func (l *ListView) onSelectedResourceChange(resource *metav1.APIResource) {
+func (l *List) onSelectedResourceChange(resource *metav1.APIResource) {
 	if resource == nil {
 		return
 	}
@@ -82,10 +96,10 @@ func (l *ListView) onSelectedResourceChange(resource *metav1.APIResource) {
 	var ctx context.Context
 	ctx, l.watchCancel = context.WithCancel(l.ctx)
 	api.ObjectWatcher(ctx, resource, l.objects)
-	l.splitView.SetShowSidebar(false)
+	l.overlay.SetShowSidebar(false)
 }
 
-func (l *ListView) onObjectsChange(objects []client.Object) {
+func (l *List) onObjectsChange(objects []client.Object) {
 	resource := l.SelectedResource.Value()
 	if resource == nil {
 		return
@@ -114,7 +128,7 @@ func (l *ListView) onObjectsChange(objects []client.Object) {
 
 }
 
-func (l *ListView) onSearchFilterChange(filter common.SearchFilter) {
+func (l *List) onSearchFilterChange(filter common.SearchFilter) {
 	l.model.Splice(0, l.model.NItems(), nil)
 	for i, object := range l.objects.Value() {
 		if filter.Test(object) {
@@ -123,7 +137,7 @@ func (l *ListView) onSearchFilterChange(filter common.SearchFilter) {
 	}
 }
 
-func (l *ListView) createColumns() []*gtk.ColumnViewColumn {
+func (l *List) createColumns() []*gtk.ColumnViewColumn {
 	var columns []api.Column
 
 	for _, e := range l.Extensions {

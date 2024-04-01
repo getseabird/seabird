@@ -17,24 +17,43 @@ import (
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
+	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
+	"github.com/imkira/go-observer/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/tools/reference"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Navigation struct {
 	*adw.ToolbarView
 	*common.ClusterState
-	list *gtk.ListBox
-	rows []*gtk.ListBoxRow
+	ctx             context.Context
+	resourceList    *gtk.ListBox
+	pinList         *gtk.ListBox
+	pinRows         []*gtk.ListBoxRow
+	pinViews        []*adw.NavigationView
+	favourites      []*gtk.ListBoxRow
+	resources       []*gtk.ListBoxRow
+	viewStack       *gtk.Stack
+	editor          *editor.EditorWindow
+	resourcesToggle *gtk.ToggleButton
+	pinsToggle      *gtk.ToggleButton
 }
 
-func NewNavigation(ctx context.Context, state *common.ClusterState) *Navigation {
-	n := &Navigation{ToolbarView: adw.NewToolbarView(), ClusterState: state}
+func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *gtk.Stack, editor *editor.EditorWindow) *Navigation {
+	n := &Navigation{
+		ToolbarView:  adw.NewToolbarView(),
+		ctx:          ctx,
+		ClusterState: state,
+		viewStack:    viewStack,
+		editor:       editor,
+	}
 	n.SetVExpand(true)
 	n.AddCSSClass("sidebar-pane")
 
@@ -73,23 +92,108 @@ func NewNavigation(ctx context.Context, state *common.ClusterState) *Navigation 
 	header.PackEnd(button)
 	n.AddTopBar(header)
 
-	content := gtk.NewBox(gtk.OrientationVertical, 0)
-	sw := gtk.NewScrolledWindow()
-	sw.SetChild(content)
-	n.SetContent(sw)
+	content := gtk.NewBox(gtk.OrientationVertical, 4)
+	n.SetContent(content)
 
-	listBin := adw.NewBin()
-	listBin.SetVExpand(false)
-	content.Append(listBin)
+	toggleBox := gtk.NewBox(gtk.OrientationHorizontal, 4)
+	toggleBox.SetMarginStart(8)
+	toggleBox.SetMarginEnd(8)
+	content.Append(toggleBox)
+	n.resourcesToggle = gtk.NewToggleButton()
+	n.resourcesToggle.AddCSSClass("flat")
+	n.resourcesToggle.SetIconName("view-list-symbolic")
+	n.resourcesToggle.SetHExpand(true)
+	n.resourcesToggle.SetActive(true)
+	toggleBox.Append(n.resourcesToggle)
+	n.pinsToggle = gtk.NewToggleButton()
+	n.pinsToggle.AddCSSClass("flat")
+	n.pinsToggle.SetIconName("view-pin-symbolic")
+	n.pinsToggle.SetHExpand(true)
+	toggleBox.Append(n.pinsToggle)
 
-	common.OnChange(ctx, n.ClusterPreferences, func(prefs api.ClusterPreferences) {
-		listBin.SetChild(n.createList(prefs))
+	navStack := gtk.NewStack()
+	content.Append(navStack)
+
+	resbin := adw.NewBin()
+	resw := gtk.NewScrolledWindow()
+	resw.SetChild(resbin)
+	resw.SetVExpand(true)
+	navStack.AddChild(resw)
+	navStack.SetVisibleChild(resw)
+
+	n.pinList = gtk.NewListBox()
+	n.pinList.AddCSSClass("navigation-sidebar")
+	n.pinList.ConnectRowActivated(func(row *gtk.ListBoxRow) {
+		if row == nil {
+			return
+		}
+
+		var ref corev1.ObjectReference
+		if err := json.Unmarshal([]byte(row.Name()), &ref); err != nil {
+			panic(err)
+		}
+		pages := n.viewStack.Pages()
+		for i := 0; i < int(pages.NItems()); i++ {
+			page := pages.Item(uint(i)).Cast().(*gtk.StackPage)
+			if page.Name() == string(ref.UID) {
+				n.viewStack.SetVisibleChild(page.Child())
+				return
+			}
+		}
 	})
 
-	listBin.SetChild(n.createList(n.ClusterPreferences.Value()))
-	if len(n.rows) > 0 {
-		n.list.SelectRow(n.rows[0])
+	pinw := gtk.NewScrolledWindow()
+	pinw.SetChild(n.pinList)
+	pinw.SetVExpand(true)
+	navStack.AddChild(pinw)
+
+	n.resourcesToggle.ConnectClicked(func() {
+		n.resourcesToggle.SetActive(true)
+	})
+	n.resourcesToggle.ConnectToggled(func() {
+		if n.resourcesToggle.Active() {
+			n.pinsToggle.SetActive(false)
+			navStack.SetVisibleChild(resw)
+			if row := n.resourceList.SelectedRow(); row != nil {
+				row.Activate()
+			}
+		}
+	})
+	n.pinsToggle.ConnectClicked(func() {
+		n.pinsToggle.SetActive(true)
+	})
+	n.pinsToggle.ConnectToggled(func() {
+		if n.pinsToggle.Active() {
+			n.resourcesToggle.SetActive(false)
+			navStack.SetVisibleChild(pinw)
+			if row := n.pinList.SelectedRow(); row != nil {
+				row.Activate()
+			} else if len(n.pinRows) > 0 {
+				n.pinList.SelectRow(n.pinRows[0])
+				n.pinRows[0].Activate()
+			}
+		}
+	})
+
+	common.OnChange(ctx, n.ClusterPreferences, func(prefs api.ClusterPreferences) {
+		resbin.SetChild(n.createResourceList(prefs))
+		n.updatePins(prefs.Navigation.Pins)
+	})
+
+	resbin.SetChild(n.createResourceList(n.ClusterPreferences.Value()))
+	if len(n.favourites) > 0 {
+		n.resourceList.SelectRow(n.favourites[0])
 	}
+
+	if row := n.resourceList.SelectedRow(); row != nil {
+		row.Activate()
+	}
+	return n
+}
+
+func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListBox {
+	n.resourceList = gtk.NewListBox()
+	n.resourceList.AddCSSClass("navigation-sidebar")
 
 	// TODO actions should be able to use "u" for uint but I can't get it to work
 	actionGroup := gio.NewSimpleActionGroup()
@@ -114,42 +218,34 @@ func NewNavigation(ctx context.Context, state *common.ClusterState) *Navigation 
 		}
 	})
 	actionGroup.AddAction(unpin)
-	n.InsertActionGroup("navigation", actionGroup)
+	n.resourceList.InsertActionGroup("navigation", actionGroup)
 
-	return n
-}
-
-func (n *Navigation) createList(prefs api.ClusterPreferences) *gtk.ListBox {
-	n.list = gtk.NewListBox()
-	n.list.SetHeaderFunc(func(row, before *gtk.ListBoxRow) {
-		switch {
-		case row.Index() == 0:
-			label := gtk.NewLabel("Favourites")
-			label.AddCSSClass("caption-heading")
-			label.SetHAlign(gtk.AlignStart)
-			r := gtk.NewListBoxRow()
-			r.SetChild(label)
-			r.SetSensitive(false)
-			row.SetHeader(r)
-		case row.Index() == len(prefs.Navigation.Favourites):
-			label := gtk.NewLabel("Resources")
-			label.AddCSSClass("caption-heading")
-			label.SetHAlign(gtk.AlignStart)
-			r := gtk.NewListBoxRow()
-			r.SetChild(label)
-			r.SetSensitive(false)
-			row.SetHeader(r)
-		}
-	})
-	n.list.AddCSSClass("dim-label")
-	n.list.AddCSSClass("navigation-sidebar")
-	n.list.ConnectRowSelected(func(row *gtk.ListBoxRow) {
+	n.resourceList.ConnectRowActivated(func(row *gtk.ListBoxRow) {
 		if row == nil {
 			return
 		}
+
 		var gvr schema.GroupVersionResource
 		if err := json.Unmarshal([]byte(row.Name()), &gvr); err != nil {
-			log.Printf("failed to unmarshal gvr: %v", err)
+			return
+		}
+		pages := n.viewStack.Pages()
+		for i := 0; i < int(pages.NItems()); i++ {
+			page := pages.Item(uint(i)).Cast().(*gtk.StackPage)
+			if page.Name() == "list" {
+				n.viewStack.SetVisibleChild(page.Child())
+				break
+			}
+		}
+	})
+
+	n.resourceList.ConnectRowSelected(func(row *gtk.ListBoxRow) {
+		if row == nil {
+			return
+		}
+
+		var gvr schema.GroupVersionResource
+		if err := json.Unmarshal([]byte(row.Name()), &gvr); err != nil {
 			return
 		}
 		for _, res := range n.Resources {
@@ -158,32 +254,108 @@ func (n *Navigation) createList(prefs api.ClusterPreferences) *gtk.ListBox {
 				break
 			}
 		}
+
 	})
 
-	n.rows = nil
+	n.favourites = nil
+	n.resources = nil
 
-	var favs int
 	for i, resource := range n.Resources {
 		var fav bool
 		for _, f := range prefs.Navigation.Favourites {
 			if util.GVREquals(f, util.ResourceGVR(&resource)) {
-				favs++
 				fav = true
 			}
 		}
 		row := createResourceRow(&resource, i, fav)
-		if fav && len(n.rows) > 0 {
-			n.rows = slices.Insert(n.rows, favs-1, row)
+		if fav {
+			n.favourites = append(n.favourites, row)
 		} else {
-			n.rows = append(n.rows, row)
+			n.resources = append(n.resources, row)
+		}
+
+		if selected := n.SelectedResource.Value(); selected != nil && util.ResourceEquals(selected, &resource) {
+			n.resourceList.SelectRow(row)
 		}
 	}
 
-	for _, row := range n.rows {
-		n.list.Append(row)
+	if len(n.favourites) > 0 {
+		header := n.createHeaderRow("Favourites")
+		n.resourceList.Append(header)
+		for _, row := range n.favourites {
+			n.resourceList.Append(row)
+		}
 	}
 
-	return n.list
+	if len(n.resources) > 0 {
+		header := n.createHeaderRow("Resources")
+		n.resourceList.Append(header)
+		for _, row := range n.resources {
+			n.resourceList.Append(row)
+		}
+	}
+
+	return n.resourceList
+}
+
+func (n *Navigation) updatePins(pins []corev1.ObjectReference) *gtk.ListBox {
+rows:
+	for _, row := range n.pinRows {
+		var ref corev1.ObjectReference
+		if err := json.Unmarshal([]byte(row.Name()), &ref); err != nil {
+			panic(err)
+		}
+
+		for _, pin := range pins {
+			if string(pin.UID) == string(ref.UID) {
+				continue rows
+			}
+		}
+
+		defer n.removePin(ref)
+	}
+
+outer:
+	for _, pin := range pins {
+		for _, row := range n.pinRows {
+			var ref corev1.ObjectReference
+			if err := json.Unmarshal([]byte(row.Name()), &ref); err != nil {
+				panic(err)
+			}
+			if ref.UID == pin.UID {
+				continue outer
+			}
+		}
+		object, err := n.GetReference(n.ctx, pin)
+		if err != nil {
+			log.Printf("updatePins: %s %v", err, pin)
+			continue
+		}
+		n.createPin(object)
+	}
+
+	return n.pinList
+}
+
+func createObjectRow(ref corev1.ObjectReference) *gtk.ListBoxRow {
+	row := gtk.NewListBoxRow()
+	json, err := json.Marshal(ref)
+	if err != nil {
+		panic(err)
+	}
+	row.SetName(string(json))
+	row.AddCSSClass(string(ref.UID))
+	box := gtk.NewBox(gtk.OrientationHorizontal, 8)
+	box.SetMarginTop(4)
+	box.SetMarginBottom(4)
+	box.Append(resourceImage(ref.GroupVersionKind()))
+	row.SetChild(box)
+	label := gtk.NewLabel(ref.Name)
+	label.SetHAlign(gtk.AlignStart)
+	label.SetEllipsize(pango.EllipsizeEnd)
+	box.Append(label)
+
+	return row
 }
 
 func createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.ListBoxRow {
@@ -198,7 +370,7 @@ func createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.Lis
 	box := gtk.NewBox(gtk.OrientationHorizontal, 8)
 	box.SetMarginTop(4)
 	box.SetMarginBottom(4)
-	box.Append(resourceImage(gvr))
+	box.Append(resourceImage(util.ResourceGVK(resource)))
 	vbox := gtk.NewBox(gtk.OrientationVertical, 2)
 	vbox.SetVAlign(gtk.AlignCenter)
 	box.Append(vbox)
@@ -236,48 +408,167 @@ func createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.Lis
 	return row
 }
 
-func resourceImage(gvk schema.GroupVersionResource) *gtk.Image {
+func (n *Navigation) createHeaderRow(label string) *gtk.ListBoxRow {
+	box := gtk.NewBox(gtk.OrientationHorizontal, 4)
+	box.SetHAlign(gtk.AlignFill)
+	box.AddCSSClass("dim-label")
+	lbl := gtk.NewLabel(label)
+	box.Append(lbl)
+	// icon := gtk.NewImageFromIconName("go-up-symbolic")
+	// icon.SetHAlign(gtk.AlignEnd)
+	// icon.SetHExpand(true)
+	// box.Append(icon)
+	row := gtk.NewListBoxRow()
+	row.SetChild(box)
+	row.SetSelectable(false)
+	// n.resourceList.ConnectRowActivated(func(r *gtk.ListBoxRow) {
+	// 	if r.Index() != row.Index() {
+	// 		return
+	// 	}
+	// 	// set filter var...
+	// 	n.resourceList.InvalidateFilter()
+	// })
+	return row
+}
+
+func (n *Navigation) createPin(object client.Object) *gtk.ListBoxRow {
+	ref, err := reference.GetReference(n.Scheme, object)
+	if err != nil {
+		log.Print("createPin: %s", err)
+		return nil
+	}
+
+	row := createObjectRow(*ref)
+	n.pinRows = append(n.pinRows, row)
+	n.pinList.Append(row)
+
+	state := *n.ClusterState
+	state.SelectedObject = observer.NewProperty[client.Object](object)
+	navView := adw.NewNavigationView()
+	navView.SetName(string(object.GetUID()))
+	navView.Push(NewObjectView(n.ctx, &state, n.editor, navView, n).NavigationPage)
+	n.pinViews = append(n.pinViews, navView)
+
+	page := n.viewStack.AddChild(navView)
+	page.SetName(string(object.GetUID()))
+
+	return row
+}
+
+func (n *Navigation) removePin(ref corev1.ObjectReference) {
+outer:
+	for i, row := range n.pinRows {
+		for _, c := range row.CSSClasses() {
+			if c == string(ref.UID) {
+				n.pinList.Remove(row)
+				n.pinRows = slices.Delete(n.pinRows, i, i+1)
+				break outer
+			}
+		}
+	}
+	for i, v := range n.pinViews {
+		if v.Name() == string(ref.UID) {
+			n.viewStack.Remove(v)
+			n.pinViews = slices.Delete(n.pinViews, i, i+1)
+			break
+		}
+	}
+}
+
+func (n *Navigation) AddPin(object client.Object) {
+	ref, err := reference.GetReference(n.Scheme, object)
+	if err != nil {
+		log.Print(err.Error())
+		return
+	}
+	prefs := n.ClusterPreferences.Value()
+	for _, p := range prefs.Navigation.Pins {
+		if p.UID == ref.UID {
+			return
+		}
+	}
+	prefs.Navigation.Pins = append(prefs.Navigation.Pins, *ref)
+	n.ClusterPreferences.Update(prefs)
+	n.updatePins(prefs.Navigation.Pins)
+
+pins:
+	for _, row := range n.pinRows {
+		for _, c := range row.CSSClasses() {
+			if c == string(object.GetUID()) {
+				n.pinList.SelectRow(row)
+				break pins
+			}
+		}
+	}
+
+	n.pinsToggle.Activate()
+}
+
+func (n *Navigation) RemovePin(object client.Object) {
+	ref, err := reference.GetReference(n.Scheme, object)
+	if err != nil {
+		log.Print(err.Error())
+		return
+	}
+
+	prefs := n.ClusterPreferences.Value()
+	for i, p := range prefs.Navigation.Pins {
+		if p.UID == object.GetUID() {
+			prefs.Navigation.Pins = slices.Delete(prefs.Navigation.Pins, i, i+1)
+			break
+		}
+	}
+	n.ClusterPreferences.Update(prefs)
+
+	n.removePin(*ref)
+
+	if len(n.pinRows) == 0 {
+		n.resourcesToggle.SetActive(true)
+	}
+}
+
+func resourceImage(gvk schema.GroupVersionKind) *gtk.Image {
 	switch gvk.Group {
 	case corev1.GroupName:
 		{
-			switch gvk.Resource {
-			case "pods":
+			switch gvk.Kind {
+			case "Pod":
 				return gtk.NewImageFromIconName("box-symbolic")
-			case "configmaps":
+			case "ConfigMap":
 				return gtk.NewImageFromIconName("file-sliders-symbolic")
-			case "secrets":
+			case "Secret":
 				return gtk.NewImageFromIconName("file-key-2-symbolic")
-			case "namespaces":
+			case "Namespace":
 				return gtk.NewImageFromIconName("orbit-symbolic")
-			case "services":
+			case "Service":
 				return gtk.NewImageFromIconName("waypoints-symbolic")
-			case "nodes":
+			case "Node":
 				return gtk.NewImageFromIconName("server-symbolic")
-			case "persistentvolumes":
+			case "PersistentVolume":
 				return gtk.NewImageFromIconName("hard-drive-download-symbolic")
-			case "persistentvolumeclaims":
+			case "PersistentVolumeClaim":
 				return gtk.NewImageFromIconName("hard-drive-upload-symbolic")
 			}
 		}
 	case appsv1.GroupName:
-		switch gvk.Resource {
-		case "replicasets":
+		switch gvk.Kind {
+		case "ReplicaSet":
 			return gtk.NewImageFromIconName("layers-2-symbolic")
-		case "deployments":
+		case "Deployment":
 			return gtk.NewImageFromIconName("layers-3-symbolic")
-		case "statefulsets":
+		case "StatefulSet":
 			return gtk.NewImageFromIconName("database-symbolic")
 		}
 	case batchv1.GroupName:
-		switch gvk.Resource {
-		case "jobs":
+		switch gvk.Kind {
+		case "Job":
 			return gtk.NewImageFromIconName("briefcase-symbolic")
-		case "cronjobs":
+		case "CronJob":
 			return gtk.NewImageFromIconName("timer-reset-symbolic")
 		}
 	case networkingv1.GroupName:
-		switch gvk.Resource {
-		case "ingresses":
+		switch gvk.Kind {
+		case "Ingress":
 			return gtk.NewImageFromIconName("radio-tower-symbolic")
 		}
 	}

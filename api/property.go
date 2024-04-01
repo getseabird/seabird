@@ -5,6 +5,7 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	corev1 "k8s.io/api/core/v1"
 )
 
 type Property interface {
@@ -16,7 +17,7 @@ type TextProperty struct {
 	ID        string
 	Name      string
 	Value     string
-	Reference *ObjectReference
+	Reference *corev1.ObjectReference
 	Widget    func(gtk.Widgetter, *adw.NavigationView)
 }
 

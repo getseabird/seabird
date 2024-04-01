@@ -57,6 +57,7 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 
 	toolbar := adw.NewToolbarView()
 	toolbar.SetTopBarStyle(adw.ToolbarRaised)
+	toolbar.AddCSSClass("view")
 	content.Append(toolbar)
 
 	header := adw.NewHeaderBar()
