@@ -67,10 +67,9 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 	w.SetContent(w.toastOverlay)
 
 	paned := gtk.NewPaned(gtk.OrientationHorizontal)
-	paned.SetPosition(250)
+	paned.SetPosition(225)
 	paned.SetShrinkStartChild(false)
 	paned.SetShrinkEndChild(false)
-	paned.SetMarginStart(-8)
 	w.toastOverlay.SetChild(paned)
 
 	// replace split view with sheet dialog? in adw 1.5
@@ -86,14 +85,14 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 	w.overlay.SetContent(w.listView)
 
 	w.navigation = NewNavigation(ctx, w.ClusterState, viewStack, editor)
-	w.navigation.SetSizeRequest(250, 250)
+	w.navigation.SetSizeRequest(225, -1)
 	paned.SetStartChild(w.navigation)
 
 	navView := adw.NewNavigationView()
 	w.objectView = NewObjectView(ctx, w.ClusterState, editor, navView, w.navigation)
 	navView.Add(w.objectView.NavigationPage)
 	navView.SetHExpand(true)
-	navView.SetSizeRequest(400, 0)
+	navView.SetSizeRequest(400, -1)
 	w.overlay.SetSidebar(navView)
 
 	viewStack.AddChild(w.overlay).SetName("list")
