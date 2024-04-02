@@ -38,8 +38,9 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 		UniversalWindow: widget.NewUniversalWindow(),
 		pages:           map[*adw.TabPage]*sourcePage{},
 	}
-	w.SetDefaultSize(1280, 720)
-	w.SetTitle("Editor")
+	cluster := ctxt.MustFrom[*api.Cluster](ctx)
+	w.SetDefaultSize(1000, 600)
+	w.SetTitle(fmt.Sprintf("Editor - %v", cluster.ClusterPreferences.Value().Name))
 
 	w.ConnectCloseRequest(func() (ok bool) {
 		w.Hide()
