@@ -34,7 +34,7 @@ type Core struct {
 }
 
 func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, columns []api.Column) []api.Column {
-	switch util.ResourceGVR(res).String() {
+	switch util.GVRForResource(res).String() {
 	case corev1.SchemeGroupVersion.WithResource("pods").String():
 		columns = append(columns,
 			api.Column{

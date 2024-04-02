@@ -196,7 +196,7 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 	pin.ConnectActivate(func(idx *glib.Variant) {
 		id, _ := strconv.Atoi(idx.String())
 		prefs := n.ClusterPreferences.Value()
-		prefs.Navigation.Favourites = append(prefs.Navigation.Favourites, util.ResourceGVR(&n.Resources[id]))
+		prefs.Navigation.Favourites = append(prefs.Navigation.Favourites, util.GVRForResource(&n.Resources[id]))
 		n.ClusterPreferences.Update(prefs)
 	})
 	actionGroup.AddAction(pin)
@@ -205,7 +205,7 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 		id, _ := strconv.Atoi(idx.String())
 		prefs := n.ClusterPreferences.Value()
 		for i, f := range prefs.Navigation.Favourites {
-			if util.GVREquals(f, util.ResourceGVR(&n.Resources[id])) {
+			if util.GVREquals(f, util.GVRForResource(&n.Resources[id])) {
 				prefs.Navigation.Favourites = slices.Delete(prefs.Navigation.Favourites, i, i+1)
 				n.ClusterPreferences.Update(prefs)
 				break
@@ -244,7 +244,7 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 			return
 		}
 		for _, res := range n.Resources {
-			if util.GVREquals(util.ResourceGVR(&res), gvr) && !util.ResourceEquals(n.SelectedResource.Value(), &res) {
+			if util.GVREquals(util.GVRForResource(&res), gvr) && !util.ResourceEquals(n.SelectedResource.Value(), &res) {
 				n.SelectedResource.Update(&res)
 				break
 			}
@@ -258,7 +258,7 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 	for i, resource := range n.Resources {
 		var fav bool
 		for _, f := range prefs.Navigation.Favourites {
-			if util.GVREquals(f, util.ResourceGVR(&resource)) {
+			if util.GVREquals(f, util.GVRForResource(&resource)) {
 				fav = true
 			}
 		}
@@ -354,7 +354,7 @@ func createObjectRow(ref corev1.ObjectReference) *gtk.ListBoxRow {
 }
 
 func createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.ListBoxRow {
-	gvr := util.ResourceGVR(resource)
+	gvr := util.GVRForResource(resource)
 
 	row := gtk.NewListBoxRow()
 	json, err := json.Marshal(gvr)
@@ -365,7 +365,7 @@ func createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.Lis
 	box := gtk.NewBox(gtk.OrientationHorizontal, 8)
 	box.SetMarginTop(4)
 	box.SetMarginBottom(4)
-	box.Append(resourceImage(util.ResourceGVK(resource)))
+	box.Append(resourceImage(util.GVKForResource(resource)))
 	vbox := gtk.NewBox(gtk.OrientationVertical, 2)
 	vbox.SetVAlign(gtk.AlignCenter)
 	box.Append(vbox)

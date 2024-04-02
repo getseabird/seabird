@@ -31,7 +31,7 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	createButton.SetIconName("document-new-symbolic")
 	createButton.SetTooltipText("New Resource")
 	createButton.ConnectClicked(func() {
-		gvk := util.ResourceGVK(state.SelectedResource.Value())
+		gvk := util.GVKForResource(state.SelectedResource.Value())
 		err := editor.AddPage(&gvk, nil)
 		if err != nil {
 			widget.ShowErrorDialog(ctx, "Error loading editor", err)

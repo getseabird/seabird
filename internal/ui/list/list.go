@@ -95,7 +95,7 @@ func (l *List) onSelectedResourceChange(resource *metav1.APIResource) {
 	}
 	var ctx context.Context
 	ctx, l.watchCancel = context.WithCancel(l.ctx)
-	api.ObjectWatcher(ctx, resource, l.objects)
+	api.Watch(ctx, l.Cluster, resource, api.WatchOptions[client.Object]{Property: l.objects})
 	l.overlay.SetShowSidebar(false)
 }
 
@@ -150,7 +150,7 @@ func (l *List) createColumns() []*gtk.ColumnViewColumn {
 	var gtkColumns []*gtk.ColumnViewColumn
 	for _, col := range columns {
 		factory := gtk.NewSignalListItemFactory()
-		gvk := util.ResourceGVK(l.SelectedResource.Value()).String()
+		gvk := util.GVKForResource(l.SelectedResource.Value()).String()
 		factory.ConnectBind(func(listitem *gtk.ListItem) {
 			idx, _ := strconv.Atoi(listitem.Item().Cast().(*gtk.StringObject).String())
 			object := l.objects.Value()[idx]

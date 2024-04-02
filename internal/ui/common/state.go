@@ -67,7 +67,7 @@ func (s *State) NewClusterState(ctx context.Context, clusterPrefs observer.Prope
 			break
 		}
 	}
-	api.ObjectWatcher(ctx, ns, cluster.Namespaces)
+	api.Watch(ctx, clusterApi, ns, api.WatchOptions[*corev1.Namespace]{Property: cluster.Namespaces})
 
 	for _, new := range extension.Extensions {
 		cluster.Extensions = append(cluster.Extensions, new(clusterApi))

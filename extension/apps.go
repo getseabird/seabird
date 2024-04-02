@@ -27,7 +27,7 @@ type Apps struct {
 }
 
 func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, columns []api.Column) []api.Column {
-	switch util.ResourceGVR(resource).String() {
+	switch util.GVRForResource(resource).String() {
 	case appsv1.SchemeGroupVersion.WithResource("deployments").String():
 		columns = append(columns,
 			api.Column{

@@ -5,11 +5,11 @@ import (
 	"k8s.io/apimachinery/pkg/runtime/schema"
 )
 
-func ResourceGVR(resource *v1.APIResource) schema.GroupVersionResource {
+func GVRForResource(resource *v1.APIResource) schema.GroupVersionResource {
 	return schema.GroupVersionResource{Group: resource.Group, Version: resource.Version, Resource: resource.Name}
 }
 
-func ResourceGVK(resource *v1.APIResource) schema.GroupVersionKind {
+func GVKForResource(resource *v1.APIResource) schema.GroupVersionKind {
 	return schema.GroupVersionKind{Group: resource.Group, Version: resource.Version, Kind: resource.Kind}
 }
 

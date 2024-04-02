@@ -20,6 +20,8 @@ import (
 	"github.com/getseabird/seabird/widget"
 	"github.com/google/uuid"
 	"github.com/imkira/go-observer/v2"
+	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/fields"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -132,6 +134,8 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 			pin.SetActive(pinned)
 		}
 	})
+
+	watchCtx, cancelWatch := context.WithCancel(ctx)
 	common.OnChange(ctx, o.SelectedObject, func(object client.Object) {
 		for o.navView.Pop() {
 			// empty
@@ -142,6 +146,29 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 			o.updateProperties([]api.Property{})
 			return
 		}
+
+		cancelWatch()
+		watchCtx, cancelWatch = context.WithCancel(ctx)
+		api.Watch(
+			watchCtx,
+			o.Cluster,
+			o.Cluster.GetAPIResource(object.GetObjectKind().GroupVersionKind()),
+			api.WatchOptions[client.Object]{
+				ListOptions: v1.ListOptions{
+					FieldSelector:   fields.OneTermEqualSelector("metadata.name", object.GetName()).String(),
+					ResourceVersion: object.GetResourceVersion(),
+				},
+				UpdateFunc: func(obj client.Object) {
+					o.SelectedObject.Update(obj)
+				},
+				DeleteFunc: func(obj client.Object) {
+					o.SelectedObject.Update(nil)
+					if pin.Active() {
+						pin.Activate()
+					}
+				},
+			},
+		)
 
 		resource := o.GetAPIResource(object.GetObjectKind().GroupVersionKind())
 

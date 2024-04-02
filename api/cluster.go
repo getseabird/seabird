@@ -166,7 +166,7 @@ func (cluster *Cluster) GetReference(ctx context.Context, ref corev1.ObjectRefer
 
 func (cluster *Cluster) GetAPIResource(gvk schema.GroupVersionKind) *metav1.APIResource {
 	for _, res := range cluster.Resources {
-		if util.GVKEquals(gvk, util.ResourceGVK(&res)) {
+		if util.GVKEquals(gvk, util.GVKForResource(&res)) {
 			return &res
 		}
 	}
