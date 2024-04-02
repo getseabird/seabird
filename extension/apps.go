@@ -91,7 +91,7 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 	return columns
 }
 
-func (e *Apps) CreateObjectProperties(ctx context.Context, object client.Object, props []api.Property) []api.Property {
+func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource, object client.Object, props []api.Property) []api.Property {
 	switch object := object.(type) {
 	case *appsv1.Deployment:
 		prop := &api.GroupProperty{Name: "Pods"}

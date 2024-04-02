@@ -3,6 +3,7 @@ package extension
 import (
 	"context"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
@@ -70,7 +71,7 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 	return columns
 }
 
-func (e *Meta) CreateObjectProperties(ctx context.Context, object client.Object, props []api.Property) []api.Property {
+func (e *Meta) CreateObjectProperties(ctx context.Context, resource *metav1.APIResource, object client.Object, props []api.Property) []api.Property {
 	var labels []api.Property
 	for key, value := range object.GetLabels() {
 		labels = append(labels, &api.TextProperty{Name: key, Value: value})
@@ -94,33 +95,36 @@ func (e *Meta) CreateObjectProperties(ctx context.Context, object client.Object,
 		})
 	}
 
-	props = append(props,
-		&api.GroupProperty{
-			Priority: 100,
-			Name:     "Metadata",
-			Children: []api.Property{
-				&api.TextProperty{
-					Name:  "Name",
-					Value: object.GetName(),
-				},
-				&api.TextProperty{
-					Name:  "Namespace",
-					Value: object.GetNamespace(),
-				},
-				&api.GroupProperty{
-					Name:     "Labels",
-					Children: labels,
-				},
-				&api.GroupProperty{
-					Name:     "Annotations",
-					Children: annotations,
-				},
-				&api.GroupProperty{
-					Name:     "Owners",
-					Children: owners,
-				},
+	metadata := api.GroupProperty{
+		Priority: 100,
+		Name:     "Metadata",
+		Children: []api.Property{
+			&api.TextProperty{
+				Name:  "Name",
+				Value: object.GetName(),
 			},
-		})
+			&api.TextProperty{
+				Name:  "Namespace",
+				Value: object.GetNamespace(),
+			},
+			&api.GroupProperty{
+				Name:     "Labels",
+				Children: labels,
+			},
+			&api.GroupProperty{
+				Name:     "Annotations",
+				Children: annotations,
+			},
+			&api.GroupProperty{
+				Name:     "Owners",
+				Children: owners,
+			},
+		},
+	}
+	if !resource.Namespaced {
+		metadata.Children = slices.Delete(metadata.Children, 1, 2)
+	}
+	props = append(props, &metadata)
 
 	events := &api.GroupProperty{Name: "Events", Priority: -100}
 	for _, ev := range e.Events.For(object) {

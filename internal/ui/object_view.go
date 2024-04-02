@@ -143,6 +143,8 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 			return
 		}
 
+		resource := o.GetAPIResource(object.GetObjectKind().GroupVersionKind())
+
 		yaml, err := o.Encoder.EncodeYAML(object)
 		if err != nil {
 			o.sourceBuffer.SetText(fmt.Sprintf("error: %v", err))
@@ -152,7 +154,7 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 
 		var props []api.Property
 		for _, ext := range o.Extensions {
-			props = ext.CreateObjectProperties(ctx, object, props)
+			props = ext.CreateObjectProperties(ctx, resource, object, props)
 		}
 		sort.Slice(props, func(i, j int) bool {
 			return props[i].GetPriority() > props[j].GetPriority()

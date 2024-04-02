@@ -181,7 +181,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 	return columns
 }
 
-func (e *Core) CreateObjectProperties(ctx context.Context, object client.Object, props []api.Property) []api.Property {
+func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource, object client.Object, props []api.Property) []api.Property {
 	switch object := object.(type) {
 	case *corev1.Pod:
 		var containers []api.Property

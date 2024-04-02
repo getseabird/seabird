@@ -8,6 +8,7 @@ import (
 	"slices"
 	"sort"
 
+	"github.com/getseabird/seabird/internal/util"
 	"github.com/imkira/go-observer/v2"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
@@ -27,6 +28,7 @@ import (
 	"k8s.io/client-go/restmapper"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
 )
 
 type Cluster struct {
@@ -157,5 +159,25 @@ func (cluster *Cluster) GetReference(ctx context.Context, ref corev1.ObjectRefer
 		return nil, err
 	}
 
+	cluster.SetObjectGVK(object)
+
 	return object, nil
+}
+
+func (cluster *Cluster) GetAPIResource(gvk schema.GroupVersionKind) *metav1.APIResource {
+	for _, res := range cluster.Resources {
+		if util.GVKEquals(gvk, util.ResourceGVK(&res)) {
+			return &res
+		}
+	}
+	return nil
+}
+
+func (cluster *Cluster) SetObjectGVK(object client.Object) error {
+	gvk, err := apiutil.GVKForObject(object, cluster.Scheme)
+	if err != nil {
+		return err
+	}
+	object.GetObjectKind().SetGroupVersionKind(gvk)
+	return nil
 }

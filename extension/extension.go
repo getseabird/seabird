@@ -14,5 +14,5 @@ type Constructor func(*api.Cluster) Extension
 
 type Extension interface {
 	CreateColumns(ctx context.Context, resource *metav1.APIResource, columns []api.Column) []api.Column
-	CreateObjectProperties(ctx context.Context, object client.Object, props []api.Property) []api.Property
+	CreateObjectProperties(ctx context.Context, resource *metav1.APIResource, object client.Object, props []api.Property) []api.Property
 }

@@ -24,6 +24,14 @@ func ObjectWatcher[T client.Object](ctx context.Context, resource *metav1.APIRes
 	cluster, _ := ctxt.From[*Cluster](ctx)
 	objects := []T{}
 
+	update, _ := debounce.Debounce(func() {
+		for _, object := range objects {
+			cluster.SetObjectGVK(object)
+		}
+		prop.Update(objects)
+	}, 100*time.Millisecond, debounce.WithMaxWait(time.Second))
+	defer update()
+
 	if !slices.Contains(resource.Verbs, "watch") {
 		go func() {
 			for {
@@ -39,18 +47,13 @@ func ObjectWatcher[T client.Object](ctx context.Context, resource *metav1.APIRes
 					for _, i := range list.Items {
 						objects = append(objects, client.Object(&i).(T))
 					}
-					prop.Update(objects)
+					update()
 					time.Sleep(time.Minute)
 				}
 			}
 		}()
 		return
 	}
-
-	update, _ := debounce.Debounce(func() {
-		prop.Update(objects)
-	}, 100*time.Millisecond, debounce.WithMaxWait(time.Second))
-	defer update()
 
 	obj, _ := cluster.Scheme.New(util.ResourceGVK(resource))
 
