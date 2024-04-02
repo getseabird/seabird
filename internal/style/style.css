@@ -45,3 +45,7 @@ dropdown.kind-dropdown>button {
   padding-left: 7px;
   padding-right: 7px;
 }
+
+.navigation-sidebar {
+  background-color: @sidebar_bg_color;
+}

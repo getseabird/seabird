@@ -55,7 +55,7 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 		editor:       editor,
 	}
 	n.SetVExpand(true)
-	n.AddCSSClass("sidebar-pane")
+	n.AddCSSClass("navigation-sidebar")
 
 	header := adw.NewHeaderBar()
 	title := gtk.NewLabel(n.ClusterPreferences.Value().Name)
