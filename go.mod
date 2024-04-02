@@ -2,15 +2,13 @@ module github.com/getseabird/seabird
 
 go 1.22.0
 
-replace github.com/diamondburned/gotk4/pkg => github.com/jgillich/gotk4/pkg v0.0.0-20240229122553-ce93f6c9ba91
-
 require (
 	github.com/NdoleStudio/lemonsqueezy-go v1.2.2
 	github.com/adrg/strutil v0.3.1
 	github.com/creack/pty v1.1.21
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc
-	github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240109205950-92962b56dd0f
-	github.com/diamondburned/gotk4/pkg v0.2.2
+	github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240312005410-8276faa7949c
+	github.com/diamondburned/gotk4/pkg v0.2.3-0.20240325192138-30a99fed423d
 	github.com/getkin/kin-openapi v0.123.0
 	github.com/go-logr/logr v1.4.1
 	github.com/google/uuid v1.6.0
@@ -19,7 +17,7 @@ require (
 	github.com/jgillich/gotk4-vte v0.0.0-20240131190304-a4aecd4a69b4
 	github.com/leaanthony/go-ansi-parser v1.6.1
 	github.com/zmwangx/debounce v1.0.0
-	golang.org/x/exp v0.0.0-20240213143201-ec583247a57a
+	golang.org/x/exp v0.0.0-20240325151524-a685a6edb6d8
 	gopkg.in/yaml.v2 v2.4.0
 	k8s.io/api v0.29.3
 	k8s.io/apiextensions-apiserver v0.29.3
@@ -44,7 +42,7 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/google/gofuzz v1.2.0 // indirect
 	github.com/gorilla/websocket v1.5.1 // indirect
-	github.com/imdario/mergo v0.3.16 // indirect
+	github.com/imdario/mergo v0.3.6 // indirect
 	github.com/invopop/yaml v0.2.0 // indirect
 	github.com/josharian/intern v1.0.0 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
