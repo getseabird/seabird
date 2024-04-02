@@ -24,6 +24,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/client-go/tools/reference"
@@ -44,6 +45,7 @@ type Navigation struct {
 	editor          *editor.EditorWindow
 	resourcesToggle *gtk.ToggleButton
 	pinsToggle      *gtk.ToggleButton
+	cancelFuncs     map[string]context.CancelFunc
 }
 
 func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *gtk.Stack, editor *editor.EditorWindow) *Navigation {
@@ -53,6 +55,7 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 		ClusterState: state,
 		viewStack:    viewStack,
 		editor:       editor,
+		cancelFuncs:  map[string]context.CancelFunc{},
 	}
 	n.SetVExpand(true)
 	n.AddCSSClass("navigation-sidebar")
@@ -180,9 +183,6 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 		n.resourceList.SelectRow(n.favourites[0])
 	}
 
-	if row := n.resourceList.SelectedRow(); row != nil {
-		row.Activate()
-	}
 	return n
 }
 
@@ -311,7 +311,7 @@ rows:
 	}
 
 outer:
-	for _, pin := range pins {
+	for i, pin := range pins {
 		for _, row := range n.pinRows {
 			var ref corev1.ObjectReference
 			if err := json.Unmarshal([]byte(row.Name()), &ref); err != nil {
@@ -323,7 +323,13 @@ outer:
 		}
 		object, err := n.GetReference(n.ctx, pin)
 		if err != nil {
-			log.Printf("updatePins: %s %v", err, pin)
+			if errors.IsNotFound(err) {
+				prefs := n.ClusterPreferences.Value()
+				prefs.Navigation.Pins = slices.Delete(pins, i, i+1)
+				n.ClusterPreferences.Update(prefs)
+			} else {
+				log.Printf("updatePins: %s %v", err, pin)
+			}
 			continue
 		}
 		n.createPin(object)
@@ -441,7 +447,9 @@ func (n *Navigation) createPin(object client.Object) *gtk.ListBoxRow {
 	state.SelectedObject = observer.NewProperty[client.Object](object)
 	navView := adw.NewNavigationView()
 	navView.SetName(string(object.GetUID()))
-	navView.Push(NewObjectView(n.ctx, &state, n.editor, navView, n).NavigationPage)
+	ctx, cancel := context.WithCancel(n.ctx)
+	n.cancelFuncs[string(object.GetUID())] = cancel
+	navView.Push(NewObjectView(ctx, &state, n.editor, navView, n).NavigationPage)
 	n.pinViews = append(n.pinViews, navView)
 
 	page := n.viewStack.AddChild(navView)
@@ -461,12 +469,18 @@ outer:
 			}
 		}
 	}
+
 	for i, v := range n.pinViews {
 		if v.Name() == string(ref.UID) {
 			n.viewStack.Remove(v)
 			n.pinViews = slices.Delete(n.pinViews, i, i+1)
 			break
 		}
+	}
+
+	if cancel, ok := n.cancelFuncs[string(ref.UID)]; ok {
+		cancel()
+		delete(n.cancelFuncs, string(ref.UID))
 	}
 }
 
@@ -506,6 +520,8 @@ func (n *Navigation) RemovePin(object client.Object) {
 		return
 	}
 
+	n.removePin(*ref)
+
 	prefs := n.ClusterPreferences.Value()
 	for i, p := range prefs.Navigation.Pins {
 		if p.UID == object.GetUID() {
@@ -515,10 +531,11 @@ func (n *Navigation) RemovePin(object client.Object) {
 	}
 	n.ClusterPreferences.Update(prefs)
 
-	n.removePin(*ref)
-
 	if len(n.pinRows) == 0 {
 		n.resourcesToggle.SetActive(true)
+	} else if n.pinList.SelectedRow() == nil {
+		n.pinList.SelectRow(n.pinRows[0])
+		n.pinList.SelectedRow().Activate()
 	}
 }
 

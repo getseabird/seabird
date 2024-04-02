@@ -8,6 +8,7 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
+	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
@@ -162,10 +163,12 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 					o.SelectedObject.Update(obj)
 				},
 				DeleteFunc: func(obj client.Object) {
-					o.SelectedObject.Update(nil)
-					if pin.Active() {
-						pin.Activate()
-					}
+					cancelWatch()
+					glib.IdleAdd(func() {
+						if pin.Active() {
+							o.navigation.RemovePin(obj)
+						}
+					})
 				},
 			},
 		)
