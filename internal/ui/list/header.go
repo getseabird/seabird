@@ -26,6 +26,8 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	header.AddCSSClass("flat")
 	header.SetShowStartTitleButtons(false)
 	header.SetShowEndTitleButtons(!style.Eq(style.Windows))
+	header.SetMarginStart(8)
+	header.SetMarginEnd(8)
 
 	createButton := gtk.NewButton()
 	createButton.SetIconName("document-new-symbolic")
