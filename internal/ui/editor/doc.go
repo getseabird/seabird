@@ -47,47 +47,83 @@ func newDocumentationPage(t *openapi3.T, ref string, breadcrumbs []string) *adw.
 
 	keys := maps.Keys(schema.Value.Properties)
 	slices.Sort(keys)
-	for _, prop := range keys {
-		schema := schema.Value.Properties[prop]
+	for _, field := range keys {
+		schema := schema.Value.Properties[field]
 		var required bool
 		for _, r := range schema.Value.Required {
-			if prop == r {
+			if field == r {
 				required = true
 				break
 			}
 		}
-		row := adw.NewActionRow()
-		row.SetUseMarkup(false)
-		row.SetSubtitle(schema.Value.Description)
-
-		var vtype string
-		switch schema.Value.Type {
-		case "array":
-			vtype = fmt.Sprintf("[]%s", schema.Value.Items.Value.Type)
-		default:
-			vtype = schema.Value.Type
-		}
-
-		if inner := innerType(schema.Value); inner != nil {
-			switch schema.Value.Type {
-			case "array":
-				vtype = fmt.Sprintf("[]%s", refName(inner.Ref))
-			default:
-				vtype = refName(inner.Ref)
-			}
-			row.SetActivatable(true)
-			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-			row.ConnectActivated(func() {
-				page.Parent().(*adw.NavigationView).Push(newDocumentationPage(t, inner.Ref, append(breadcrumbs, page.Title())))
-			})
-		}
-		title := fmt.Sprintf("%s %s", prop, vtype)
-		if required {
-			title = fmt.Sprintf("%s* %s", prop, vtype)
-		}
-		row.SetTitle(title)
+		row := createPropRow(field, schema, required, func(ref string) {
+			page.Parent().(*adw.NavigationView).Push(newDocumentationPage(t, ref, append(breadcrumbs, page.Title())))
+		})
 		group.Add(row)
 	}
 
 	return page
+}
+
+// TODO this can create nested expander rows, which are not supported in adw
+func createPropRow(field string, schema *openapi3.SchemaRef, required bool, onActivate func(ref string)) gtk.Widgetter {
+	if typeName(schema.Value) == "object" && len(schema.Value.Properties) > 0 {
+		expander := adw.NewExpanderRow()
+		expander.SetUseMarkup(false)
+		expander.SetSubtitle(schema.Value.Description)
+		title := fmt.Sprintf("%s %s", field, typeName(schema.Value))
+		if required {
+			title = fmt.Sprintf("%s* %s", field, typeName(schema.Value))
+		}
+		expander.SetTitle(title)
+		keys := maps.Keys(schema.Value.Properties)
+		slices.Sort(keys)
+		for _, field := range keys {
+			schema := schema.Value.Properties[field]
+			var required bool
+			for _, r := range schema.Value.Required {
+				if field == r {
+					required = true
+					break
+				}
+			}
+			expander.AddRow(createPropRow(field, schema, required, onActivate))
+		}
+		return expander
+	} else {
+		row := adw.NewActionRow()
+		row.SetUseMarkup(false)
+		row.SetSubtitle(schema.Value.Description)
+		title := fmt.Sprintf("%s %s", field, typeName(schema.Value))
+		if required {
+			title = fmt.Sprintf("%s* %s", field, typeName(schema.Value))
+		}
+		row.SetTitle(title)
+		if inner := innerType(schema.Value); inner != nil {
+			row.SetActivatable(true)
+			row.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
+			row.ConnectActivated(func() {
+				onActivate(inner.Ref)
+			})
+		}
+		return row
+	}
+}
+
+func typeName(v *openapi3.Schema) string {
+	if inner := innerType(v); inner != nil {
+		switch v.Type {
+		case "array":
+			return fmt.Sprintf("[]%s", refName(inner.Ref))
+		default:
+			return refName(inner.Ref)
+		}
+	}
+
+	switch v.Type {
+	case "array":
+		return fmt.Sprintf("[]%s", v.Items.Value.Type)
+	default:
+		return v.Type
+	}
 }
