@@ -28,15 +28,12 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 	gvr := util.GVRForResource(resource)
 	gvk := util.GVKForResource(resource)
 
-	update, _ := debounce.Debounce(func() {
-		for _, object := range objects {
-			cluster.SetObjectGVK(object)
-		}
+	updateProperty, _ := debounce.Debounce(func() {
 		if opts.Property != nil {
 			opts.Property.Update(objects)
 		}
 	}, 100*time.Millisecond, debounce.WithMaxWait(time.Second))
-	defer update()
+	defer updateProperty()
 
 	if !slices.Contains(resource.Verbs, "watch") {
 		go func() {
@@ -56,9 +53,10 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 							log.Printf("error converting obj: %s", err)
 							continue
 						}
+						cluster.SetObjectGVK(obj)
 						objects = append(objects, obj.(T))
 					}
-					update()
+					updateProperty()
 					time.Sleep(time.Minute)
 				}
 			}
@@ -89,16 +87,18 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 					if err != nil {
 						obj = res.Object.(client.Object)
 					}
+					cluster.SetObjectGVK(obj)
 					if opts.AddFunc != nil {
 						opts.AddFunc(obj.(T))
 					}
 					objects = append(objects, obj.(T))
-					update()
+					updateProperty()
 				case watch.Modified:
 					obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
 					if err != nil {
 						obj = res.Object.(client.Object)
 					}
+					cluster.SetObjectGVK(obj)
 					if opts.UpdateFunc != nil {
 						opts.UpdateFunc(obj.(T))
 					}
@@ -108,12 +108,13 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 							break
 						}
 					}
-					update()
+					updateProperty()
 				case watch.Deleted:
 					obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
 					if err != nil {
 						obj = res.Object.(client.Object)
 					}
+					cluster.SetObjectGVK(obj)
 					if opts.DeleteFunc != nil {
 						opts.DeleteFunc(obj.(T))
 					}
@@ -123,7 +124,7 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 							break
 						}
 					}
-					update()
+					updateProperty()
 				}
 			case <-ctx.Done():
 				w.Stop()
