@@ -74,7 +74,15 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 		}
 		for {
 			select {
-			case res := <-w.ResultChan():
+			case res, ok := <-w.ResultChan():
+				if !ok {
+					w, err = cluster.DynamicClient.Resource(gvr).Watch(ctx, opts.ListOptions)
+					if err != nil {
+						log.Printf("watch failed: %s", err.Error())
+						return
+					}
+					continue
+				}
 				switch res.Type {
 				case watch.Added:
 					obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
@@ -123,42 +131,4 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 			}
 		}
 	}()
-
-	// TODO remove this. keeping it around for reference in case it's needed again
-	// 	httpClient, err := rest.HTTPClientFor(cluster.Config)
-	// if err != nil {
-	// 	log.Printf("watcher httpClient: %s", err)
-	// 	return
-	// }
-	// getter, err := apiutil.RESTClientForGVK(util.GVKForResource(resource), false, cluster.Config, serializer.NewCodecFactory(cluster.Scheme), httpClient)
-	// watchlist := cache.NewListWatchFromClient(getter, resource.Name, corev1.NamespaceAll,
-	// 	fields.Everything())
-	// informer := cache.NewSharedInformer(watchlist, obj, 0)
-	// informer.AddEventHandler(cache.ResourceEventHandlerFuncs{
-	// 	AddFunc: func(obj interface{}) {
-	// 		objects = append(objects, obj.(T))
-	// 		update()
-	// 	},
-	// 	DeleteFunc: func(o interface{}) {
-	// 		obj := o.(client.Object)
-	// 		for i, o := range objects {
-	// 			if o.GetUID() == obj.GetUID() {
-	// 				objects = append(objects[:i], objects[i+1:]...)
-	// 				break
-	// 			}
-	// 		}
-	// 		update()
-	// 	},
-	// 	UpdateFunc: func(oldObj, newObj interface{}) {
-	// 		obj := newObj.(T)
-	// 		for i, o := range objects {
-	// 			if o.GetUID() == obj.GetUID() {
-	// 				objects[i] = obj
-	// 				break
-	// 			}
-	// 		}
-	// 		update()
-	// 	},
-	// })
-	// go informer.Run(ctx.Done())
 }
