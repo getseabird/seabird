@@ -23,6 +23,7 @@
   </branding>
   <content_rating type="oars-1.1" />
   <releases>
+    <release version="v0.3.1" date="2024-04-04"/>
     <release version="v0.3.0" date="2024-04-03" />
     <release version="v0.2.2" date="2024-03-03" />
     <release version="v0.2.1" date="2024-03-03" />
