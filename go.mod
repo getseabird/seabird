@@ -24,7 +24,7 @@ require (
 	k8s.io/apimachinery v0.29.3
 	k8s.io/client-go v0.29.3
 	k8s.io/metrics v0.29.3
-	nhooyr.io/websocket v1.8.10
+	nhooyr.io/websocket v1.8.11
 	sigs.k8s.io/controller-runtime v0.17.2
 )
 
