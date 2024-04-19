@@ -18,8 +18,8 @@
   <url type="homepage">https://getseabird.github.io/</url>
   <developer_name>Seabird Project</developer_name>
   <branding>
-    <color type="primary" scheme_preference="light">#326ce5</color>
-    <color type="primary" scheme_preference="dark">#1b56d2</color>
+    <color type="primary" scheme_preference="light">#87a8ee</color>
+    <color type="primary" scheme_preference="dark">#87a8ee</color>
   </branding>
   <content_rating type="oars-1.1" />
   <releases>
