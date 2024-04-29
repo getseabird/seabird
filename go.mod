@@ -25,7 +25,7 @@ require (
 	k8s.io/client-go v0.30.0
 	k8s.io/metrics v0.30.0
 	nhooyr.io/websocket v1.8.11
-	sigs.k8s.io/controller-runtime v0.17.3
+	sigs.k8s.io/controller-runtime v0.18.0
 )
 
 require (
