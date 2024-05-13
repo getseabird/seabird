@@ -1,7 +1,7 @@
 github.com/KarpelesLab/weak v0.1.1 h1:fNnlPo3aypS9tBzoEQluY13XyUfd/eWaSE/vMvo9s4g=
 github.com/KarpelesLab/weak v0.1.1/go.mod h1:pzXsWs5f2bf+fpgHayTlBE1qJpO3MpJKo5sRaLu1XNw=
-github.com/NdoleStudio/lemonsqueezy-go v1.2.2 h1:5P16ERFXklEKfP4CA6mB2Vpvb2CmOUjfTt7o+VS49LE=
-github.com/NdoleStudio/lemonsqueezy-go v1.2.2/go.mod h1:2uZlWgn9sbNxOx3JQWLlPrDOC6NT/wmSTOgL3U/fMMw=
+github.com/NdoleStudio/lemonsqueezy-go v1.2.3 h1:r7f2R9K2HwNWod1AJW7wlXJOroTNLh2az0CgV8MONx4=
+github.com/NdoleStudio/lemonsqueezy-go v1.2.3/go.mod h1:2uZlWgn9sbNxOx3JQWLlPrDOC6NT/wmSTOgL3U/fMMw=
 github.com/adrg/strutil v0.3.1 h1:OLvSS7CSJO8lBii4YmBt8jiK9QOtB9CzCzwl4Ic/Fz4=
 github.com/adrg/strutil v0.3.1/go.mod h1:8h90y18QLrs11IBffcGX3NW/GFBXCMcNg4M7H6MspPA=
 github.com/armon/go-socks5 v0.0.0-20160902184237-e75332964ef5 h1:0CwZNZbxp69SHPdPJAN/hZIm0C4OItdklCFmMRWYpio=
