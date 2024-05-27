@@ -10,7 +10,7 @@ require (
 	github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240312005410-8276faa7949c
 	github.com/diamondburned/gotk4/pkg v0.2.3-0.20240325192138-30a99fed423d
 	github.com/getkin/kin-openapi v0.123.0
-	github.com/go-logr/logr v1.4.1
+	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
 	github.com/hexops/gotextdiff v1.0.3
 	github.com/imkira/go-observer/v2 v2.0.0-20230629064422-8e0b61f11f1b
