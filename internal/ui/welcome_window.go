@@ -79,19 +79,19 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		box.Append(header)
 	}
 
-	page := adw.NewPreferencesPage()
+	page := adw.NewPreferencesPage() 
 	box.Append(page)
 
 	if clusters := w.Preferences.Value().Clusters; len(clusters) > 0 {
-		if w.Preferences.Value().License == nil {
-			banner := adw.NewBanner("Your free trial expires in ∞ days")
-			banner.SetRevealed(true)
-			banner.SetButtonLabel("Purchase")
-			banner.ConnectButtonClicked(func() {
-				w.nav.Push(w.createPurchasePage())
-			})
-			banner.InsertBefore(box, page)
-		}
+		// if w.Preferences.Value().License == nil {
+		// 	banner := adw.NewBanner("Your free trial expires in ∞ days")
+		// 	banner.SetRevealed(true)
+		// 	banner.SetButtonLabel("Purchase") 
+		// 	banner.ConnectButtonClicked(func() {
+		// 		w.nav.Push(w.createPurchasePage())
+		// 	})
+		// 	banner.InsertBefore(box, page)
+		// }
 
 		group := adw.NewPreferencesGroup()
 		group.SetTitle("Connect to Cluster")
