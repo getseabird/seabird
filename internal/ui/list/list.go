@@ -55,7 +55,7 @@ func NewList(ctx context.Context, state *common.ClusterState, overlay *adw.Overl
 	l.columnView.SetMarginBottom(16)
 
 	l.columnView.ConnectActivate(func(position uint) {
-		i, _ := strconv.Atoi(l.model.Item(position).Cast().(*gtk.StringObject).String())
+		i, _ := strconv.Atoi(l.columnView.Model().Item(position).Cast().(*gtk.StringObject).String())
 		obj := l.objects.Value()[i]
 		l.SelectedObject.Update(obj)
 		l.overlay.SetShowSidebar(true)
