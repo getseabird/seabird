@@ -112,18 +112,18 @@ func createPropRow(field string, schema *openapi3.SchemaRef, required bool, onAc
 
 func typeName(v *openapi3.Schema) string {
 	if inner := innerType(v); inner != nil {
-		switch v.Type {
-		case "array":
+		switch {
+		case v.Type.Is(openapi3.TypeArray):
 			return fmt.Sprintf("[]%s", refName(inner.Ref))
 		default:
 			return refName(inner.Ref)
 		}
 	}
 
-	switch v.Type {
-	case "array":
+	switch {
+	case v.Type.Is(openapi3.TypeArray):
 		return fmt.Sprintf("[]%s", v.Items.Value.Type)
 	default:
-		return v.Type
+		return v.Type.Slice()[0]
 	}
 }
