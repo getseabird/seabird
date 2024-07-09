@@ -34,7 +34,7 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					listitem.SetChild(widget.NewStatusIcon(isReady(object)))
+					listitem.SetChild(widget.ObjectStatus(object).Icon())
 				},
 				Compare: func(a, b client.Object) int {
 					if isReady(a) == isReady(b) {
@@ -63,7 +63,7 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					listitem.SetChild(widget.NewStatusIcon(isReady(object)))
+					listitem.SetChild(widget.ObjectStatus(object).Icon())
 				},
 				Compare: func(a, b client.Object) int {
 					if isReady(a) == isReady(b) {
@@ -105,7 +105,10 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				Reference: ref,
 				Value:     pod.Name,
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
-					podWidget(ctx, pod, w, nv)
+					switch row := w.(type) {
+					case *adw.ActionRow:
+						row.AddPrefix(widget.ObjectStatus(&pod).Icon())
+					}
 				},
 			})
 		}
@@ -130,7 +133,10 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				Reference: ref,
 				Value:     pod.Name,
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
-					podWidget(ctx, pod, w, nv)
+					switch row := w.(type) {
+					case *adw.ActionRow:
+						row.AddPrefix(widget.ObjectStatus(&pod).Icon())
+					}
 				},
 			})
 		}
@@ -138,15 +144,4 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 	}
 
 	return props
-}
-
-func podWidget(ctx context.Context, pod corev1.Pod, w gtk.Widgetter, nv *adw.NavigationView) {
-	switch row := w.(type) {
-	case *adw.ActionRow:
-		for _, cond := range pod.Status.Conditions {
-			if cond.Type == corev1.ContainersReady {
-				row.AddPrefix(widget.NewStatusIcon(cond.Status == corev1.ConditionTrue))
-			}
-		}
-	}
 }

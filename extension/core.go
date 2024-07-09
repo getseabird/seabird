@@ -41,7 +41,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					listitem.SetChild(widget.NewStatusIcon(isReady(object)))
+					listitem.SetChild(widget.ObjectStatus(object).Icon())
 				},
 				Compare: func(a, b client.Object) int {
 					if isReady(a) == isReady(b) {
@@ -124,7 +124,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					listitem.SetChild(widget.NewStatusIcon(isReady(object)))
+					listitem.SetChild(widget.ObjectStatus(object).Icon())
 				},
 				Compare: func(a, b client.Object) int {
 					if isReady(a) == isReady(b) {
@@ -288,7 +288,7 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				Widget: func(w gtk.Widgetter, nav *adw.NavigationView) {
 					switch row := w.(type) {
 					case *adw.ExpanderRow:
-						row.AddPrefix(widget.NewStatusIcon(status.Ready))
+						row.AddPrefix(widget.ObjectStatus(object).Icon())
 						if cpu != nil {
 							req := container.Resources.Requests.Cpu()
 							if req == nil || req.IsZero() {
@@ -424,7 +424,10 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				Reference: ref,
 				Value:     pod.Name,
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
-					podWidget(ctx, pod, w, nv)
+					switch row := w.(type) {
+					case *adw.ActionRow:
+						row.AddPrefix(widget.ObjectStatus(&pod).Icon())
+					}
 				},
 			})
 		}
