@@ -11,6 +11,7 @@ import (
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/imkira/go-observer/v2"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
@@ -60,6 +61,7 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 	rbacv1.AddToScheme(scheme)
 	storagev1.AddToScheme(scheme)
 	eventsv1.AddToScheme(scheme)
+	batchv1.AddToScheme(scheme)
 	metricsv1beta1.AddToScheme(scheme)
 
 	rclient, err := client.New(config, client.Options{

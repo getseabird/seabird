@@ -251,7 +251,7 @@ func (o *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 				row.ConnectActivated(func() {
 					obj, err := o.GetReference(o.ctx, *prop.Reference)
 					if err != nil {
-						log.Print(err.Error())
+						log.Printf("error resolving reference '%v': %v", prop.Reference, err.Error())
 						return
 					}
 					ctx, cancel := context.WithCancel(o.ctx)
