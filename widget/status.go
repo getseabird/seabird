@@ -72,16 +72,18 @@ func ObjectStatus(object client.Object) *Status {
 	case *appsv1.Deployment:
 		for _, cond := range object.Status.Conditions {
 			if cond.Type == appsv1.DeploymentAvailable {
-				return &Status{
-					Condition: string(appsv1.DeploymentAvailable),
-					Reason:    cond.Reason,
-					Type:      StatusTypeSuccess,
-				}
-			} else {
-				return &Status{
-					Condition: string(appsv1.DeploymentAvailable),
-					Reason:    cond.Reason,
-					Type:      StatusTypeWarning,
+				if cond.Status == corev1.ConditionTrue {
+					return &Status{
+						Condition: string(appsv1.DeploymentAvailable),
+						Reason:    cond.Reason,
+						Type:      StatusTypeSuccess,
+					}
+				} else {
+					return &Status{
+						Condition: string(appsv1.DeploymentAvailable),
+						Reason:    cond.Reason,
+						Type:      StatusTypeWarning,
+					}
 				}
 			}
 		}
