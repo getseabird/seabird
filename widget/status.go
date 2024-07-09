@@ -18,6 +18,7 @@ type Status struct {
 	Condition string
 	Reason    string
 	Type      StatusType
+	Children  []*Status
 }
 
 func NewStatus(cond string, reason string, typ StatusType) *Status {
@@ -27,6 +28,25 @@ func NewStatus(cond string, reason string, typ StatusType) *Status {
 func ObjectStatus(object client.Object) *Status {
 	switch object := object.(type) {
 	case *corev1.Pod:
+		var children []*Status
+		for _, cs := range object.Status.ContainerStatuses {
+			if cs.State.Running != nil {
+				children = append(children, &Status{
+					Condition: "Running",
+					Type:      StatusTypeSuccess,
+				})
+			} else if cs.State.Terminated != nil && cs.State.Terminated.Reason == "Completed" {
+				children = append(children, &Status{
+					Condition: "Terminated",
+					Reason:    cs.State.Terminated.Reason,
+					Type:      StatusTypeInfo,
+				})
+			} else {
+				children = append(children, &Status{
+					Type: StatusTypeWarning,
+				})
+			}
+		}
 		for _, cond := range object.Status.Conditions {
 			if cond.Type == corev1.ContainersReady {
 				if cond.Status == corev1.ConditionTrue {
@@ -34,6 +54,7 @@ func ObjectStatus(object client.Object) *Status {
 						Condition: string(corev1.ContainersReady),
 						Reason:    cond.Reason,
 						Type:      StatusTypeSuccess,
+						Children:  children,
 					}
 				} else {
 					if cond.Reason == "PodCompleted" {
@@ -41,12 +62,14 @@ func ObjectStatus(object client.Object) *Status {
 							Condition: string(corev1.ContainersReady),
 							Reason:    cond.Reason,
 							Type:      StatusTypeInfo,
+							Children:  children,
 						}
 					}
 					return &Status{
 						Condition: string(corev1.ContainersReady),
 						Reason:    cond.Reason,
 						Type:      StatusTypeWarning,
+						Children:  children,
 					}
 				}
 			}
@@ -130,4 +153,16 @@ func (status *Status) Icon() *gtk.Image {
 	default:
 		return nil
 	}
+}
+
+func (status *Status) Icons() []*gtk.Image {
+	if len(status.Children) == 0 {
+		return []*gtk.Image{status.Icon()}
+	}
+
+	var icons []*gtk.Image
+	for _, s := range status.Children {
+		icons = append(icons, s.Icon())
+	}
+	return icons
 }

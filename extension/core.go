@@ -41,7 +41,11 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ListItem, object client.Object) {
-					listitem.SetChild(widget.ObjectStatus(object).Icon())
+					box := gtk.NewBox(gtk.OrientationHorizontal, 4)
+					for _, icon := range widget.ObjectStatus(object).Icons() {
+						box.Append(icon)
+					}
+					listitem.SetChild(box)
 				},
 				Compare: func(a, b client.Object) int {
 					if isReady(a) == isReady(b) {
