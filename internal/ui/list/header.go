@@ -50,7 +50,7 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	entry := gtk.NewSearchEntry()
 	entry.SetMaxWidthChars(75)
 	box.Append(entry)
-	entry.ConnectChanged(func() {
+	entry.ConnectSearchChanged(func() {
 		if entry.Text() != state.SearchText.Value() {
 			state.SearchText.Update(entry.Text())
 		}

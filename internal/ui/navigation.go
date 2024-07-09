@@ -7,7 +7,10 @@ import (
 	"log"
 	"slices"
 	"strconv"
+	"strings"
 
+	"github.com/adrg/strutil"
+	"github.com/adrg/strutil/metrics"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
@@ -45,6 +48,7 @@ type Navigation struct {
 	editor          *editor.EditorWindow
 	resourcesToggle *gtk.ToggleButton
 	pinsToggle      *gtk.ToggleButton
+	search          *gtk.SearchEntry
 	cancelFuncs     map[string]context.CancelFunc
 }
 
@@ -116,8 +120,19 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 	resw := gtk.NewScrolledWindow()
 	resw.SetChild(resbin)
 	resw.SetVExpand(true)
-	navStack.AddChild(resw)
-	navStack.SetVisibleChild(resw)
+
+	resBox := gtk.NewBox(gtk.OrientationVertical, 4)
+	resBox.Append(resw)
+	n.search = gtk.NewSearchEntry()
+	n.search.SetVAlign(gtk.AlignEnd)
+	n.search.SetObjectProperty("placeholder-text", "Filter...")
+	n.search.ConnectSearchChanged(func() {
+		resbin.SetChild(n.createResourceList(n.ClusterPreferences.Value()))
+	})
+	resBox.Append(n.search)
+
+	navStack.AddChild(resBox)
+	navStack.SetVisibleChild(resBox)
 
 	n.pinList = gtk.NewListBox()
 	n.pinList.AddCSSClass("navigation-sidebar")
@@ -151,7 +166,7 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 	n.resourcesToggle.ConnectToggled(func() {
 		if n.resourcesToggle.Active() {
 			n.pinsToggle.SetActive(false)
-			navStack.SetVisibleChild(resw)
+			navStack.SetVisibleChild(resBox)
 			if row := n.resourceList.SelectedRow(); row != nil {
 				row.Activate()
 			}
@@ -256,6 +271,15 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 	n.resources = nil
 
 	for i, resource := range n.Resources {
+		if len(n.search.Text()) > 0 {
+			if !strings.Contains(resource.Name, n.search.Text()) &&
+				strutil.Similarity(resource.Name, n.search.Text(), metrics.NewLevenshtein()) < 0.7 &&
+				!strings.Contains(resource.Group, n.search.Text()) &&
+				strutil.Similarity(resource.Group, n.search.Text(), metrics.NewLevenshtein()) < 0.7 {
+				continue
+			}
+		}
+
 		var fav bool
 		for _, f := range prefs.Navigation.Favourites {
 			if util.GVREquals(f, util.GVRForResource(&resource)) {

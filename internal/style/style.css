@@ -48,4 +48,12 @@ dropdown.kind-dropdown>button {
 
 .navigation-sidebar {
   background-color: @sidebar_bg_color;
+  padding-bottom: 0;
+}
+
+.navigation-sidebar entry.search {
+  min-height: 29px;
+  font-size: 0.9em;
+  box-shadow: inset 0 1px var(--sidebar-border-color);
+  border-radius: 0 0 0 11px; /* var(--window-radius) */
 }
