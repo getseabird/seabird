@@ -1,8 +1,11 @@
 # Seabird
 
-Seabird is a native cross-platform Kubernetes desktop client that makes it super
-easy to explore your cluster's resources. We aim to visualize all common
-resource types in a simple, bloat-free user interface.
+Seabird is the the native Kubernetes desktop IDE designed for seamless cluster
+exploration. Equipped with essential features including a terminal for executing
+commands, comprehensive monitoring through logs and metrics, and an intuitive
+interface for easy navigation. Effortlessly create Kubernetes resources using
+our integrated editor, which conveniently places the API reference at your
+fingertips.
 
 ![Screenshot](https://getseabird.github.io/images/screenshot.png)
 
