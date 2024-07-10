@@ -74,6 +74,7 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 			select {
 			case res, ok := <-w.ResultChan():
 				if !ok {
+					log.Printf("restarting cancelled watch: %v", res)
 					w, err = cluster.DynamicClient.Resource(gvr).Watch(ctx, opts.ListOptions)
 					if err != nil {
 						log.Printf("watch failed: %s", err.Error())

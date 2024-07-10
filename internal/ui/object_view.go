@@ -156,8 +156,10 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 			o.Cluster.GetAPIResource(object.GetObjectKind().GroupVersionKind()),
 			api.WatchOptions[client.Object]{
 				ListOptions: v1.ListOptions{
-					FieldSelector:   fields.OneTermEqualSelector("metadata.name", object.GetName()).String(),
-					ResourceVersion: object.GetResourceVersion(),
+					FieldSelector: fields.AndSelectors(
+						fields.OneTermEqualSelector("metadata.name", object.GetName()),
+						fields.OneTermEqualSelector("metadata.namespace", object.GetNamespace()),
+					).String(),
 				},
 				UpdateFunc: func(obj client.Object) {
 					o.SelectedObject.Update(obj)
