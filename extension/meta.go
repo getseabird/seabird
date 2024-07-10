@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/util"
 	corev1 "k8s.io/api/core/v1"
@@ -32,6 +33,7 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 		Bind: func(listitem *gtk.ListItem, object client.Object) {
 			label := gtk.NewLabel(object.GetName())
 			label.SetHAlign(gtk.AlignStart)
+			label.SetEllipsize(pango.EllipsizeEnd)
 			listitem.SetChild(label)
 		},
 		Compare: func(a, b client.Object) int {
@@ -46,6 +48,7 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 			Bind: func(listitem *gtk.ListItem, object client.Object) {
 				label := gtk.NewLabel(object.GetNamespace())
 				label.SetHAlign(gtk.AlignStart)
+				label.SetEllipsize(pango.EllipsizeEnd)
 				listitem.SetChild(label)
 			},
 			Compare: func(a, b client.Object) int {
