@@ -8,6 +8,7 @@ import (
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
+	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/util"
@@ -20,6 +21,7 @@ import (
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/tools/reference"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -101,27 +103,64 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			},
 		)
 	case corev1.SchemeGroupVersion.WithResource("persistentvolumeclaims").String():
-		columns = append(columns, api.Column{
-			Name:     "Size",
-			Priority: 70,
-			Bind: func(listitem *gtk.ListItem, object client.Object) {
-				pvc := object.(*corev1.PersistentVolumeClaim)
-				label := gtk.NewLabel(pvc.Spec.Resources.Requests.Storage().String())
-				label.SetHAlign(gtk.AlignStart)
-				listitem.SetChild(label)
+		columns = append(columns,
+			api.Column{
+				Name:     "Size",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pvc := object.(*corev1.PersistentVolumeClaim)
+					label := gtk.NewLabel(pvc.Spec.Resources.Requests.Storage().String())
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
 			},
-		})
+			api.Column{
+				Name:     "Class",
+				Priority: 60,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pvc := object.(*corev1.PersistentVolumeClaim)
+					label := gtk.NewLabel(ptr.Deref(pvc.Spec.StorageClassName, ""))
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
+			},
+		)
 	case corev1.SchemeGroupVersion.WithResource("persistentvolumes").String():
-		columns = append(columns, api.Column{
-			Name:     "Size",
-			Priority: 70,
-			Bind: func(listitem *gtk.ListItem, object client.Object) {
-				pvc := object.(*corev1.PersistentVolume)
-				label := gtk.NewLabel(pvc.Spec.Capacity.Storage().String())
-				label.SetHAlign(gtk.AlignStart)
-				listitem.SetChild(label)
+		columns = append(columns,
+			api.Column{
+				Name:     "Size",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pv := object.(*corev1.PersistentVolume)
+					label := gtk.NewLabel(pv.Spec.Capacity.Storage().String())
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
 			},
-		})
+			api.Column{
+				Name:     "Phase",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pv := object.(*corev1.PersistentVolume)
+					label := gtk.NewLabel(string(pv.Status.Phase))
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
+			},
+			api.Column{
+				Name:     "Claim",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					pv := object.(*corev1.PersistentVolume)
+					if pv.Spec.ClaimRef != nil {
+						label := gtk.NewLabel(string(pv.Spec.ClaimRef.Name))
+						label.SetHAlign(gtk.AlignStart)
+						listitem.SetChild(label)
+					}
+				},
+			},
+		)
+
 	case corev1.SchemeGroupVersion.WithResource("nodes").String():
 		columns = append(columns,
 			api.Column{
@@ -178,6 +217,68 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					bar := widget.NewResourceBar(metrics.Usage.Cpu(), node.Status.Allocatable.Cpu(), "")
 					bar.SetHAlign(gtk.AlignStart)
 					listitem.SetChild(bar)
+				},
+			},
+		)
+	case corev1.SchemeGroupVersion.WithResource("namespaces").String():
+		columns = append(columns,
+			api.Column{
+				Name:     "Phase",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					ns := object.(*corev1.Namespace)
+					label := gtk.NewLabel(string(ns.Status.Phase))
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
+			},
+		)
+	case corev1.SchemeGroupVersion.WithResource("configmaps").String():
+		columns = append(columns,
+			api.Column{
+				Name:     "Keys",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					configmap := object.(*corev1.ConfigMap)
+					var keys []string
+					for key := range configmap.Data {
+						keys = append(keys, key)
+					}
+					label := gtk.NewLabel(strings.Join(keys, ","))
+					label.SetHAlign(gtk.AlignStart)
+					label.SetEllipsize(pango.EllipsizeEnd)
+					listitem.SetChild(label)
+				},
+			},
+		)
+	case corev1.SchemeGroupVersion.WithResource("secrets").String():
+		columns = append(columns,
+			api.Column{
+				Name:     "Keys",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					secret := object.(*corev1.Secret)
+					var keys []string
+					for key := range secret.Data {
+						keys = append(keys, key)
+					}
+					label := gtk.NewLabel(strings.Join(keys, ","))
+					label.SetHAlign(gtk.AlignStart)
+					label.SetEllipsize(pango.EllipsizeEnd)
+					listitem.SetChild(label)
+				},
+			},
+		)
+	case corev1.SchemeGroupVersion.WithResource("services").String():
+		columns = append(columns,
+			api.Column{
+				Name:     "Type",
+				Priority: 70,
+				Bind: func(listitem *gtk.ListItem, object client.Object) {
+					service := object.(*corev1.Service)
+					label := gtk.NewLabel(string(service.Spec.Type))
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
 				},
 			},
 		)
@@ -373,11 +474,18 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 		for _, m := range object.Spec.AccessModes {
 			accessModes = append(accessModes, string(m))
 		}
-		props = append(props, &api.GroupProperty{Name: "Persistent Volume", Children: []api.Property{
+
+		group := &api.GroupProperty{Name: "Persistent Volume", Children: []api.Property{
 			&api.TextProperty{Name: "Class", Value: object.Spec.StorageClassName},
 			&api.TextProperty{Name: "Capacity", Value: object.Spec.Capacity.Storage().String()},
 			&api.TextProperty{Name: "Access modes", Value: strings.Join(accessModes, ", ")},
-		}})
+			&api.TextProperty{Name: "Phase", Value: string(object.Status.Phase)},
+		}}
+		if object.Spec.ClaimRef != nil {
+			group.Children = append(group.Children, &api.TextProperty{Name: "Claim", Value: object.Spec.ClaimRef.Name, Reference: object.Spec.ClaimRef})
+		}
+		props = append(props, group)
+
 	case *corev1.Node:
 		infoProp := &api.GroupProperty{Name: "Info"}
 		mem := object.Status.Allocatable.Memory()

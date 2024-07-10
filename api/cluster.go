@@ -14,6 +14,7 @@ import (
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
+	networkingv1 "k8s.io/api/networking/v1"
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -56,6 +57,7 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 
 	scheme := runtime.NewScheme()
 	corev1.AddToScheme(scheme)
+	networkingv1.AddToScheme(scheme)
 	apiextensionsv1.AddToScheme(scheme)
 	appsv1.AddToScheme(scheme)
 	rbacv1.AddToScheme(scheme)
