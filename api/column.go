@@ -8,6 +8,6 @@ import (
 type Column struct {
 	Name     string
 	Priority int8
-	Bind     func(listitem *gtk.ListItem, object client.Object)
+	Bind     func(cell *gtk.ColumnViewCell, object client.Object)
 	Compare  func(a, b client.Object) int
 }

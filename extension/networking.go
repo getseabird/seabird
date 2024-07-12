@@ -32,7 +32,7 @@ func (e *Networking) CreateColumns(ctx context.Context, resource *metav1.APIReso
 			api.Column{
 				Name:     "Hosts",
 				Priority: 70,
-				Bind: func(listitem *gtk.ListItem, object client.Object) {
+				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
 					ingress := object.(*networkingv1.Ingress)
 					var hosts []string
 					for _, r := range ingress.Spec.Rules {

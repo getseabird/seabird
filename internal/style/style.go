@@ -70,7 +70,7 @@ func Load() {
 func getProvider(name string) *gtk.CSSProvider {
 	provider := gtk.NewCSSProvider()
 	style, _ := fs.ReadFile(name)
-	provider.LoadFromData(string(style))
+	provider.LoadFromString(string(style))
 	return provider
 }
 

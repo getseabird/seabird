@@ -70,7 +70,7 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 	delete.ConnectClicked(func() {
 		selected := o.SelectedObject.Value()
 		dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](ctx), "Delete object?", selected.GetName())
-		defer dialog.Show()
+		defer dialog.Present()
 		dialog.AddResponse("cancel", "Cancel")
 		dialog.AddResponse("delete", "Delete")
 		dialog.SetResponseAppearance("delete", adw.ResponseDestructive)

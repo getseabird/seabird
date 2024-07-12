@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	coreglib "github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -31,16 +32,16 @@ type List struct {
 	columnView  *gtk.ColumnView
 	columns     []*gtk.ColumnViewColumn
 	columnType  *metav1.APIResource
-	overlay     *adw.OverlaySplitView
+	dialog      *adw.Dialog
 }
 
-func NewList(ctx context.Context, state *common.ClusterState, overlay *adw.OverlaySplitView, editor *editor.EditorWindow) *List {
+func NewList(ctx context.Context, state *common.ClusterState, dialog *adw.Dialog, editor *editor.EditorWindow) *List {
 	l := List{
 		ToolbarView:  adw.NewToolbarView(),
 		ClusterState: state,
 		ctx:          ctx,
 		objects:      observer.NewProperty[[]client.Object](nil),
-		overlay:      overlay,
+		dialog:       dialog,
 	}
 
 	l.AddCSSClass("view")
@@ -58,7 +59,7 @@ func NewList(ctx context.Context, state *common.ClusterState, overlay *adw.Overl
 		i, _ := strconv.Atoi(l.columnView.Model().Item(position).Cast().(*gtk.StringObject).String())
 		obj := l.objects.Value()[i]
 		l.SelectedObject.Update(obj)
-		l.overlay.SetShowSidebar(true)
+		l.dialog.Present(l)
 	})
 
 	sw := gtk.NewScrolledWindow()
@@ -96,7 +97,6 @@ func (l *List) onSelectedResourceChange(resource *metav1.APIResource) {
 	var ctx context.Context
 	ctx, l.watchCancel = context.WithCancel(l.ctx)
 	api.Watch(ctx, l.Cluster, resource, api.WatchOptions[client.Object]{Property: l.objects})
-	l.overlay.SetShowSidebar(false)
 }
 
 func (l *List) onObjectsChange(objects []client.Object) {
@@ -151,8 +151,9 @@ func (l *List) createColumns() []*gtk.ColumnViewColumn {
 	for _, col := range columns {
 		factory := gtk.NewSignalListItemFactory()
 		gvk := util.GVKForResource(l.SelectedResource.Value()).String()
-		factory.ConnectBind(func(listitem *gtk.ListItem) {
-			idx, _ := strconv.Atoi(listitem.Item().Cast().(*gtk.StringObject).String())
+		factory.ConnectBind(func(o *coreglib.Object) {
+			cell := o.Cast().(*gtk.ColumnViewCell)
+			idx, _ := strconv.Atoi(cell.Item().Cast().(*gtk.StringObject).String())
 			object := l.objects.Value()[idx]
 
 			// Very fast resource switches (e.g. holding tab in the ui) can cause panics
@@ -165,7 +166,7 @@ func (l *List) createColumns() []*gtk.ColumnViewColumn {
 					return
 				}
 			}
-			col.Bind(listitem, object)
+			col.Bind(cell, object)
 		})
 		column := gtk.NewColumnViewColumn(col.Name, &factory.ListItemFactory)
 		column.SetExpand(true)

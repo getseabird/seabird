@@ -3,6 +3,7 @@ package ui
 import (
 	"context"
 	"fmt"
+	"math"
 	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -26,7 +27,7 @@ type ClusterWindow struct {
 	listView     *list.List
 	objectView   *ObjectView
 	toastOverlay *adw.ToastOverlay
-	overlay      *adw.OverlaySplitView
+	dialog       *adw.Dialog
 }
 
 func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.ClusterState) *ClusterWindow {
@@ -72,17 +73,22 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 	paned.SetShrinkEndChild(false)
 	w.toastOverlay.SetChild(paned)
 
-	// replace split view with sheet dialog? in adw 1.5
-	// https://gnome.pages.gitlab.gnome.org/libadwaita/doc/1-latest/class.Dialog.html
-	w.overlay = adw.NewOverlaySplitView()
-	w.overlay.SetEnableHideGesture(true)
-	w.overlay.SetEnableShowGesture(true)
-	w.overlay.SetCollapsed(true)
-	w.overlay.SetSidebarPosition(gtk.PackEnd)
-	w.overlay.NotifyProperty("show-sidebar", w.resizeOverlay)
-
-	w.listView = list.NewList(ctx, w.ClusterState, w.overlay, editor)
-	w.overlay.SetContent(w.listView)
+	w.dialog = adw.NewDialog()
+	w.dialog.SetPresentationMode(adw.DialogBottomSheet)
+	w.dialog.SetFollowsContentSize(true)
+	go func() {
+		for {
+			select {
+			case <-ctx.Done():
+				return
+			default:
+				glib.IdleAdd(func() {
+					w.dialog.SetSizeRequest(int(math.Min(float64(w.Width())*0.6, 1000)), -1)
+				})
+			}
+			time.Sleep(time.Second)
+		}
+	}()
 
 	w.navigation = NewNavigation(ctx, w.ClusterState, viewStack, editor)
 	w.navigation.SetSizeRequest(225, -1)
@@ -92,11 +98,11 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 	w.objectView = NewObjectView(ctx, w.ClusterState, editor, navView, w.navigation)
 	navView.Add(w.objectView.NavigationPage)
 	navView.SetHExpand(true)
-	navView.SetSizeRequest(400, -1)
-	w.overlay.SetSidebar(navView)
+	w.dialog.SetChild(navView)
 
-	viewStack.AddChild(w.overlay).SetName("list")
-	viewStack.SetVisibleChild(w.overlay)
+	w.listView = list.NewList(ctx, w.ClusterState, w.dialog, editor)
+	viewStack.AddChild(w.listView).SetName("list")
+	viewStack.SetVisibleChild(w.listView)
 	paned.SetEndChild(viewStack)
 
 	w.createActions()
@@ -130,28 +136,14 @@ func (w *ClusterWindow) createActions() {
 	action.ConnectActivate(func(_ *glib.Variant) {
 		prefs := NewPreferencesWindow(w.ctx, w.State)
 		prefs.SetTransientFor(&w.Window)
-		prefs.Show()
+		prefs.Present()
 	})
 	w.AddAction(action)
 
 	action = gio.NewSimpleAction("about", nil)
 	action.ConnectActivate(func(_ *glib.Variant) {
-		NewAboutWindow(&w.Window).Show()
+		NewAboutWindow(&w.Window).Present()
 	})
 	w.AddAction(action)
 
-}
-
-func (w *ClusterWindow) resizeOverlay() {
-	w.overlay.SetMaxSidebarWidth(float64(w.Width()-w.navigation.Width()) - 150)
-	// Workaround for lack of window resize signals
-	// could probably use size_allocate when subclassing is available
-	go func() {
-		time.Sleep(250 * time.Millisecond)
-		glib.IdleAdd(func() {
-			if w.overlay.ShowSidebar() {
-				w.resizeOverlay()
-			}
-		})
-	}()
 }

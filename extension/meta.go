@@ -30,7 +30,7 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 	columns = append(columns, api.Column{
 		Name:     "Name",
 		Priority: 100,
-		Bind: func(listitem *gtk.ListItem, object client.Object) {
+		Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
 			label := gtk.NewLabel(object.GetName())
 			label.SetHAlign(gtk.AlignStart)
 			label.SetEllipsize(pango.EllipsizeEnd)
@@ -45,7 +45,7 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 		columns = append(columns, api.Column{
 			Name:     "Namespace",
 			Priority: 90,
-			Bind: func(listitem *gtk.ListItem, object client.Object) {
+			Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
 				label := gtk.NewLabel(object.GetNamespace())
 				label.SetHAlign(gtk.AlignStart)
 				label.SetEllipsize(pango.EllipsizeEnd)
@@ -60,7 +60,7 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 	columns = append(columns, api.Column{
 		Name:     "Age",
 		Priority: 80,
-		Bind: func(listitem *gtk.ListItem, object client.Object) {
+		Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
 			duration := time.Since(object.GetCreationTimestamp().Time)
 			label := gtk.NewLabel(util.HumanizeApproximateDuration(duration))
 			label.SetHAlign(gtk.AlignStart)
