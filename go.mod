@@ -6,9 +6,9 @@ require (
 	github.com/NdoleStudio/lemonsqueezy-go v1.2.3
 	github.com/adrg/strutil v0.3.1
 	github.com/creack/pty v1.1.21
-	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc
+	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240712143708-824c3ce8a5f4
 	github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240312005410-8276faa7949c
-	github.com/diamondburned/gotk4/pkg v0.2.3-0.20240325192138-30a99fed423d
+	github.com/diamondburned/gotk4/pkg v0.2.3-0.20240712132236-ab1a56e93c15
 	github.com/getkin/kin-openapi v0.126.0
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
@@ -24,6 +24,7 @@ require (
 	k8s.io/apimachinery v0.30.2
 	k8s.io/client-go v0.30.2
 	k8s.io/metrics v0.30.2
+	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	nhooyr.io/websocket v1.8.11
 	sigs.k8s.io/controller-runtime v0.18.4
 )
@@ -71,7 +72,6 @@ require (
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	k8s.io/klog/v2 v2.120.1 // indirect
 	k8s.io/kube-openapi v0.0.0-20240228011516-70dd3763d340 // indirect
-	k8s.io/utils v0.0.0-20240102154912-e7106e64919e // indirect
 	sigs.k8s.io/json v0.0.0-20221116044647-bc3834ca7abd // indirect
 	sigs.k8s.io/structured-merge-diff/v4 v4.4.1 // indirect
 	sigs.k8s.io/yaml v1.4.0 // indirect

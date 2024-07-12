@@ -7,6 +7,8 @@ before:
 builds:
   - flags:
       - -trimpath
+    goos:
+      - windows
     goarch:
       - amd64
     ldflags:
@@ -22,3 +24,6 @@ changelog:
     include:
       - "^feat:"
       - "^fix:"
+
+snapshot:
+  name_template: "{{ .Version }}-{{.ShortCommit}}"

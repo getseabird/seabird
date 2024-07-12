@@ -11,12 +11,12 @@ github.com/creack/pty v1.1.21/go.mod h1:MOBLtS5ELjhRRrroQr9kyvTxUAFNvYEK993ew/Vr
 github.com/davecgh/go-spew v1.1.0/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
 github.com/davecgh/go-spew v1.1.1 h1:vj9j/u1bqnvCEfJOwUhtlOARqs3+rkHYY13jYWTU97c=
 github.com/davecgh/go-spew v1.1.1/go.mod h1:J7Y8YcW2NihsgmVo/mv3lAwl/skON4iLHjSsI+c5H38=
-github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc h1:qx5q0yTNuT30m0t/gugjsYOHjmGUVxsCekR5xcwGRVY=
-github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240107232253-5f283b5d35bc/go.mod h1:fkvdR7MYO1sI0ex07VYLTc+YK87v24aRFYyMJQ/xAeA=
+github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240712143708-824c3ce8a5f4 h1:LIOh9NaVui4TaCLbWHe3Yn/7liGdWgH2LsUp+xhTqkw=
+github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240712143708-824c3ce8a5f4/go.mod h1:fkvdR7MYO1sI0ex07VYLTc+YK87v24aRFYyMJQ/xAeA=
 github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240312005410-8276faa7949c h1:9vqKD0zBVac04//nX4f6DQ/pX76eqi7UGFFHnIUJEWY=
 github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240312005410-8276faa7949c/go.mod h1:vKV3IOI1vvV9aI7PKCgxYzUUarQByRfgDmXMRrDJy7Q=
-github.com/diamondburned/gotk4/pkg v0.2.3-0.20240325192138-30a99fed423d h1:3DnAgU39jAXKbpJ9ezC8ZqDIzwZkt1vfHWiqxOkBEIw=
-github.com/diamondburned/gotk4/pkg v0.2.3-0.20240325192138-30a99fed423d/go.mod h1:DqeOW+MxSZFg9OO+esk4JgQk0TiUJJUBfMltKhG+ub4=
+github.com/diamondburned/gotk4/pkg v0.2.3-0.20240712132236-ab1a56e93c15 h1:NDLUgJSMKZylI/m1wwUkn4++EewrW3IcHQ+NmbgF9B0=
+github.com/diamondburned/gotk4/pkg v0.2.3-0.20240712132236-ab1a56e93c15/go.mod h1:DqeOW+MxSZFg9OO+esk4JgQk0TiUJJUBfMltKhG+ub4=
 github.com/emicklei/go-restful/v3 v3.11.2 h1:1onLa9DcsMYO9P+CXaL0dStDqQ2EHHXLiz+BtnqkLAU=
 github.com/emicklei/go-restful/v3 v3.11.2/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
 github.com/evanphx/json-patch v4.12.0+incompatible h1:4onqiflcdA9EOZ4RxV643DvftH5pOlLGNtQ5lPWQu84=

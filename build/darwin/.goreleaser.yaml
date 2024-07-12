@@ -6,7 +6,7 @@ before:
 
 builds:
   - flags:
-      -trimpath
+      - -trimpath
     goos:
       - darwin
 
@@ -20,3 +20,6 @@ changelog:
     include:
       - "^feat:"
       - "^fix:"
+
+snapshot:
+  name_template: "{{ .Version }}-{{.ShortCommit}}"
