@@ -138,10 +138,6 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 
 	watchCtx, cancelWatch := context.WithCancel(ctx)
 	common.OnChange(ctx, o.SelectedObject, func(object client.Object) {
-		for o.navView.Pop() {
-			// empty
-		}
-
 		if object == nil {
 			o.sourceBuffer.SetText("")
 			o.updateProperties([]api.Property{})
@@ -261,11 +257,7 @@ func (o *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 					state.SelectedObject = observer.NewProperty[client.Object](obj)
 					dv := NewObjectView(ctx, &state, o.editor, o.navView, o.navigation)
 					o.navView.Push(dv.NavigationPage)
-					o.navView.ConnectPopped(func(page *adw.NavigationPage) {
-						if page.Tag() == dv.Tag() {
-							cancel()
-						}
-					})
+					o.navView.ConnectReplaced(cancel)
 				})
 			}
 			return row

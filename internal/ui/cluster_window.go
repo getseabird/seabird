@@ -99,6 +99,9 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 	navView.Add(w.objectView.NavigationPage)
 	navView.SetHExpand(true)
 	w.dialog.SetChild(navView)
+	w.dialog.ConnectClosed(func() {
+		navView.ReplaceWithTags([]string{w.objectView.Tag()})
+	})
 
 	w.listView = list.NewList(ctx, w.ClusterState, w.dialog, editor)
 	viewStack.AddChild(w.listView).SetName("list")
