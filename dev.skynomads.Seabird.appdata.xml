@@ -6,7 +6,13 @@
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MPL-2.0</project_license>
   <description>
-    <p>Seabird is the native desktop app that simplifies working with Kubernetes.</p>
+    <p>
+      Seabird is a native Kubernetes IDE designed for the GNOME desktop. Explore and
+      manage your clusters with a simple and intuitive interface. Equipped with
+      essential features such as a terminal for executing commands, monitoring through
+      logs and metrics, and a resource editor that conveniently places the API
+      reference at your fingertips.
+    </p>
   </description>
   <launchable type="desktop-id">dev.skynomads.Seabird.desktop</launchable>
   <screenshots>
@@ -23,12 +29,12 @@
   </branding>
   <content_rating type="oars-1.1" />
   <releases>
-    <release version="v0.4.2" date="2024-07-10"/>
-    <release version="v0.4.1" date="2024-07-10"/>
-    <release version="v0.4.0" date="2024-07-10"/>
-    <release version="v0.3.3" date="2024-07-08"/>
-    <release version="v0.3.2" date="2024-04-04"/>
-    <release version="v0.3.1" date="2024-04-04"/>
+    <release version="v0.4.2" date="2024-07-10" />
+    <release version="v0.4.1" date="2024-07-10" />
+    <release version="v0.4.0" date="2024-07-10" />
+    <release version="v0.3.3" date="2024-07-08" />
+    <release version="v0.3.2" date="2024-04-04" />
+    <release version="v0.3.1" date="2024-04-04" />
     <release version="v0.3.0" date="2024-04-03" />
     <release version="v0.2.2" date="2024-03-03" />
     <release version="v0.2.1" date="2024-03-03" />

@@ -20,7 +20,7 @@ major:
 
 .PHONY: release
 release:
-	sed -i "/<releases>/a \    <release version=\"$$($(SEMVER) get release)\" date=\"$$(date +%F)\"/>" dev.skynomads.Seabird.appdata.xml
+	sed -i "/<releases>/a \    <release version=\"$$($(SEMVER) get release)\" date=\"$$(date +%F)\">\n      <url>https://github.com/getseabird/seabird/releases/tag/$$($(SEMVER) get release)</url>\n    </release>" dev.skynomads.Seabird.appdata.xml
 	git add .semver.yaml dev.skynomads.Seabird.appdata.xml
 	git commit -m "$$($(SEMVER) get release)"
 	git tag -a -m "$$($(SEMVER) get release)" "$$($(SEMVER) get release)"
