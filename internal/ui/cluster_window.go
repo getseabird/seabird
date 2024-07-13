@@ -15,6 +15,7 @@ import (
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/ui/list"
 	"github.com/getseabird/seabird/widget"
+	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type ClusterWindow struct {
@@ -58,13 +59,14 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 		return false
 	})
 
+	w.toastOverlay = adw.NewToastOverlay()
+	w.SetContent(w.toastOverlay)
+	ctx = ctxt.With[*adw.ToastOverlay](ctx, w.toastOverlay)
+
 	editor := editor.NewEditorWindow(ctx)
 
 	viewStack := gtk.NewStack()
 	viewStack.SetTransitionType(gtk.StackTransitionTypeCrossfade)
-
-	w.toastOverlay = adw.NewToastOverlay()
-	w.SetContent(w.toastOverlay)
 
 	paned := gtk.NewPaned(gtk.OrientationHorizontal)
 	paned.SetPosition(225)
@@ -74,6 +76,11 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 
 	w.dialog = adw.NewDialog()
 	w.dialog.SetPresentationMode(adw.DialogBottomSheet)
+	common.OnChange(ctx, state.SelectedObject, func(object client.Object) {
+		if object == nil {
+			w.dialog.Close()
+		}
+	})
 	go func() {
 		for {
 			select {

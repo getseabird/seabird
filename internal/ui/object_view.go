@@ -34,7 +34,6 @@ type ObjectView struct {
 	groups       []*adw.PreferencesGroup
 	sourceBuffer *gtksource.Buffer
 	sourceView   *gtksource.View
-	expanded     map[string]bool
 	editor       *editor.EditorWindow
 	navView      *adw.NavigationView
 	navigation   *Navigation
@@ -47,7 +46,6 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 		NavigationPage: adw.NewNavigationPage(content, "Object"),
 		ClusterState:   state,
 		prefPage:       adw.NewPreferencesPage(),
-		expanded:       map[string]bool{},
 		ctx:            ctx,
 		editor:         editor,
 		navView:        navView,
@@ -141,6 +139,9 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 		if object == nil {
 			o.sourceBuffer.SetText("")
 			o.updateProperties([]api.Property{})
+			if visible := o.navView.VisiblePage(); visible != nil && visible.Tag() == o.Tag() {
+				o.navView.Pop()
+			}
 			return
 		}
 
@@ -161,7 +162,8 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 					o.SelectedObject.Update(obj)
 				},
 				DeleteFunc: func(obj client.Object) {
-					cancelWatch()
+					ctxt.MustFrom[*adw.ToastOverlay](ctx).AddToast(adw.NewToast(fmt.Sprintf("%v was deleted", obj.GetName())))
+					o.SelectedObject.Update(nil)
 					glib.IdleAdd(func() {
 						if pin.Active() {
 							o.navigation.RemovePin(obj)
@@ -300,13 +302,6 @@ func (o *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 			return group
 		case 1:
 			row := adw.NewExpanderRow()
-			id := fmt.Sprintf("%s-%d-%d", o.SelectedObject.Value().GetObjectKind().GroupVersionKind().String(), level, index)
-			if e, ok := o.expanded[id]; ok && e {
-				row.SetExpanded(true)
-			}
-			row.Connect("state-flags-changed", func() {
-				o.expanded[id] = row.Expanded()
-			})
 			row.SetTitle(prop.Name)
 			for i, child := range prop.Children {
 				row.AddRow(o.renderObjectProperty(level+1, i, child))
