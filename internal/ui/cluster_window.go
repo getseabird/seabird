@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -75,7 +74,6 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 
 	w.dialog = adw.NewDialog()
 	w.dialog.SetPresentationMode(adw.DialogBottomSheet)
-	w.dialog.SetFollowsContentSize(true)
 	go func() {
 		for {
 			select {
@@ -83,7 +81,9 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 				return
 			default:
 				glib.IdleAdd(func() {
-					w.dialog.SetSizeRequest(int(math.Min(float64(w.Width())*0.6, 1000)), -1)
+					w.dialog.SetContentWidth(int(float64(w.Width()) * 0.7))
+					w.dialog.SetContentHeight(int(float64(w.Height()) * 0.9))
+
 				})
 			}
 			time.Sleep(time.Second)
@@ -97,7 +97,6 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 	navView := adw.NewNavigationView()
 	w.objectView = NewObjectView(ctx, w.ClusterState, editor, navView, w.navigation)
 	navView.Add(w.objectView.NavigationPage)
-	navView.SetHExpand(true)
 	w.dialog.SetChild(navView)
 	w.dialog.ConnectClosed(func() {
 		navView.ReplaceWithTags([]string{w.objectView.Tag()})
@@ -121,7 +120,7 @@ func (w *ClusterWindow) createActions() {
 			return
 		}
 		prefs.Defaults()
-		NewWelcomeWindow(context.WithoutCancel(w.ctx), w.Application(), w.State).Show()
+		NewWelcomeWindow(context.WithoutCancel(w.ctx), w.Application(), w.State).Present()
 	})
 	w.AddAction(newWindow)
 	w.Application().SetAccelsForAction("win.newWindow", []string{"<Ctrl>N"})
