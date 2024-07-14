@@ -54,7 +54,7 @@ func NewApplication(version string) (*Application, error) {
 	}
 
 	a.ConnectActivate(func() {
-		NewWelcomeWindow(ctx, &a.Application.Application, state).Show()
+		NewWelcomeWindow(ctx, &a.Application.Application, state).Present()
 	})
 
 	return &a, nil

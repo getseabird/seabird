@@ -79,14 +79,14 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 		box.Append(header)
 	}
 
-	page := adw.NewPreferencesPage() 
+	page := adw.NewPreferencesPage()
 	box.Append(page)
 
 	if clusters := w.Preferences.Value().Clusters; len(clusters) > 0 {
 		// if w.Preferences.Value().License == nil {
 		// 	banner := adw.NewBanner("Your free trial expires in ∞ days")
 		// 	banner.SetRevealed(true)
-		// 	banner.SetButtonLabel("Purchase") 
+		// 	banner.SetButtonLabel("Purchase")
 		// 	banner.ConnectButtonClicked(func() {
 		// 		w.nav.Push(w.createPurchasePage())
 		// 	})
@@ -138,7 +138,7 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 						}
 						app := w.Application()
 						w.Close()
-						NewClusterWindow(w.ctx, app, state).Show()
+						NewClusterWindow(w.ctx, app, state).Present()
 					})
 				}()
 			})

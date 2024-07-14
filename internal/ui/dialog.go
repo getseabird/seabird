@@ -29,10 +29,11 @@ func showClusterPrefsErrorDialog(ctx context.Context, prefs api.ClusterPreferenc
 			dialog.ConnectResponse(func(response string) {
 				switch response {
 				case "docs":
+					// gtk.NewURILauncher("https://getseabird.github.io/docs/credential-plugins/").Launch()
 					gtk.ShowURI(w, "https://getseabird.github.io/docs/credential-plugins/", gdk.CURRENT_TIME)
 				}
 			})
-			dialog.Show()
+			dialog.Present()
 			return true
 		}
 	}

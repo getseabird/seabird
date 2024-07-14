@@ -197,7 +197,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 			dialog.AddResponse("cancel", "Cancel")
 			dialog.AddResponse("delete", "Delete")
 			dialog.SetResponseAppearance("delete", adw.ResponseDestructive)
-			dialog.Show()
+			dialog.Present()
 			dialog.ConnectResponse(func(response string) {
 				if response == "delete" {
 					prefs := p.Preferences.Value()
@@ -230,7 +230,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 	}
 
 	dialog := adw.NewMessageDialog(ctxt.MustFrom[*gtk.Window](p.ctx), "Select Context", "")
-	defer dialog.Show()
+	defer dialog.Present()
 	dialog.AddResponse("cancel", "Cancel")
 	dialog.AddResponse("confirm", "Confirm")
 	dialog.SetResponseAppearance("confirm", adw.ResponseSuggested)

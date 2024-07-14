@@ -164,7 +164,7 @@ func (w *EditorWindow) saveClicked() {
 	dialog.AddResponse("save", "Save")
 	dialog.SetResponseAppearance("save", adw.ResponseSuggested)
 	dialog.SetSizeRequest(600, 500)
-	defer dialog.Show()
+	defer dialog.Present()
 
 	box := dialog.Child().(*gtk.WindowHandle).Child().(*gtk.Box).FirstChild().(*gtk.Box)
 
