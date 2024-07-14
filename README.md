@@ -1,10 +1,10 @@
 # Seabird
 
-Seabird is a native Kubernetes IDE designed for the GNOME desktop. Explore and
-manage your clusters with a simple and intuitive interface. Equipped with
-essential features such as a terminal for executing commands, monitoring through
-logs and metrics, and a resource editor that conveniently places the API
-reference at your fingertips.
+Seabird is a Kubernetes IDE designed for the GNOME desktop. Explore and manage
+your clusters with a simple and intuitive interface. Equipped with essential
+features such as a terminal for executing commands, monitoring through logs and
+metrics, and a resource editor that conveniently places the API reference at
+your fingertips.
 
 ![Screenshot](https://getseabird.github.io/images/screenshot.png)
 
