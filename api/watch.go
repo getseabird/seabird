@@ -12,6 +12,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/util/flowcontrol"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -65,71 +67,73 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 	}
 
 	go func() {
-		w, err := cluster.DynamicClient.Resource(gvr).Watch(ctx, opts.ListOptions)
-		if err != nil {
-			log.Printf("watch failed: %s", err.Error())
-			return
-		}
+		backoff := flowcontrol.NewBackOff(time.Second, time.Minute)
+
+	watch:
 		for {
-			select {
-			case res, ok := <-w.ResultChan():
-				if !ok {
-					log.Printf("restarting cancelled watch: %v", res)
-					w, err = cluster.DynamicClient.Resource(gvr).Watch(ctx, opts.ListOptions)
-					if err != nil {
-						log.Printf("watch failed: %s", err.Error())
-						return
+			backoff.Next(gvr.Resource, time.Now())
+			time.Sleep(backoff.Get(gvr.Resource))
+			w, err := cluster.DynamicClient.Resource(gvr).Watch(ctx, opts.ListOptions)
+			if err != nil {
+				klog.Infof("restarting watch: %s", err)
+				continue
+			}
+			for {
+				select {
+				case res, ok := <-w.ResultChan():
+					if !ok {
+						klog.Infof("restarting watch: channel closed")
+						continue watch
 					}
-					continue
-				}
-				switch res.Type {
-				case watch.Added:
-					obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
-					if err != nil {
-						obj = res.Object.(client.Object)
-					}
-					cluster.SetObjectGVK(obj)
-					if opts.AddFunc != nil {
-						opts.AddFunc(obj.(T))
-					}
-					objects = append(objects, obj.(T))
-					updateProperty()
-				case watch.Modified:
-					obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
-					if err != nil {
-						obj = res.Object.(client.Object)
-					}
-					cluster.SetObjectGVK(obj)
-					if opts.UpdateFunc != nil {
-						opts.UpdateFunc(obj.(T))
-					}
-					for i, o := range objects {
-						if o.GetUID() == obj.GetUID() {
-							objects[i] = obj.(T)
-							break
+					switch res.Type {
+					case watch.Added:
+						obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
+						if err != nil {
+							obj = res.Object.(client.Object)
 						}
-					}
-					updateProperty()
-				case watch.Deleted:
-					obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
-					if err != nil {
-						obj = res.Object.(client.Object)
-					}
-					cluster.SetObjectGVK(obj)
-					if opts.DeleteFunc != nil {
-						opts.DeleteFunc(obj.(T))
-					}
-					for i, o := range objects {
-						if o.GetUID() == obj.GetUID() {
-							objects = slices.Delete(objects, i, i+1)
-							break
+						cluster.SetObjectGVK(obj)
+						if opts.AddFunc != nil {
+							opts.AddFunc(obj.(T))
 						}
+						objects = append(objects, obj.(T))
+						updateProperty()
+					case watch.Modified:
+						obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
+						if err != nil {
+							obj = res.Object.(client.Object)
+						}
+						cluster.SetObjectGVK(obj)
+						if opts.UpdateFunc != nil {
+							opts.UpdateFunc(obj.(T))
+						}
+						for i, o := range objects {
+							if o.GetUID() == obj.GetUID() {
+								objects[i] = obj.(T)
+								break
+							}
+						}
+						updateProperty()
+					case watch.Deleted:
+						obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
+						if err != nil {
+							obj = res.Object.(client.Object)
+						}
+						cluster.SetObjectGVK(obj)
+						if opts.DeleteFunc != nil {
+							opts.DeleteFunc(obj.(T))
+						}
+						for i, o := range objects {
+							if o.GetUID() == obj.GetUID() {
+								objects = slices.Delete(objects, i, i+1)
+								break
+							}
+						}
+						updateProperty()
 					}
-					updateProperty()
+				case <-ctx.Done():
+					w.Stop()
+					return
 				}
-			case <-ctx.Done():
-				w.Stop()
-				return
 			}
 		}
 	}()
