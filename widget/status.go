@@ -110,6 +110,16 @@ func ObjectStatus(object client.Object) *Status {
 				}
 			}
 		}
+	case *appsv1.ReplicaSet:
+		if object.Status.ReadyReplicas == object.Status.Replicas {
+			return &Status{
+				Type: StatusTypeSuccess,
+			}
+		} else {
+			return &Status{
+				Type: StatusTypeWarning,
+			}
+		}
 	case *appsv1.StatefulSet:
 		if object.Status.ReadyReplicas == object.Status.Replicas {
 			return &Status{

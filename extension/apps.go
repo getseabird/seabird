@@ -57,6 +57,35 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				},
 			},
 		)
+	case appsv1.SchemeGroupVersion.WithResource("replicasets").String():
+		columns = append(columns,
+			api.Column{
+				Name:     "Status",
+				Priority: 70,
+				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+					listitem.SetChild(widget.ObjectStatus(object).Icon())
+				},
+				Compare: func(a, b client.Object) int {
+					if isReady(a) == isReady(b) {
+						return 0
+					}
+					if isReady(a) {
+						return 1
+					}
+					return -1
+				},
+			},
+			api.Column{
+				Name:     "Available",
+				Priority: 60,
+				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+					replicaSet := object.(*appsv1.ReplicaSet)
+					label := gtk.NewLabel(fmt.Sprintf("%d/%d", replicaSet.Status.AvailableReplicas, replicaSet.Status.Replicas))
+					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
+			},
+		)
 	case appsv1.SchemeGroupVersion.WithResource("statefulsets").String():
 		columns = append(columns,
 			api.Column{
@@ -94,6 +123,25 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource, object client.Object, props []api.Property) []api.Property {
 	switch object := object.(type) {
 	case *appsv1.Deployment:
+		prop := &api.GroupProperty{Name: "Pods"}
+		var pods corev1.PodList
+		e.List(ctx, &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
+		for i, pod := range pods.Items {
+			ref, _ := reference.GetReference(e.Scheme, &pod)
+			prop.Children = append(prop.Children, &api.TextProperty{
+				ID:        fmt.Sprintf("pods.%d", i),
+				Reference: ref,
+				Value:     pod.Name,
+				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
+					switch row := w.(type) {
+					case *adw.ActionRow:
+						row.AddPrefix(widget.ObjectStatus(&pod).Icon())
+					}
+				},
+			})
+		}
+		props = append(props, prop)
+	case *appsv1.ReplicaSet:
 		prop := &api.GroupProperty{Name: "Pods"}
 		var pods corev1.PodList
 		e.List(ctx, &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))

@@ -569,8 +569,10 @@ func isReady(object client.Object) bool {
 				return cond.Status == corev1.ConditionTrue
 			}
 		}
+	case *appsv1.ReplicaSet:
+		return object.Status.AvailableReplicas == object.Status.Replicas
 	case *appsv1.StatefulSet:
-		return object.Status.ReadyReplicas == object.Status.Replicas
+		return object.Status.AvailableReplicas == object.Status.Replicas
 	}
 	return false
 }
