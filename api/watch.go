@@ -71,8 +71,8 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 
 	watch:
 		for {
-			backoff.Next(gvr.Resource, time.Now())
 			time.Sleep(backoff.Get(gvr.Resource))
+			backoff.Next(gvr.Resource, time.Now())
 			w, err := cluster.DynamicClient.Resource(gvr).Watch(ctx, opts.ListOptions)
 			if err != nil {
 				klog.Infof("restarting watch: %s", err)

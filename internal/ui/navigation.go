@@ -148,7 +148,7 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 		pages := n.viewStack.Pages()
 		for i := 0; i < int(pages.NItems()); i++ {
 			page := pages.Item(uint(i)).Cast().(*gtk.StackPage)
-			if page.Name() == string(ref.UID) {
+			if page.Name() == fmt.Sprintf("%s/%s", ref.Namespace, ref.Name) {
 				n.viewStack.SetVisibleChild(page.Child())
 				return
 			}
@@ -326,7 +326,7 @@ rows:
 		}
 
 		for _, pin := range pins {
-			if string(pin.UID) == string(ref.UID) {
+			if pin.Name == ref.Name && pin.Namespace == ref.Namespace {
 				continue rows
 			}
 		}
@@ -341,7 +341,7 @@ outer:
 			if err := json.Unmarshal([]byte(row.Name()), &ref); err != nil {
 				panic(err)
 			}
-			if ref.UID == pin.UID {
+			if pin.Name == ref.Name && pin.Namespace == ref.Namespace {
 				continue outer
 			}
 		}
@@ -369,7 +369,7 @@ func createObjectRow(ref corev1.ObjectReference) *gtk.ListBoxRow {
 		panic(err)
 	}
 	row.SetName(string(json))
-	row.AddCSSClass(string(ref.UID))
+	row.AddCSSClass(fmt.Sprintf("%s/%s", ref.Namespace, ref.Name))
 	box := gtk.NewBox(gtk.OrientationHorizontal, 8)
 	box.SetMarginTop(4)
 	box.SetMarginBottom(4)
@@ -470,14 +470,14 @@ func (n *Navigation) createPin(object client.Object) *gtk.ListBoxRow {
 	state := *n.ClusterState
 	state.SelectedObject = observer.NewProperty[client.Object](object)
 	navView := adw.NewNavigationView()
-	navView.SetName(string(object.GetUID()))
+	navView.SetName(fmt.Sprintf("%s/%s", ref.Namespace, ref.Name))
 	ctx, cancel := context.WithCancel(n.ctx)
-	n.cancelFuncs[string(object.GetUID())] = cancel
+	n.cancelFuncs[fmt.Sprintf("%s/%s", ref.Namespace, ref.Name)] = cancel
 	navView.Push(NewObjectView(ctx, &state, n.editor, navView, n).NavigationPage)
 	n.pinViews = append(n.pinViews, navView)
 
 	page := n.viewStack.AddChild(navView)
-	page.SetName(string(object.GetUID()))
+	page.SetName(fmt.Sprintf("%s/%s", ref.Namespace, ref.Name))
 
 	return row
 }
@@ -486,7 +486,7 @@ func (n *Navigation) removePin(ref corev1.ObjectReference) {
 outer:
 	for i, row := range n.pinRows {
 		for _, c := range row.CSSClasses() {
-			if c == string(ref.UID) {
+			if c == fmt.Sprintf("%s/%s", ref.Namespace, ref.Name) {
 				n.pinList.Remove(row)
 				n.pinRows = slices.Delete(n.pinRows, i, i+1)
 				break outer
@@ -495,16 +495,16 @@ outer:
 	}
 
 	for i, v := range n.pinViews {
-		if v.Name() == string(ref.UID) {
+		if v.Name() == fmt.Sprintf("%s/%s", ref.Namespace, ref.Name) {
 			n.viewStack.Remove(v)
 			n.pinViews = slices.Delete(n.pinViews, i, i+1)
 			break
 		}
 	}
 
-	if cancel, ok := n.cancelFuncs[string(ref.UID)]; ok {
+	if cancel, ok := n.cancelFuncs[fmt.Sprintf("%s/%s", ref.Namespace, ref.Name)]; ok {
 		cancel()
-		delete(n.cancelFuncs, string(ref.UID))
+		delete(n.cancelFuncs, fmt.Sprintf("%s/%s", ref.Namespace, ref.Name))
 	}
 }
 
@@ -516,7 +516,7 @@ func (n *Navigation) AddPin(object client.Object) {
 	}
 	prefs := n.ClusterPreferences.Value()
 	for _, p := range prefs.Navigation.Pins {
-		if p.UID == ref.UID {
+		if p.Name == ref.Name && p.Namespace == ref.Namespace {
 			return
 		}
 	}
@@ -527,7 +527,7 @@ func (n *Navigation) AddPin(object client.Object) {
 pins:
 	for _, row := range n.pinRows {
 		for _, c := range row.CSSClasses() {
-			if c == string(object.GetUID()) {
+			if c == fmt.Sprintf("%s/%s", object.GetNamespace(), object.GetName()) {
 				n.pinList.SelectRow(row)
 				break pins
 			}
@@ -548,7 +548,7 @@ func (n *Navigation) RemovePin(object client.Object) {
 
 	prefs := n.ClusterPreferences.Value()
 	for i, p := range prefs.Navigation.Pins {
-		if p.UID == object.GetUID() {
+		if p.Name == object.GetName() && p.Namespace == object.GetNamespace() {
 			prefs.Navigation.Pins = slices.Delete(prefs.Navigation.Pins, i, i+1)
 			break
 		}

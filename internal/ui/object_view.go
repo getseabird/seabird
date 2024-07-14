@@ -125,7 +125,7 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 		if object := o.SelectedObject.Value(); object != nil {
 			pinned := false
 			for _, p := range prefs.Navigation.Pins {
-				if p.UID == object.GetUID() {
+				if p.Name == object.GetName() && p.Namespace == object.GetNamespace() {
 					pinned = true
 					break
 				}
@@ -193,7 +193,7 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 
 		pinned := false
 		for _, p := range o.ClusterPreferences.Value().Navigation.Pins {
-			if p.UID == object.GetUID() {
+			if p.Name == object.GetName() && p.Namespace == object.GetNamespace() {
 				pinned = true
 				break
 			}
