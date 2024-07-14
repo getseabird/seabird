@@ -98,6 +98,11 @@ func (e *Meta) CreateObjectProperties(ctx context.Context, resource *metav1.APIR
 		})
 	}
 
+	group := object.GetObjectKind().GroupVersionKind().Group
+	if len(group) == 0 {
+		group = "k8s.io"
+	}
+
 	metadata := api.GroupProperty{
 		Priority: 100,
 		Name:     "Metadata",
@@ -110,6 +115,18 @@ func (e *Meta) CreateObjectProperties(ctx context.Context, resource *metav1.APIR
 				Name:  "Namespace",
 				Value: object.GetNamespace(),
 			},
+			&api.TextProperty{
+				Name:  "Created",
+				Value: object.GetCreationTimestamp().Format(time.RFC822),
+			},
+			// &api.TextProperty{
+			// 	Name:  "Kind",
+			// 	Value: object.GetObjectKind().GroupVersionKind().Kind,
+			// },
+			// &api.TextProperty{
+			// 	Name:  "Group",
+			// 	Value: group,
+			// },
 			&api.GroupProperty{
 				Name:     "Labels",
 				Children: labels,
@@ -136,7 +153,7 @@ func (e *Meta) CreateObjectProperties(ctx context.Context, resource *metav1.APIR
 			eventTime = ev.CreationTimestamp.Time
 		}
 		events.Children = append(events.Children, &api.TextProperty{
-			Name:  eventTime.Format(time.RFC3339),
+			Name:  eventTime.Format(time.RFC822),
 			Value: ev.Note,
 		})
 	}

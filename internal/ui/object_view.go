@@ -106,7 +106,15 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 			o.navigation.RemovePin(o.SelectedObject.Value())
 		}
 	})
-	header.PackStart(pin)
+	header.PackEnd(pin)
+
+	kind := gtk.NewLabel("")
+	kind.SetEllipsize(pango.EllipsizeEnd)
+	kind.SetHAlign(gtk.AlignStart)
+	kind.AddCSSClass("title-4")
+	kind.SetMarginStart(10)
+	kind.SetVExpand(true)
+	header.PackStart(kind)
 
 	stack := adw.NewViewStack()
 	stack.AddTitledWithIcon(o.prefPage, "properties", "Properties", "info-outline-symbolic")
@@ -144,6 +152,8 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 			}
 			return
 		}
+
+		kind.SetText(object.GetObjectKind().GroupVersionKind().Kind)
 
 		cancelWatch()
 		watchCtx, cancelWatch = context.WithCancel(ctx)
