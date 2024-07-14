@@ -28,6 +28,7 @@ import (
 	"k8s.io/client-go/kubernetes"
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/restmapper"
+	"k8s.io/klog/v2"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/client/apiutil"
@@ -163,7 +164,9 @@ func (cluster *Cluster) GetReference(ctx context.Context, ref corev1.ObjectRefer
 		return nil, err
 	}
 
-	cluster.SetObjectGVK(object)
+	if err := cluster.SetObjectGVK(object); err != nil {
+		klog.Infof("Cluster/SetObjectGVK: %s", err)
+	}
 
 	return object, nil
 }

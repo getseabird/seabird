@@ -162,7 +162,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 		}
 		props = append(props, prop)
 	case *appsv1.StatefulSet:
-		prop := &api.GroupProperty{Name: "Pods"}
+		podsProp := &api.GroupProperty{Name: "Pods"}
 		var pods corev1.PodList
 		e.List(ctx, &pods, client.InNamespace(object.Namespace), client.MatchingLabels(object.Spec.Selector.MatchLabels))
 		for i, pod := range pods.Items {
@@ -176,7 +176,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				continue
 			}
 			ref, _ := reference.GetReference(e.Scheme, &pod)
-			prop.Children = append(prop.Children, &api.TextProperty{
+			podsProp.Children = append(podsProp.Children, &api.TextProperty{
 				ID:        fmt.Sprintf("pods.%d", i),
 				Reference: ref,
 				Value:     pod.Name,
@@ -188,7 +188,37 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				},
 			})
 		}
-		props = append(props, prop)
+		props = append(props, podsProp)
+
+		if len(object.Spec.VolumeClaimTemplates) > 0 {
+			claimProp := &api.GroupProperty{Name: "Volume Claims"}
+			for _, claim := range object.Spec.VolumeClaimTemplates {
+				for replica := 0; replica < int(*object.Spec.Replicas); replica++ {
+					e.SetObjectGVK(&claim)
+					ref := corev1.ObjectReference{
+						Kind:       claim.Kind,
+						APIVersion: claim.APIVersion,
+						Name:       fmt.Sprintf("%s-%s-%d", claim.Name, object.Name, replica),
+						Namespace:  object.Namespace,
+					}
+					pv, _ := e.GetReference(ctx, ref)
+					prop := &api.TextProperty{
+						Reference: &ref,
+						Value:     claim.Name,
+						Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
+							switch row := w.(type) {
+							case *adw.ActionRow:
+								if pv != nil {
+									row.AddPrefix(widget.ObjectStatus(pv).Icon())
+								}
+							}
+						},
+					}
+					claimProp.Children = append(claimProp.Children, prop)
+				}
+			}
+			props = append(props, claimProp)
+		}
 	}
 
 	return props

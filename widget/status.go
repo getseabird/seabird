@@ -130,6 +130,16 @@ func ObjectStatus(object client.Object) *Status {
 				Type: StatusTypeWarning,
 			}
 		}
+	case *corev1.PersistentVolumeClaim:
+		if object.Status.Phase == corev1.ClaimBound {
+			return &Status{
+				Type: StatusTypeSuccess,
+			}
+		} else {
+			return &Status{
+				Type: StatusTypeWarning,
+			}
+		}
 	}
 	return &Status{
 		Type: StatusTypeError,
