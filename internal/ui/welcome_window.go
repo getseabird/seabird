@@ -2,15 +2,19 @@ package ui
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/NdoleStudio/lemonsqueezy-go"
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/diamondburned/gotk4/pkg/gdk/v4"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
@@ -47,6 +51,8 @@ func NewWelcomeWindow(ctx context.Context, app *gtk.Application, state *common.S
 	w.SetContent(w.toast)
 	w.content.SetChild(w.createContent())
 	w.SetTitle(ApplicationName)
+
+	go w.showUpdateNotification()
 
 	var h glib.SignalHandle
 	h = w.ConnectCloseRequest(func() bool {
@@ -219,4 +225,61 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 	group.Add(entry)
 
 	return navPage
+}
+
+func (w *WelcomeWindow) showUpdateNotification() {
+	if strings.Contains(Version, "dev") {
+		return
+	}
+
+	res, err := http.Get("https://api.github.com/repos/getseabird/seabird/releases")
+	if err != nil {
+		return
+	}
+
+	type Release struct {
+		TagName     string    `json:"tag_name"`
+		PublishedAt time.Time `json:"published_at"`
+		Draft       bool      `json:"draft"`
+		Prerelease  bool      `json:"prerelease"`
+	}
+	var releases []Release
+	json.NewDecoder(res.Body).Decode(&releases)
+
+	var release *Release
+	for _, r := range releases {
+		if r.Draft || r.Prerelease {
+			continue
+		}
+		release = &r
+		break
+	}
+	if release == nil {
+		return
+	}
+
+	if strings.Contains(Version, release.TagName) {
+		return
+	}
+
+	// wait a bit for stores to propagate updates
+	if time.Now().Add(24 * time.Hour).Before(release.PublishedAt) {
+		return
+	}
+
+	glib.IdleAdd(func() {
+		group := gio.NewSimpleActionGroup()
+		action := gio.NewSimpleAction("releases", nil)
+		action.ConnectActivate(func(idx *glib.Variant) {
+			gtk.ShowURI(&w.Window, "https://github.com/getseabird/seabird/releases", gdk.CURRENT_TIME)
+		})
+		group.AddAction(action)
+		w.InsertActionGroup("welcome", group)
+
+		toast := adw.NewToast(fmt.Sprintf("Version %s is available.", strings.TrimPrefix(release.TagName, "v")))
+		toast.SetActionName("welcome.releases")
+		toast.SetButtonLabel("Update")
+		toast.SetPriority(adw.ToastPriorityNormal)
+		w.toast.AddToast(toast)
+	})
 }
