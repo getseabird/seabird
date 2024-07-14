@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"errors"
 	"log"
 	"slices"
 	"time"
@@ -69,70 +70,62 @@ func Watch[T client.Object](ctx context.Context, cluster *Cluster, resource *met
 	go func() {
 		backoff := flowcontrol.NewBackOff(time.Second, time.Minute)
 
-	watch:
 		for {
 			time.Sleep(backoff.Get(gvr.Resource))
 			backoff.Next(gvr.Resource, time.Now())
 			w, err := cluster.DynamicClient.Resource(gvr).Watch(ctx, opts.ListOptions)
 			if err != nil {
+				if errors.Is(context.Canceled, err) {
+					return
+				}
 				klog.Infof("restarting watch: %s", err)
 				continue
 			}
-			for {
-				select {
-				case res, ok := <-w.ResultChan():
-					if !ok {
-						klog.Infof("restarting watch: channel closed")
-						continue watch
+			for res := range w.ResultChan() {
+				switch res.Type {
+				case watch.Added:
+					obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
+					if err != nil {
+						obj = res.Object.(client.Object)
 					}
-					switch res.Type {
-					case watch.Added:
-						obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
-						if err != nil {
-							obj = res.Object.(client.Object)
-						}
-						cluster.SetObjectGVK(obj)
-						if opts.AddFunc != nil {
-							opts.AddFunc(obj.(T))
-						}
-						objects = append(objects, obj.(T))
-						updateProperty()
-					case watch.Modified:
-						obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
-						if err != nil {
-							obj = res.Object.(client.Object)
-						}
-						cluster.SetObjectGVK(obj)
-						if opts.UpdateFunc != nil {
-							opts.UpdateFunc(obj.(T))
-						}
-						for i, o := range objects {
-							if o.GetUID() == obj.GetUID() {
-								objects[i] = obj.(T)
-								break
-							}
-						}
-						updateProperty()
-					case watch.Deleted:
-						obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
-						if err != nil {
-							obj = res.Object.(client.Object)
-						}
-						cluster.SetObjectGVK(obj)
-						if opts.DeleteFunc != nil {
-							opts.DeleteFunc(obj.(T))
-						}
-						for i, o := range objects {
-							if o.GetUID() == obj.GetUID() {
-								objects = slices.Delete(objects, i, i+1)
-								break
-							}
-						}
-						updateProperty()
+					cluster.SetObjectGVK(obj)
+					if opts.AddFunc != nil {
+						opts.AddFunc(obj.(T))
 					}
-				case <-ctx.Done():
-					w.Stop()
-					return
+					objects = append(objects, obj.(T))
+					updateProperty()
+				case watch.Modified:
+					obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
+					if err != nil {
+						obj = res.Object.(client.Object)
+					}
+					cluster.SetObjectGVK(obj)
+					if opts.UpdateFunc != nil {
+						opts.UpdateFunc(obj.(T))
+					}
+					for i, o := range objects {
+						if o.GetUID() == obj.GetUID() {
+							objects[i] = obj.(T)
+							break
+						}
+					}
+					updateProperty()
+				case watch.Deleted:
+					obj, err := objectFromUnstructured(cluster.Scheme, gvk, res.Object.(*unstructured.Unstructured))
+					if err != nil {
+						obj = res.Object.(client.Object)
+					}
+					cluster.SetObjectGVK(obj)
+					if opts.DeleteFunc != nil {
+						opts.DeleteFunc(obj.(T))
+					}
+					for i, o := range objects {
+						if o.GetUID() == obj.GetUID() {
+							objects = slices.Delete(objects, i, i+1)
+							break
+						}
+					}
+					updateProperty()
 				}
 			}
 		}
