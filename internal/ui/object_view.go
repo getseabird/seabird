@@ -278,17 +278,14 @@ func (o *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 			box.SetHAlign(gtk.AlignStart)
 
 			label := gtk.NewLabel(prop.Name)
-			label.AddCSSClass("caption")
 			label.AddCSSClass("dim-label")
-			label.SetVAlign(gtk.AlignStart)
+			label.AddCSSClass("monospace")
 			label.SetEllipsize(pango.EllipsizeEnd)
 			box.Append(label)
 
 			label = gtk.NewLabel(prop.Value)
-			label.AddCSSClass("caption")
-			label.SetName("button")
-			label.AddCSSClass("pill")
 			label.SetWrap(true)
+			label.AddCSSClass("monospace")
 			label.SetEllipsize(pango.EllipsizeEnd)
 			box.Append(label)
 

@@ -19,6 +19,7 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/fields"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/tools/portforward"
 	"k8s.io/client-go/tools/reference"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"k8s.io/utils/ptr"
@@ -27,12 +28,13 @@ import (
 
 func init() {
 	Extensions = append(Extensions, func(cluster *api.Cluster) Extension {
-		return &Core{Cluster: cluster}
+		return &Core{Cluster: cluster, portforward: PortForwarder{cluster, map[types.NamespacedName]*portforward.PortForwarder{}}}
 	})
 }
 
 type Core struct {
 	*api.Cluster
+	portforward PortForwarder
 }
 
 func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, columns []api.Column) []api.Column {
@@ -342,31 +344,49 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				props = append(props, &api.TextProperty{Name: "Command", Value: strings.Join(container.Command, " ")})
 			}
 
-			prop := &api.GroupProperty{Name: "Env"}
+			envs := &api.GroupProperty{Name: "Env"}
 			for i, env := range container.Env {
 				id := fmt.Sprintf("env.%d", i)
 				if from := env.ValueFrom; from != nil {
 					if ref := from.ConfigMapKeyRef; ref != nil {
 						var cm corev1.ConfigMap
 						if err := e.Get(ctx, types.NamespacedName{Name: ref.Name, Namespace: object.Namespace}, &cm); err != nil {
-							prop.Children = append(prop.Children, &api.TextProperty{ID: id, Name: env.Name, Value: fmt.Sprintf("error: %v", err)})
+							envs.Children = append(envs.Children, &api.TextProperty{ID: id, Name: env.Name, Value: fmt.Sprintf("error: %v", err)})
 						} else {
-							prop.Children = append(prop.Children, &api.TextProperty{ID: id, Name: env.Name, Value: cm.Data[ref.Key]})
+							envs.Children = append(envs.Children, &api.TextProperty{ID: id, Name: env.Name, Value: cm.Data[ref.Key]})
 						}
 					} else if ref := from.SecretKeyRef; ref != nil {
 						var secret corev1.Secret
 						if err := e.Get(ctx, types.NamespacedName{Name: ref.Name, Namespace: object.Namespace}, &secret); err != nil {
-							prop.Children = append(prop.Children, &api.TextProperty{ID: id, Name: env.Name, Value: fmt.Sprintf("error: %v", err)})
+							envs.Children = append(envs.Children, &api.TextProperty{ID: id, Name: env.Name, Value: fmt.Sprintf("error: %v", err)})
 						} else {
-							prop.Children = append(prop.Children, &api.TextProperty{ID: id, Name: env.Name, Value: string(secret.Data[ref.Key])})
+							envs.Children = append(envs.Children, &api.TextProperty{ID: id, Name: env.Name, Value: string(secret.Data[ref.Key])})
 						}
 					}
 					// TODO field refs
 				} else {
-					prop.Children = append(prop.Children, &api.TextProperty{ID: id, Name: env.Name, Value: env.Value})
+					envs.Children = append(envs.Children, &api.TextProperty{ID: id, Name: env.Name, Value: env.Value})
 				}
 			}
-			props = append(props, prop)
+			props = append(props, envs)
+
+			ports := &api.GroupProperty{Name: "Ports"}
+			for _, port := range container.Ports {
+				ports.Children = append(ports.Children, &api.TextProperty{
+					Name:  port.Name,
+					Value: fmt.Sprintf("%d", port.ContainerPort),
+					Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
+						name := types.NamespacedName{Name: object.Name, Namespace: object.Namespace}
+						switch box := w.(type) {
+						case *gtk.Box:
+							btn := gtk.NewButton()
+							e.portforward.UpdateButton(ctx, btn, name, []string{fmt.Sprintf(":%d", port.ContainerPort)})
+							box.Append(btn)
+						}
+					},
+				})
+			}
+			props = append(props, ports)
 
 			var cpu *resource.Quantity
 			var mem *resource.Quantity
