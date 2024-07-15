@@ -3,6 +3,7 @@ package widget
 import (
 	"context"
 	"fmt"
+	"html"
 	"io"
 	"strings"
 
@@ -57,7 +58,7 @@ func NewLogPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, cont
 				if text.BgCol != nil {
 					attr = append(attr, fmt.Sprintf(`background="%s"`, text.BgCol.Hex))
 				}
-				buffer.InsertMarkup(buffer.EndIter(), fmt.Sprintf(`<span %s>%s</span>`, strings.Join(attr, " "), text.Label))
+				buffer.InsertMarkup(buffer.EndIter(), fmt.Sprintf(`<span %s>%s</span>`, strings.Join(attr, " "), html.EscapeString(text.Label)))
 			}
 		}
 	}
