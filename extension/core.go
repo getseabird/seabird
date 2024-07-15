@@ -258,7 +258,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					for key := range configmap.Data {
 						keys = append(keys, key)
 					}
-					label := gtk.NewLabel(strings.Join(keys, ","))
+					label := gtk.NewLabel(strings.Join(keys, ", "))
 					label.SetHAlign(gtk.AlignStart)
 					label.SetEllipsize(pango.EllipsizeEnd)
 					listitem.SetChild(label)
@@ -276,7 +276,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					for key := range secret.Data {
 						keys = append(keys, key)
 					}
-					label := gtk.NewLabel(strings.Join(keys, ","))
+					label := gtk.NewLabel(strings.Join(keys, ", "))
 					label.SetHAlign(gtk.AlignStart)
 					label.SetEllipsize(pango.EllipsizeEnd)
 					listitem.SetChild(label)
@@ -292,6 +292,21 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					service := object.(*corev1.Service)
 					label := gtk.NewLabel(string(service.Spec.Type))
 					label.SetHAlign(gtk.AlignStart)
+					listitem.SetChild(label)
+				},
+			},
+			api.Column{
+				Name:     "Ports",
+				Priority: 60,
+				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+					svc := object.(*corev1.Service)
+					var ports []string
+					for _, port := range svc.Spec.Ports {
+						ports = append(ports, strconv.Itoa(int(port.Port)))
+					}
+					label := gtk.NewLabel(strings.Join(ports, ", "))
+					label.SetHAlign(gtk.AlignStart)
+					label.SetEllipsize(pango.EllipsizeEnd)
 					listitem.SetChild(label)
 				},
 			},
