@@ -426,7 +426,7 @@ func createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.Lis
 		popover := gtk.NewPopoverMenuFromModel(menu)
 		popover.SetHasArrow(false)
 		row.FirstChild().(*gtk.Box).Append(popover)
-		popover.Present()
+		popover.SetVisible(true)
 	})
 	row.AddController(gesture)
 
