@@ -8,7 +8,7 @@ require (
 	github.com/creack/pty v1.1.21
 	github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240712143708-824c3ce8a5f4
 	github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240312005410-8276faa7949c
-	github.com/diamondburned/gotk4/pkg v0.2.3-0.20240712132236-ab1a56e93c15
+	github.com/diamondburned/gotk4/pkg v0.3.0
 	github.com/getkin/kin-openapi v0.126.0
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0

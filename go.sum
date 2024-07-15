@@ -15,8 +15,8 @@ github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240712143708-824c3ce8a5f4 h1
 github.com/diamondburned/gotk4-adwaita/pkg v0.0.0-20240712143708-824c3ce8a5f4/go.mod h1:fkvdR7MYO1sI0ex07VYLTc+YK87v24aRFYyMJQ/xAeA=
 github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240312005410-8276faa7949c h1:9vqKD0zBVac04//nX4f6DQ/pX76eqi7UGFFHnIUJEWY=
 github.com/diamondburned/gotk4-sourceview/pkg v0.0.0-20240312005410-8276faa7949c/go.mod h1:vKV3IOI1vvV9aI7PKCgxYzUUarQByRfgDmXMRrDJy7Q=
-github.com/diamondburned/gotk4/pkg v0.2.3-0.20240712132236-ab1a56e93c15 h1:NDLUgJSMKZylI/m1wwUkn4++EewrW3IcHQ+NmbgF9B0=
-github.com/diamondburned/gotk4/pkg v0.2.3-0.20240712132236-ab1a56e93c15/go.mod h1:DqeOW+MxSZFg9OO+esk4JgQk0TiUJJUBfMltKhG+ub4=
+github.com/diamondburned/gotk4/pkg v0.3.0 h1:6PvqjIfZ4MOp1KG30mmsL6mqo6jCvR5SaGP8fwczQr0=
+github.com/diamondburned/gotk4/pkg v0.3.0/go.mod h1:DqeOW+MxSZFg9OO+esk4JgQk0TiUJJUBfMltKhG+ub4=
 github.com/emicklei/go-restful/v3 v3.11.2 h1:1onLa9DcsMYO9P+CXaL0dStDqQ2EHHXLiz+BtnqkLAU=
 github.com/emicklei/go-restful/v3 v3.11.2/go.mod h1:6n3XBCmQQb25CM2LCACGz8ukIrRry+4bhvbpWn3mrbc=
 github.com/evanphx/json-patch v4.12.0+incompatible h1:4onqiflcdA9EOZ4RxV643DvftH5pOlLGNtQ5lPWQu84=
