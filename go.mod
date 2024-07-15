@@ -23,7 +23,7 @@ require (
 	k8s.io/apiextensions-apiserver v0.30.2
 	k8s.io/apimachinery v0.30.2
 	k8s.io/client-go v0.30.2
-	k8s.io/klog/v2 v2.120.1
+	k8s.io/klog/v2 v2.130.1
 	k8s.io/metrics v0.30.2
 	k8s.io/utils v0.0.0-20240102154912-e7106e64919e
 	nhooyr.io/websocket v1.8.11
