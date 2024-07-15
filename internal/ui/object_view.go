@@ -14,7 +14,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
-	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
@@ -59,8 +58,6 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
 	content.Append(header)
-	header.SetShowStartTitleButtons(!style.Eq(style.Windows, style.Darwin))
-	header.SetShowEndTitleButtons(!style.Eq(style.Windows, style.Darwin))
 
 	delete := gtk.NewButton()
 	delete.SetIconName("user-trash-symbolic")

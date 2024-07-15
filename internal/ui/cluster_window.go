@@ -19,7 +19,7 @@ import (
 )
 
 type ClusterWindow struct {
-	*widget.UniversalApplicationWindow
+	*adw.ApplicationWindow
 	*common.ClusterState
 	ctx          context.Context
 	cancel       context.CancelFunc
@@ -31,15 +31,15 @@ type ClusterWindow struct {
 }
 
 func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.ClusterState) *ClusterWindow {
-	window := widget.NewUniversalApplicationWindow(app)
+	window := adw.NewApplicationWindow(app)
 	ctx = ctxt.With[*gtk.Window](ctx, &window.Window)
 	ctx = ctxt.With[*api.Cluster](ctx, state.Cluster)
 	ctx, cancel := context.WithCancel(ctx)
 	w := ClusterWindow{
-		ClusterState:               state,
-		ctx:                        ctx,
-		UniversalApplicationWindow: window,
-		cancel:                     cancel,
+		ClusterState:      state,
+		ctx:               ctx,
+		ApplicationWindow: window,
+		cancel:            cancel,
 	}
 	w.SetIconName("seabird")
 	w.SetTitle(fmt.Sprintf("%s - %s", w.ClusterPreferences.Value().Name, ApplicationName))

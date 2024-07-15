@@ -25,8 +25,6 @@ func NewApplication(version string) (*Application, error) {
 	gtk.Init()
 
 	switch style.Get() {
-	case style.Windows:
-		os.Setenv("GTK_CSD", "0")
 	case style.Darwin:
 		gtk.SettingsGetDefault().SetObjectProperty("gtk-decoration-layout", "close,minimize,maximize")
 	}

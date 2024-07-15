@@ -19,14 +19,13 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
-	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
 )
 
 type WelcomeWindow struct {
-	*widget.UniversalApplicationWindow
+	*adw.ApplicationWindow
 	*common.State
 	ctx     context.Context
 	content *adw.Bin
@@ -35,13 +34,13 @@ type WelcomeWindow struct {
 }
 
 func NewWelcomeWindow(ctx context.Context, app *gtk.Application, state *common.State) *WelcomeWindow {
-	window := widget.NewUniversalApplicationWindow(app)
+	window := adw.NewApplicationWindow(app)
 	ctx = ctxt.With[*gtk.Window](ctx, &window.Window)
 	w := WelcomeWindow{
-		ctx:                        ctx,
-		UniversalApplicationWindow: window,
-		content:                    adw.NewBin(),
-		State:                      state,
+		ctx:               ctx,
+		ApplicationWindow: window,
+		content:           adw.NewBin(),
+		State:             state,
 	}
 	w.SetApplication(app)
 	w.SetIconName("seabird")
@@ -80,10 +79,8 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	w.nav.Add(adw.NewNavigationPage(box, ApplicationName))
 
-	if !style.Eq(style.Windows) {
-		header := gtk.NewHeaderBar()
-		box.Append(header)
-	}
+	header := gtk.NewHeaderBar()
+	box.Append(header)
 
 	page := adw.NewPreferencesPage()
 	box.Append(page)
@@ -179,7 +176,6 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 	navPage := adw.NewNavigationPage(content, "Purchase Seabird")
 
 	header := adw.NewHeaderBar()
-	header.SetShowEndTitleButtons(!style.Eq(style.Windows))
 	content.Append(header)
 
 	prefPage := adw.NewPreferencesPage()

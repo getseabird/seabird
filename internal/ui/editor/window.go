@@ -11,7 +11,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
-	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
@@ -25,7 +24,7 @@ import (
 )
 
 type EditorWindow struct {
-	*widget.UniversalWindow
+	*adw.Window
 	ctx     context.Context
 	tabview *adw.TabView
 	toast   *adw.ToastOverlay
@@ -35,8 +34,8 @@ type EditorWindow struct {
 
 func NewEditorWindow(ctx context.Context) *EditorWindow {
 	w := EditorWindow{
-		UniversalWindow: widget.NewUniversalWindow(),
-		pages:           map[*adw.TabPage]*sourcePage{},
+		Window: adw.NewWindow(),
+		pages:  map[*adw.TabPage]*sourcePage{},
 	}
 	cluster := ctxt.MustFrom[*api.Cluster](ctx)
 	w.SetDefaultSize(1000, 600)
@@ -47,7 +46,7 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 		return true
 	})
 
-	ctx = ctxt.With[*gtk.Window](ctx, w.Window)
+	ctx = ctxt.With[*gtk.Window](ctx, &w.Window.Window)
 	w.ctx = ctx
 
 	content := gtk.NewBox(gtk.OrientationVertical, 0)
@@ -62,8 +61,6 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 	content.Append(toolbar)
 
 	header := adw.NewHeaderBar()
-	header.SetShowTitle(!style.Eq(style.Windows))
-	header.SetShowEndTitleButtons(!style.Eq(style.Windows))
 	toolbar.AddTopBar(header)
 
 	w.save = gtk.NewButton()

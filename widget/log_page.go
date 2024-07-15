@@ -10,7 +10,6 @@ import (
 	"github.com/diamondburned/gotk4-sourceview/pkg/gtksource/v5"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
-	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/leaanthony/go-ansi-parser"
 	corev1 "k8s.io/api/core/v1"
@@ -27,7 +26,6 @@ func NewLogPage(ctx context.Context, cluster *api.Cluster, pod *corev1.Pod, cont
 
 	header := adw.NewHeaderBar()
 	header.SetShowStartTitleButtons(false)
-	header.SetShowEndTitleButtons(!style.Eq(style.Windows))
 	header.AddCSSClass("flat")
 	box.Append(header)
 

@@ -8,7 +8,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
-	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
@@ -25,7 +24,6 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	header := adw.NewHeaderBar()
 	header.AddCSSClass("flat")
 	header.SetShowStartTitleButtons(false)
-	header.SetShowEndTitleButtons(!style.Eq(style.Windows))
 
 	createButton := gtk.NewButton()
 	createButton.SetIconName("document-new-symbolic")
@@ -49,6 +47,7 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 
 	entry := gtk.NewSearchEntry()
 	entry.SetMaxWidthChars(75)
+	entry.SetObjectProperty("placeholder-text", "Search")
 	box.Append(entry)
 	entry.ConnectSearchChanged(func() {
 		if entry.Text() != state.SearchText.Value() {
