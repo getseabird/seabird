@@ -126,6 +126,17 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					listitem.SetChild(label)
 				},
 			},
+			api.Column{
+				Name:     "Volume",
+				Priority: 60,
+				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+					pvc := object.(*corev1.PersistentVolumeClaim)
+					label := gtk.NewLabel(pvc.Spec.VolumeName)
+					label.SetHAlign(gtk.AlignStart)
+					label.SetEllipsize(pango.EllipsizeEnd)
+					listitem.SetChild(label)
+				},
+			},
 		)
 	case corev1.SchemeGroupVersion.WithResource("persistentvolumes").String():
 		columns = append(columns,
@@ -157,6 +168,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					if pv.Spec.ClaimRef != nil {
 						label := gtk.NewLabel(string(pv.Spec.ClaimRef.Name))
 						label.SetHAlign(gtk.AlignStart)
+						label.SetEllipsize(pango.EllipsizeEnd)
 						listitem.SetChild(label)
 					}
 				},
@@ -488,6 +500,16 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 			&api.TextProperty{Name: "Class", Value: storageClass},
 			&api.TextProperty{Name: "Request", Value: object.Spec.Resources.Requests.Storage().String()},
 			&api.TextProperty{Name: "Access modes", Value: strings.Join(accessModes, ", ")},
+			&api.TextProperty{
+				Name:  "Volume",
+				Value: object.Spec.VolumeName,
+				Reference: &corev1.ObjectReference{
+					Kind:       "PersistentVolume",
+					APIVersion: corev1.SchemeGroupVersion.String(),
+					Name:       object.Spec.VolumeName,
+					Namespace:  object.Namespace,
+				},
+			},
 		}})
 	case *corev1.PersistentVolume:
 		var accessModes []string
@@ -499,6 +521,7 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 			&api.TextProperty{Name: "Class", Value: object.Spec.StorageClassName},
 			&api.TextProperty{Name: "Capacity", Value: object.Spec.Capacity.Storage().String()},
 			&api.TextProperty{Name: "Access modes", Value: strings.Join(accessModes, ", ")},
+			&api.TextProperty{Name: "Reclaim policy", Value: string(object.Spec.PersistentVolumeReclaimPolicy)},
 			&api.TextProperty{Name: "Phase", Value: string(object.Status.Phase)},
 		}}
 		if object.Spec.ClaimRef != nil {
