@@ -44,18 +44,19 @@ import (
 type Cluster struct {
 	client.Client
 	*kubernetes.Clientset
-	Config             *rest.Config
-	ClusterPreferences observer.Property[ClusterPreferences]
-	Metrics            *Metrics
-	Events             *Events
-	RESTMapper         meta.RESTMapper
-	DynamicClient      *dynamic.DynamicClient
-	Scheme             *runtime.Scheme
-	Encoder            *Encoder
-	Resources          []metav1.APIResource
-	ctx                context.Context
-	informerFactory    dynamicinformer.DynamicSharedInformerFactory
-	sharedInformers    map[schema.GroupVersionResource]informers.GenericInformer
+	Config                 *rest.Config
+	ClusterPreferences     observer.Property[ClusterPreferences]
+	Metrics                *Metrics
+	Events                 *Events
+	RESTMapper             meta.RESTMapper
+	DynamicClient          *dynamic.DynamicClient
+	Scheme                 *runtime.Scheme
+	Encoder                *Encoder
+	Resources              []metav1.APIResource
+	ctx                    context.Context
+	informerFactory        informers.SharedInformerFactory
+	dynamicInformerFactory dynamicinformer.DynamicSharedInformerFactory
+	sharedInformers        map[schema.GroupVersionResource]informers.GenericInformer
 }
 
 func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPreferences]) (*Cluster, error) {
@@ -100,8 +101,10 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 	}
 	mapper := restmapper.NewDiscoveryRESTMapper(res)
 
-	informerFactory := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, time.Hour)
+	informerFactory := informers.NewSharedInformerFactory(clientset, time.Hour)
 	informerFactory.Start(ctx.Done())
+	dynamicInformerFactory := dynamicinformer.NewDynamicSharedInformerFactory(dynamicClient, time.Hour)
+	dynamicInformerFactory.Start(ctx.Done())
 
 	var resources []metav1.APIResource
 	preferredResources, err := clientset.Discovery().ServerPreferredResources()
@@ -147,20 +150,21 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 	})
 
 	cluster := Cluster{
-		Client:             rclient,
-		Config:             config,
-		Clientset:          clientset,
-		RESTMapper:         mapper,
-		Scheme:             scheme,
-		Encoder:            &Encoder{Scheme: scheme},
-		ClusterPreferences: clusterPrefs,
-		DynamicClient:      dynamicClient,
-		Metrics:            metrics,
-		Events:             newEvents(ctx, clientset),
-		ctx:                ctx,
-		Resources:          resources,
-		informerFactory:    informerFactory,
-		sharedInformers:    map[schema.GroupVersionResource]informers.GenericInformer{},
+		Client:                 rclient,
+		Config:                 config,
+		Clientset:              clientset,
+		RESTMapper:             mapper,
+		Scheme:                 scheme,
+		Encoder:                &Encoder{Scheme: scheme},
+		ClusterPreferences:     clusterPrefs,
+		DynamicClient:          dynamicClient,
+		Metrics:                metrics,
+		Events:                 newEvents(ctx, clientset),
+		ctx:                    ctx,
+		Resources:              resources,
+		informerFactory:        informerFactory,
+		dynamicInformerFactory: dynamicInformerFactory,
+		sharedInformers:        map[schema.GroupVersionResource]informers.GenericInformer{},
 	}
 
 	return &cluster, nil
@@ -205,48 +209,31 @@ func (cluster *Cluster) SetObjectGVK(object client.Object) error {
 	return nil
 }
 
-func (c *Cluster) DynamicList(ctx context.Context, resource *metav1.APIResource, opts metav1.ListOptions) ([]client.Object, error) {
-	var objects []client.Object
-	list, err := c.DynamicClient.Resource(util.GVRForResource(resource)).List(ctx, opts)
-	if err != nil {
-		return nil, err
-	}
-	for _, i := range list.Items {
-		obj, err := objectFromUnstructured(c.Scheme, util.GVKForResource(resource), &i)
-		if err != nil {
-			log.Printf("error converting obj: %s", err)
-			continue
-		}
-		c.SetObjectGVK(obj)
-		objects = append(objects, obj)
-	}
-	return objects, nil
-}
-
-func (c *Cluster) HasInformer(gvr schema.GroupVersionResource) bool {
-	_, ok := c.sharedInformers[gvr]
-	return ok
-}
-
 func (c *Cluster) GetInformer(gvr schema.GroupVersionResource) informers.GenericInformer {
-	gvk, _ := c.GVRToK(gvr)
 	if informer, ok := c.sharedInformers[gvr]; ok {
 		return informer
 	}
-	informer := c.informerFactory.ForResource(gvr)
+	var informer informers.GenericInformer
+	informer, err := c.informerFactory.ForResource(gvr)
+	if err != nil {
+		informer = c.dynamicInformerFactory.ForResource(gvr)
+	}
 	informer.Informer().SetWatchErrorHandler(func(r *cache.Reflector, err error) {
 		if apierrors.IsMethodNotSupported(err) {
 			return
 		}
 		klog.Errorf("%s informer: %s", gvr.Resource, err)
 	})
-	informer.Informer().SetTransform(func(o interface{}) (interface{}, error) {
-		obj := o.(client.Object)
-		if o, err := objectFromUnstructured(c.Scheme, *gvk, obj.(*unstructured.Unstructured)); err == nil {
-			obj = o
+	informer.Informer().SetTransform(func(obj interface{}) (interface{}, error) {
+		switch obj := obj.(type) {
+		case *unstructured.Unstructured:
+			return obj, nil
+		case client.Object:
+			err := c.SetObjectGVK(obj)
+			return obj, err
+		default:
+			return obj, nil
 		}
-		err := c.SetObjectGVK(obj)
-		return obj, err
 	})
 	go informer.Informer().Run(c.ctx.Done())
 	c.sharedInformers[gvr] = informer
