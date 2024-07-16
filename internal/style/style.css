@@ -5,16 +5,34 @@ columnview>listview>row:selected {
   border-radius: 6px;
 }
 
-.navigation-sidebar {
-  opacity: 0.9;
+/* .linked:not(.vertical) label.pill:not(:first-child) {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
-label.badge {
-  background-color: @window_bg_color;
-  padding: .6em;
-  border-radius: .6rem;
-  font-size: 0.9em;
+.linked:not(.vertical) label.pill:not(:last-child) {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+  border-right: 0.3px solid @sidebar_backdrop_color;
+} */
+
+label.pill {
+  background-color: @card_bg_color;
+  border-radius: 99px;
+  padding: 1px 8px;
 }
+
+/* label.pill.success {
+  background-color: @success_bg_color;
+  color: @success_fg_color;
+  filter: brightness(70%);
+}
+
+label.pill.warning {
+  background-color: @warning_color;
+  color: @warning_fg_color;
+  filter: brightness(70%);
+} */
 
 levelbar block.lb-error {
   background-color: @destructive_bg_color;

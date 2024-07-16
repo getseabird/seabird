@@ -20,8 +20,7 @@ import (
 	"github.com/getseabird/seabird/widget"
 	"github.com/google/uuid"
 	"github.com/imkira/go-observer/v2"
-	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	"k8s.io/apimachinery/pkg/fields"
+	"k8s.io/client-go/tools/cache"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -154,31 +153,28 @@ func NewObjectView(ctx context.Context, state *common.ClusterState, editor *edit
 
 		cancelWatch()
 		watchCtx, cancelWatch = context.WithCancel(ctx)
-		api.Watch(
-			watchCtx,
-			o.Cluster,
-			o.Cluster.GetAPIResource(object.GetObjectKind().GroupVersionKind()),
-			api.WatchOptions[client.Object]{
-				ListOptions: v1.ListOptions{
-					FieldSelector: fields.AndSelectors(
-						fields.OneTermEqualSelector("metadata.name", object.GetName()),
-						fields.OneTermEqualSelector("metadata.namespace", object.GetNamespace()),
-					).String(),
-				},
-				UpdateFunc: func(obj client.Object) {
-					o.SelectedObject.Update(obj)
-				},
-				DeleteFunc: func(obj client.Object) {
-					ctxt.MustFrom[*adw.ToastOverlay](ctx).AddToast(adw.NewToast(fmt.Sprintf("%v was deleted", obj.GetName())))
-					o.SelectedObject.Update(nil)
-					glib.IdleAdd(func() {
-						if pin.Active() {
-							o.navigation.RemovePin(obj)
-						}
-					})
-				},
+		gvr, _ := o.Cluster.GVKToR(object.GetObjectKind().GroupVersionKind())
+		o.Cluster.AddInformerEventHandler(watchCtx, *gvr, cache.ResourceEventHandlerFuncs{
+			UpdateFunc: func(_, new interface{}) {
+				obj := new.(client.Object)
+				if obj.GetUID() != object.GetUID() {
+					return
+				}
+				o.SelectedObject.Update(obj)
 			},
-		)
+			DeleteFunc: func(obj interface{}) {
+				if obj.(client.Object).GetUID() != object.GetUID() {
+					return
+				}
+				ctxt.MustFrom[*adw.ToastOverlay](ctx).AddToast(adw.NewToast(fmt.Sprintf("%v was deleted", object.GetName())))
+				o.SelectedObject.Update(nil)
+				glib.IdleAdd(func() {
+					if pin.Active() {
+						o.navigation.RemovePin(object)
+					}
+				})
+			},
+		})
 
 		resource := o.GetAPIResource(object.GetObjectKind().GroupVersionKind())
 

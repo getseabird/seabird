@@ -10,6 +10,8 @@ import (
 	"github.com/imkira/go-observer/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 )
@@ -27,6 +29,7 @@ type ClusterState struct {
 	SearchText       observer.Property[string]
 	SearchFilter     observer.Property[SearchFilter]
 	SelectedObject   observer.Property[client.Object]
+	Objects          observer.Property[[]client.Object]
 }
 
 func NewState() (*State, error) {
@@ -44,34 +47,30 @@ func NewState() (*State, error) {
 func (s *State) NewClusterState(ctx context.Context, clusterPrefs observer.Property[api.ClusterPreferences]) (*ClusterState, error) {
 	logf.SetLogger(logr.Discard())
 
-	clusterApi, err := api.NewCluster(ctx, clusterPrefs)
+	cluster, err := api.NewCluster(ctx, clusterPrefs)
 	if err != nil {
 		return nil, err
 	}
-	ctx = ctxt.With[*api.Cluster](ctx, clusterApi)
+	ctx = ctxt.With[*api.Cluster](ctx, cluster)
 
-	cluster := ClusterState{
+	state := ClusterState{
 		State:            s,
-		Cluster:          clusterApi,
+		Cluster:          cluster,
 		Namespaces:       observer.NewProperty([]*corev1.Namespace{}),
 		SelectedResource: observer.NewProperty[*metav1.APIResource](nil),
 		SearchText:       observer.NewProperty(""),
 		SearchFilter:     observer.NewProperty(SearchFilter{}),
 		SelectedObject:   observer.NewProperty[client.Object](nil),
+		Objects:          observer.NewProperty[[]client.Object](nil),
 	}
 
-	var ns *metav1.APIResource
-	for _, r := range clusterApi.Resources {
-		if r.Group == corev1.SchemeGroupVersion.Group && r.Version == corev1.SchemeGroupVersion.Version && r.Name == "namespaces" {
-			ns = &r
-			break
-		}
+	if err := api.InformerConnectProperty(ctx, cluster, schema.GroupVersionResource{Version: "v1", Resource: "namespaces"}, state.Namespaces); err != nil {
+		klog.Errorf("watching namespaces: %v", err)
 	}
-	api.Watch(ctx, clusterApi, ns, api.WatchOptions[*corev1.Namespace]{Property: cluster.Namespaces})
 
 	for _, new := range extension.Extensions {
-		cluster.Extensions = append(cluster.Extensions, new(clusterApi))
+		state.Extensions = append(state.Extensions, new(cluster))
 	}
 
-	return &cluster, nil
+	return &state, nil
 }

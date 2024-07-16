@@ -9,10 +9,13 @@ import (
 
 type StatusType string
 
-const StatusTypeInfo StatusType = "accent"
-const StatusTypeSuccess StatusType = "success"
-const StatusTypeWarning StatusType = "warning"
-const StatusTypeError StatusType = "error"
+const (
+	StatusInfo    StatusType = "accent"
+	StatusSuccess StatusType = "success"
+	StatusWarning StatusType = "warning"
+	StatusError   StatusType = "error"
+	StatusUnknown StatusType = "unknown"
+)
 
 type Status struct {
 	Condition string
@@ -33,17 +36,17 @@ func ObjectStatus(object client.Object) *Status {
 			if cs.State.Running != nil {
 				children = append(children, &Status{
 					Condition: "Running",
-					Type:      StatusTypeSuccess,
+					Type:      StatusSuccess,
 				})
 			} else if cs.State.Terminated != nil && cs.State.Terminated.Reason == "Completed" {
 				children = append(children, &Status{
 					Condition: "Terminated",
 					Reason:    cs.State.Terminated.Reason,
-					Type:      StatusTypeInfo,
+					Type:      StatusInfo,
 				})
 			} else {
 				children = append(children, &Status{
-					Type: StatusTypeWarning,
+					Type: StatusWarning,
 				})
 			}
 		}
@@ -53,7 +56,7 @@ func ObjectStatus(object client.Object) *Status {
 					return &Status{
 						Condition: string(corev1.ContainersReady),
 						Reason:    cond.Reason,
-						Type:      StatusTypeSuccess,
+						Type:      StatusSuccess,
 						Children:  children,
 					}
 				} else {
@@ -61,14 +64,14 @@ func ObjectStatus(object client.Object) *Status {
 						return &Status{
 							Condition: string(corev1.ContainersReady),
 							Reason:    cond.Reason,
-							Type:      StatusTypeInfo,
+							Type:      StatusInfo,
 							Children:  children,
 						}
 					}
 					return &Status{
 						Condition: string(corev1.ContainersReady),
 						Reason:    cond.Reason,
-						Type:      StatusTypeWarning,
+						Type:      StatusWarning,
 						Children:  children,
 					}
 				}
@@ -81,13 +84,13 @@ func ObjectStatus(object client.Object) *Status {
 					return &Status{
 						Condition: string(corev1.NodeReady),
 						Reason:    cond.Reason,
-						Type:      StatusTypeSuccess,
+						Type:      StatusSuccess,
 					}
 				} else {
 					return &Status{
 						Condition: string(corev1.NodeReady),
 						Reason:    cond.Reason,
-						Type:      StatusTypeWarning,
+						Type:      StatusWarning,
 					}
 				}
 			}
@@ -99,13 +102,13 @@ func ObjectStatus(object client.Object) *Status {
 					return &Status{
 						Condition: string(appsv1.DeploymentAvailable),
 						Reason:    cond.Reason,
-						Type:      StatusTypeSuccess,
+						Type:      StatusSuccess,
 					}
 				} else {
 					return &Status{
 						Condition: string(appsv1.DeploymentAvailable),
 						Reason:    cond.Reason,
-						Type:      StatusTypeWarning,
+						Type:      StatusWarning,
 					}
 				}
 			}
@@ -113,36 +116,36 @@ func ObjectStatus(object client.Object) *Status {
 	case *appsv1.ReplicaSet:
 		if object.Status.ReadyReplicas == object.Status.Replicas {
 			return &Status{
-				Type: StatusTypeSuccess,
+				Type: StatusSuccess,
 			}
 		} else {
 			return &Status{
-				Type: StatusTypeWarning,
+				Type: StatusWarning,
 			}
 		}
 	case *appsv1.StatefulSet:
 		if object.Status.ReadyReplicas == object.Status.Replicas {
 			return &Status{
-				Type: StatusTypeSuccess,
+				Type: StatusSuccess,
 			}
 		} else {
 			return &Status{
-				Type: StatusTypeWarning,
+				Type: StatusWarning,
 			}
 		}
 	case *corev1.PersistentVolumeClaim:
 		if object.Status.Phase == corev1.ClaimBound {
 			return &Status{
-				Type: StatusTypeSuccess,
+				Type: StatusSuccess,
 			}
 		} else {
 			return &Status{
-				Type: StatusTypeWarning,
+				Type: StatusWarning,
 			}
 		}
 	}
 	return &Status{
-		Type: StatusTypeError,
+		Type: StatusUnknown,
 	}
 }
 
@@ -155,17 +158,17 @@ func ObjectStatus(object client.Object) *Status {
 
 func (status *Status) Icon() *gtk.Image {
 	switch status.Type {
-	case StatusTypeSuccess, StatusTypeInfo:
+	case StatusSuccess, StatusInfo:
 		icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
 		icon.AddCSSClass(string(status.Type))
 		icon.SetHAlign(gtk.AlignStart)
 		return icon
-	case StatusTypeWarning:
+	case StatusWarning:
 		icon := gtk.NewImageFromIconName("dialog-warning")
 		icon.AddCSSClass(string(status.Type))
 		icon.SetHAlign(gtk.AlignStart)
 		return icon
-	case StatusTypeError:
+	case StatusError:
 		icon := gtk.NewImageFromIconName("dialog-error")
 		icon.AddCSSClass(string(status.Type))
 		icon.SetHAlign(gtk.AlignStart)

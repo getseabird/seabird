@@ -8,6 +8,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/adrg/strutil"
 	"github.com/adrg/strutil/metrics"
@@ -22,44 +23,52 @@ import (
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
+	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
+	"github.com/zmwangx/debounce"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime/schema"
+	"k8s.io/client-go/informers"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/reference"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
 type Navigation struct {
 	*adw.ToolbarView
 	*common.ClusterState
-	ctx             context.Context
-	resourceList    *gtk.ListBox
-	pinList         *gtk.ListBox
-	pinRows         []*gtk.ListBoxRow
-	pinViews        []*adw.NavigationView
-	favourites      []*gtk.ListBoxRow
-	resources       []*gtk.ListBoxRow
-	viewStack       *gtk.Stack
-	editor          *editor.EditorWindow
-	resourcesToggle *gtk.ToggleButton
-	pinsToggle      *gtk.ToggleButton
-	search          *gtk.SearchEntry
-	cancelFuncs     map[string]context.CancelFunc
+	ctx                   context.Context
+	resourceList          *gtk.ListBox
+	pinList               *gtk.ListBox
+	pinRows               []*gtk.ListBoxRow
+	pinViews              []*adw.NavigationView
+	favourites            []*gtk.ListBoxRow
+	resources             []*gtk.ListBoxRow
+	viewStack             *gtk.Stack
+	editor                *editor.EditorWindow
+	resourcesToggle       *gtk.ToggleButton
+	pinsToggle            *gtk.ToggleButton
+	search                *gtk.SearchEntry
+	cancelFuncs           map[string]context.CancelFunc
+	informerRegistrations map[informers.GenericInformer]cache.ResourceEventHandlerRegistration
 }
 
 func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *gtk.Stack, editor *editor.EditorWindow) *Navigation {
 	n := &Navigation{
-		ToolbarView:  adw.NewToolbarView(),
-		ctx:          ctx,
-		ClusterState: state,
-		viewStack:    viewStack,
-		editor:       editor,
-		cancelFuncs:  map[string]context.CancelFunc{},
+		ToolbarView:           adw.NewToolbarView(),
+		ctx:                   ctx,
+		ClusterState:          state,
+		viewStack:             viewStack,
+		editor:                editor,
+		cancelFuncs:           map[string]context.CancelFunc{},
+		informerRegistrations: map[informers.GenericInformer]cache.ResourceEventHandlerRegistration{},
 	}
 	n.SetVExpand(true)
 	n.AddCSSClass("navigation-sidebar")
@@ -202,6 +211,11 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 }
 
 func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListBox {
+	for inf, reg := range n.informerRegistrations {
+		inf.Informer().RemoveEventHandler(reg)
+		delete(n.informerRegistrations, inf)
+	}
+
 	n.resourceList = gtk.NewListBox()
 	n.resourceList.AddCSSClass("navigation-sidebar")
 
@@ -264,7 +278,6 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 				break
 			}
 		}
-
 	})
 
 	n.favourites = nil
@@ -286,7 +299,7 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 				fav = true
 			}
 		}
-		row := createResourceRow(&resource, i, fav)
+		row := n.createResourceRow(&resource, i, fav)
 		if fav {
 			n.favourites = append(n.favourites, row)
 		} else {
@@ -383,7 +396,7 @@ func createObjectRow(ref corev1.ObjectReference) *gtk.ListBoxRow {
 	return row
 }
 
-func createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.ListBoxRow {
+func (n *Navigation) createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.ListBoxRow {
 	gvr := util.GVRForResource(resource)
 
 	row := gtk.NewListBoxRow()
@@ -414,6 +427,40 @@ func createResourceRow(resource *metav1.APIResource, idx int, fav bool) *gtk.Lis
 	vbox.Append(label)
 	row.SetChild(box)
 
+	statusBox := gtk.NewBox(gtk.OrientationHorizontal, 4)
+	// statusBox.AddCSSClass("linked")
+	statusBox.SetHExpand(true)
+	statusBox.SetHAlign(gtk.AlignEnd)
+	statusBox.SetVAlign(gtk.AlignCenter)
+	box.Append(statusBox)
+	errorLabel := gtk.NewLabel("")
+	errorLabel.AddCSSClass("pill")
+	errorLabel.AddCSSClass("error")
+	errorLabel.AddCSSClass("heading")
+	errorLabel.SetVisible(false)
+	statusBox.Append(errorLabel)
+	successLabel := gtk.NewLabel("")
+	successLabel.AddCSSClass("pill")
+	successLabel.AddCSSClass("success")
+	successLabel.AddCSSClass("heading")
+	successLabel.SetVisible(false)
+	statusBox.Append(successLabel)
+
+	if fav && n.Scheme.IsGroupRegistered(resource.Group) && slices.Contains(resource.Verbs, "watch") {
+		go func() {
+			informer := n.Cluster.GetInformer(util.GVRForResource(resource))
+			h := bindStatusLabels(n.ctx, informer, map[*gtk.Label][]widget.StatusType{
+				errorLabel:   []widget.StatusType{widget.StatusError, widget.StatusWarning},
+				successLabel: []widget.StatusType{widget.StatusInfo, widget.StatusSuccess},
+			})
+			if h != nil {
+				glib.IdleAdd(func() {
+					n.informerRegistrations[informer] = h
+				})
+			}
+		}()
+	}
+
 	gesture := gtk.NewGestureClick()
 	gesture.SetButton(gdk.BUTTON_SECONDARY)
 	gesture.ConnectPressed(func(nPress int, x, y float64) {
@@ -439,20 +486,9 @@ func (n *Navigation) createHeaderRow(label string) *gtk.ListBoxRow {
 	box.AddCSSClass("dim-label")
 	lbl := gtk.NewLabel(label)
 	box.Append(lbl)
-	// icon := gtk.NewImageFromIconName("go-up-symbolic")
-	// icon.SetHAlign(gtk.AlignEnd)
-	// icon.SetHExpand(true)
-	// box.Append(icon)
 	row := gtk.NewListBoxRow()
 	row.SetChild(box)
 	row.SetSelectable(false)
-	// n.resourceList.ConnectRowActivated(func(r *gtk.ListBoxRow) {
-	// 	if r.Index() != row.Index() {
-	// 		return
-	// 	}
-	// 	// set filter var...
-	// 	n.resourceList.InvalidateFilter()
-	// })
 	return row
 }
 
@@ -610,4 +646,54 @@ func resourceImage(gvk schema.GroupVersionKind) *gtk.Image {
 	}
 
 	return gtk.NewImageFromIconName("blocks")
+}
+
+func bindStatusLabels(ctx context.Context, informer informers.GenericInformer, widgets map[*gtk.Label][]widget.StatusType) cache.ResourceEventHandlerRegistration {
+	if !cache.WaitForCacheSync(ctx.Done(), informer.Informer().HasSynced) {
+		return nil
+	}
+
+	updateLabels, _ := debounce.Debounce(func() {
+		var objects []client.Object
+		err := cache.ListAll(informer.Informer().GetIndexer(), labels.Everything(), func(m interface{}) {
+			objects = append(objects, m.(client.Object))
+		})
+		if err != nil {
+			klog.Warning("list for status: %v", err)
+			return
+		}
+
+		updateStatusLabels(objects, widgets)
+	}, time.Second)
+
+	reg, _ := informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		AddFunc: func(obj interface{}) {
+			updateLabels()
+		},
+		UpdateFunc: func(oldObj, newObj interface{}) {
+			updateLabels()
+		},
+	})
+
+	return reg
+}
+
+func updateStatusLabels(objects []client.Object, labels map[*gtk.Label][]widget.StatusType) {
+	matches := map[*gtk.Label]int{}
+	for _, o := range objects {
+		status := widget.ObjectStatus(o)
+		for label, statuses := range labels {
+			if slices.Contains(statuses, status.Type) {
+				matches[label]++
+			}
+		}
+	}
+
+	for label := range labels {
+		glib.IdleAdd(func() {
+			num := matches[label]
+			label.SetText(fmt.Sprint(num))
+			label.SetVisible(num > 0)
+		})
+	}
 }
