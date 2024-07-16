@@ -20,6 +20,7 @@ import (
 	rbacv1 "k8s.io/api/rbac/v1"
 	storagev1 "k8s.io/api/storage/v1"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
+	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
@@ -233,6 +234,12 @@ func (c *Cluster) GetInformer(gvr schema.GroupVersionResource) informers.Generic
 		return informer
 	}
 	informer := c.informerFactory.ForResource(gvr)
+	informer.Informer().SetWatchErrorHandler(func(r *cache.Reflector, err error) {
+		if apierrors.IsMethodNotSupported(err) {
+			return
+		}
+		klog.Errorf("%s informer: %s", gvr.Resource, err)
+	})
 	informer.Informer().SetTransform(func(o interface{}) (interface{}, error) {
 		obj := o.(client.Object)
 		if o, err := objectFromUnstructured(c.Scheme, *gvk, obj.(*unstructured.Unstructured)); err == nil {

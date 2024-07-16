@@ -13,7 +13,6 @@ import (
 	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
-	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,15 +50,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					}
 					listitem.SetChild(box)
 				},
-				Compare: func(a, b client.Object) int {
-					if isReady(a) == isReady(b) {
-						return 0
-					}
-					if isReady(a) {
-						return 1
-					}
-					return -1
-				},
+				Compare: widget.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Memory",
@@ -183,15 +174,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
 					listitem.SetChild(widget.ObjectStatus(object).Icon())
 				},
-				Compare: func(a, b client.Object) int {
-					if isReady(a) == isReady(b) {
-						return 0
-					}
-					if isReady(a) {
-						return 1
-					}
-					return -1
-				},
+				Compare: widget.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Pods",
@@ -605,32 +588,4 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 	}
 
 	return props
-}
-
-func isReady(object client.Object) bool {
-	switch object := object.(type) {
-	case *corev1.Pod:
-		for _, cond := range object.Status.Conditions {
-			if cond.Type == corev1.ContainersReady {
-				return cond.Status == corev1.ConditionTrue || cond.Reason == "PodCompleted"
-			}
-		}
-	case *corev1.Node:
-		for _, cond := range object.Status.Conditions {
-			if cond.Type == corev1.NodeReady {
-				return cond.Status == corev1.ConditionTrue
-			}
-		}
-	case *appsv1.Deployment:
-		for _, cond := range object.Status.Conditions {
-			if cond.Type == appsv1.DeploymentAvailable {
-				return cond.Status == corev1.ConditionTrue
-			}
-		}
-	case *appsv1.ReplicaSet:
-		return object.Status.AvailableReplicas == object.Status.Replicas
-	case *appsv1.StatefulSet:
-		return object.Status.AvailableReplicas == object.Status.Replicas
-	}
-	return false
 }

@@ -147,6 +147,8 @@ func (page *sourcePage) updateKind(gvk schema.GroupVersionKind) error {
 		rdns = "io.k8s.api.core"
 	case gvk.Group == "apps":
 		rdns = "io.k8s.api.apps"
+	case gvk.Group == "batch":
+		rdns = "io.k8s.api.batch"
 	case strings.HasSuffix(gvk.Group, "k8s.io"):
 		rdns = strings.ReplaceAll(rdns, "io.k8s", "io.k8s.api")
 	}

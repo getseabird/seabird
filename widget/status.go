@@ -3,6 +3,7 @@ package widget
 import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	appsv1 "k8s.io/api/apps/v1"
+	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -143,10 +144,40 @@ func ObjectStatus(object client.Object) *Status {
 				Type: StatusWarning,
 			}
 		}
+	case *batchv1.Job:
+		for _, cond := range object.Status.Conditions {
+			if cond.Type == batchv1.JobComplete {
+				if cond.Status == corev1.ConditionTrue {
+					return &Status{
+						Condition: string(batchv1.JobComplete),
+						Reason:    cond.Reason,
+						Type:      StatusSuccess,
+					}
+				} else {
+					return &Status{
+						Condition: string(batchv1.JobComplete),
+						Reason:    cond.Reason,
+						Type:      StatusWarning,
+					}
+				}
+			}
+		}
 	}
+
 	return &Status{
 		Type: StatusUnknown,
 	}
+}
+
+func CompareObjectStatus(a, b client.Object) int {
+	s1, s2 := ObjectStatus(a).Int(), ObjectStatus(b).Int()
+	if s1 > s2 {
+		return 1
+	}
+	if s2 > s1 {
+		return -1
+	}
+	return 0
 }
 
 // func (status *Status) Label() *gtk.Label {
@@ -155,6 +186,23 @@ func ObjectStatus(object client.Object) *Status {
 // 	label.AddCSSClass(string(status.Type))
 // 	return label
 // }
+
+func (status *Status) Int() int {
+	switch status.Type {
+	case StatusInfo:
+		return 0
+	case StatusSuccess:
+		return 1
+	case StatusWarning:
+		return 2
+	case StatusError:
+		return 3
+	case StatusUnknown:
+		return 4
+	default:
+		return -1
+	}
+}
 
 func (status *Status) Icon() *gtk.Image {
 	switch status.Type {
@@ -174,7 +222,9 @@ func (status *Status) Icon() *gtk.Image {
 		icon.SetHAlign(gtk.AlignStart)
 		return icon
 	default:
-		return nil
+		icon := gtk.NewImageFromIconName("dialog-question-symbolic")
+		icon.SetHAlign(gtk.AlignStart)
+		return icon
 	}
 }
 

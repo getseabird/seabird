@@ -36,15 +36,7 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
 					listitem.SetChild(widget.ObjectStatus(object).Icon())
 				},
-				Compare: func(a, b client.Object) int {
-					if isReady(a) == isReady(b) {
-						return 0
-					}
-					if isReady(a) {
-						return 1
-					}
-					return -1
-				},
+				Compare: widget.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Available",
@@ -65,15 +57,7 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
 					listitem.SetChild(widget.ObjectStatus(object).Icon())
 				},
-				Compare: func(a, b client.Object) int {
-					if isReady(a) == isReady(b) {
-						return 0
-					}
-					if isReady(a) {
-						return 1
-					}
-					return -1
-				},
+				Compare: widget.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Available",
@@ -94,15 +78,7 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
 					listitem.SetChild(widget.ObjectStatus(object).Icon())
 				},
-				Compare: func(a, b client.Object) int {
-					if isReady(a) == isReady(b) {
-						return 0
-					}
-					if isReady(a) {
-						return 1
-					}
-					return -1
-				},
+				Compare: widget.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Available",
