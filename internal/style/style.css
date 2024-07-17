@@ -16,7 +16,7 @@ columnview>listview>row:selected {
   border-right: 0.3px solid @sidebar_backdrop_color;
 } */
 
-.pill {
+box.pill, label.pill {
   background-color: @card_bg_color;
   border-radius: 99px;
   padding: 4px 12px;

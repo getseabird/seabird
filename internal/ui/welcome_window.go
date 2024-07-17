@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"log"
+	"math/rand/v2"
 	"net/http"
 	"os"
 	"strings"
@@ -19,9 +19,11 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
+	"k8s.io/klog/v2"
 )
 
 type WelcomeWindow struct {
@@ -44,11 +46,11 @@ func NewWelcomeWindow(ctx context.Context, app *gtk.Application, state *common.S
 	}
 	w.SetApplication(app)
 	w.SetIconName("seabird")
-	w.SetDefaultSize(600, 550)
+	w.SetDefaultSize(600, 650)
 	w.toast = adw.NewToastOverlay()
 	w.toast.SetChild(w.content)
 	w.SetContent(w.toast)
-	w.content.SetChild(w.createContent())
+	w.content.SetChild(w.createContent(true))
 	w.SetTitle(ApplicationName)
 
 	go w.showUpdateNotification()
@@ -70,10 +72,10 @@ func NewWelcomeWindow(ctx context.Context, app *gtk.Application, state *common.S
 	return &w
 }
 
-func (w *WelcomeWindow) createContent() *adw.NavigationView {
+func (w *WelcomeWindow) createContent(first bool) *adw.NavigationView {
 	w.nav = adw.NewNavigationView()
 	w.nav.ConnectPopped(func(page *adw.NavigationPage) {
-		w.content.SetChild(w.createContent())
+		w.content.SetChild(w.createContent(false))
 	})
 
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
@@ -86,15 +88,9 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 	box.Append(page)
 
 	if clusters := w.Preferences.Value().Clusters; len(clusters) > 0 {
-		// if w.Preferences.Value().License == nil {
-		// 	banner := adw.NewBanner("Your free trial expires in ∞ days")
-		// 	banner.SetRevealed(true)
-		// 	banner.SetButtonLabel("Purchase")
-		// 	banner.ConnectButtonClicked(func() {
-		// 		w.nav.Push(w.createPurchasePage())
-		// 	})
-		// 	banner.InsertBefore(box, page)
-		// }
+		if first && !style.Eq(style.Windows) && w.Preferences.Value().License == nil && rand.IntN(5) == 0 {
+			w.nav.Push(w.createPurchasePage())
+		}
 
 		group := adw.NewPreferencesGroup()
 		group.SetTitle("Connect to Cluster")
@@ -172,27 +168,67 @@ func (w *WelcomeWindow) createContent() *adw.NavigationView {
 }
 
 func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
-	content := gtk.NewBox(gtk.OrientationVertical, 0)
-	navPage := adw.NewNavigationPage(content, "Purchase Seabird")
+	body := gtk.NewBox(gtk.OrientationVertical, 0)
+	navPage := adw.NewNavigationPage(body, "Purchase Seabird")
 
 	header := adw.NewHeaderBar()
-	content.Append(header)
+	header.SetShowBackButton(false)
+	body.Append(header)
 
-	prefPage := adw.NewPreferencesPage()
-	content.Append(prefPage)
+	clamp := adw.NewClamp()
+	clamp.SetMaximumSize(650)
+	body.Append(clamp)
 
-	group := adw.NewPreferencesGroup()
-	group.SetDescription("There is no time limit for testing Seabird. With the purchase of a subscription, you receive extended support and help fund development.")
-	prefPage.Add(group)
+	status := adw.NewStatusPage()
+	status.SetIconName("seabird")
+	status.SetTitle("This Bird Needs Your Help")
+	status.SetDescription("Seabird is free software with no limitations. To maintain free and open access, we need your support.")
+	clamp.SetChild(status)
 
-	action := adw.NewActionRow()
-	action.SetTitle("Purchase now")
-	action.SetActivatable(true)
-	action.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-	action.ConnectActivated(func() {
+	content := gtk.NewBox(gtk.OrientationVertical, 24)
+	status.SetChild(content)
+
+	benefits := gtk.NewGrid()
+	benefits.SetColumnSpacing(8)
+	benefits.SetRowSpacing(8)
+	content.Append(benefits)
+	for i, benefit := range []string{"Get direct email support", "Influence our roadmap", "No vendor lock-in", "No enterprise-only features", "Auditable code under MPL 2.0 license", "Contribute to open-source ecosystem"} {
+		box := gtk.NewBox(gtk.OrientationHorizontal, 4)
+		icon := gtk.NewImageFromIconName("emblem-ok-symbolic")
+		icon.AddCSSClass("success")
+		box.Append(icon)
+		box.Append(gtk.NewLabel(benefit))
+		box.SetHExpand(true)
+		benefits.Attach(box, i%2, i/2, 1, 1)
+	}
+	later := gtk.NewButton()
+	later.ConnectClicked(func() {
+		w.nav.Pop()
+	})
+	later.SetHAlign(gtk.AlignCenter)
+	later.SetLabel("Remind Me Later")
+	later.AddCSSClass("pill")
+	purchase := gtk.NewButton()
+	purchase.ConnectClicked(func() {
 		gtk.ShowURI(&w.Window, "https://seabird.lemonsqueezy.com/checkout/buy/7cbd80a0-701b-46cc-b61f-c46cc339dca5", gdk.CURRENT_TIME)
 	})
-	group.Add(action)
+	purchase.SetHAlign(gtk.AlignCenter)
+	purchase.SetLabel("Purchase Now")
+	purchase.AddCSSClass("pill")
+	purchase.AddCSSClass("suggested-action")
+	actions := gtk.NewBox(gtk.OrientationHorizontal, 16)
+	actions.SetHAlign(gtk.AlignCenter)
+	content.Append(actions)
+	actions.Append(later)
+	actions.Append(purchase)
+
+	// label = gtk.NewLabel("Did you know that nearly 60% of open-source maintainers have either quit or contemplated quitting their roles? By supporting this project financially, you can help ensure its long-term sustainability.")
+	// label.SetWrap(true)
+	// content.Append(label)
+
+	group := adw.NewPreferencesGroup()
+	group.SetMarginTop(16)
+	content.Append(group)
 
 	entry := adw.NewEntryRow()
 	entry.SetTitle("License key")
@@ -201,7 +237,7 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 		res, raw, err := lemonsqueezy.New().Licenses.Activate(w.ctx, strings.TrimSpace(entry.Text()), "Seabird")
 		switch {
 		case err != nil:
-			log.Printf("%v", err)
+			klog.Infof("%v", err)
 			err = errors.New(http.StatusText(raw.HTTPResponse.StatusCode))
 			widget.ShowErrorDialog(w.ctx, "Could not activate license", err)
 		case res.Activated:
