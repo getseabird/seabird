@@ -3,13 +3,13 @@ package api
 import (
 	"context"
 	"errors"
-	"log"
 	"time"
 
 	"github.com/imkira/go-observer/v2"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/klog/v2"
 	metricsv1beta1 "k8s.io/metrics/pkg/apis/metrics/v1beta1"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -37,13 +37,13 @@ func newMetrics(ctx context.Context, client client.Client, resources []metav1.AP
 			default:
 				var podMetricsList metricsv1beta1.PodMetricsList
 				if err := client.List(ctx, &podMetricsList); err != nil {
-					log.Printf("unable to fetch pod metrics: %s", err.Error())
+					klog.Infof("unable to fetch pod metrics: %s", err.Error())
 				}
 				m.podMetrics.Update(podMetricsList.Items)
 
 				var nodeMetricsList metricsv1beta1.NodeMetricsList
 				if err := client.List(ctx, &nodeMetricsList); err != nil {
-					log.Printf("unable to fetch node metrics: %s", err.Error())
+					klog.Infof("unable to fetch node metrics: %s", err.Error())
 				}
 				m.nodeMetrics.Update(nodeMetricsList.Items)
 

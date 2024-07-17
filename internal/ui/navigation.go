@@ -365,7 +365,7 @@ outer:
 				prefs.Navigation.Pins = slices.Delete(pins, i, i+1)
 				n.ClusterPreferences.Update(prefs)
 			} else {
-				log.Printf("updatePins: %s %v", err, pin)
+				klog.Infof("updatePins: %s %v", err, pin)
 			}
 			continue
 		}

@@ -3,7 +3,6 @@ package list
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 	"strconv"
 	"strings"
@@ -18,6 +17,7 @@ import (
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -159,7 +159,7 @@ func (l *List) createColumns() []*gtk.ColumnViewColumn {
 			gvks, _, _ := l.Cluster.Scheme.ObjectKinds(object)
 			if len(gvks) == 1 {
 				if gvks[0].String() != gvk {
-					log.Printf("list bind error: expected '%s', got '%s'", gvk, gvks[0].String())
+					klog.Infof("list bind error: expected '%s', got '%s'", gvk, gvks[0].String())
 					return
 				}
 			}

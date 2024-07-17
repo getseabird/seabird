@@ -2,7 +2,6 @@ package widget
 
 import (
 	"context"
-	"log"
 	"net"
 	"net/http"
 	"time"
@@ -10,6 +9,7 @@ import (
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
 	"github.com/getseabird/seabird/api"
 	corev1 "k8s.io/api/core/v1"
+	"k8s.io/klog/v2"
 	"nhooyr.io/websocket"
 	"nhooyr.io/websocket/wsjson"
 )
@@ -45,7 +45,7 @@ func server() (int, error) {
 	http.HandleFunc("/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		c, err := websocket.Accept(w, r, nil)
 		if err != nil {
-			log.Printf(err.Error())
+			klog.Infof(err.Error())
 			return
 		}
 		defer c.CloseNow()
@@ -56,11 +56,11 @@ func server() (int, error) {
 		var v interface{}
 		err = wsjson.Read(ctx, c, &v)
 		if err != nil {
-			log.Printf(err.Error())
+			klog.Infof(err.Error())
 			return
 		}
 
-		log.Printf("received: %v", v)
+		klog.Infof("received: %v", v)
 
 		c.Close(websocket.StatusNormalClosure, "")
 	}))

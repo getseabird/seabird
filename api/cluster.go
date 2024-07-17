@@ -3,7 +3,6 @@ package api
 import (
 	"context"
 	"errors"
-	"log"
 	"reflect"
 	"slices"
 	"sort"
@@ -114,7 +113,7 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 		if errors.As(err, &groupDiscoveryFailed) {
 			for api, err := range groupDiscoveryFailed.Groups {
 				// TODO display as toast
-				log.Printf("group discovery failed for '%s': %s", api.String(), err.Error())
+				klog.Infof("group discovery failed for '%s': %s", api.String(), err.Error())
 			}
 		} else {
 			return nil, err
@@ -143,7 +142,7 @@ func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPrefe
 
 	metrics, err := newMetrics(ctx, rclient, resources)
 	if err != nil {
-		log.Printf("metrics disabled: %s", err.Error())
+		klog.Infof("metrics disabled: %s", err.Error())
 	}
 
 	sort.Slice(resources, func(i, j int) bool {

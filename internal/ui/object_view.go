@@ -3,7 +3,6 @@ package ui
 import (
 	"context"
 	"fmt"
-	"log"
 	"sort"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -21,6 +20,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/imkira/go-observer/v2"
 	"k8s.io/client-go/tools/cache"
+	"k8s.io/klog/v2"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -254,7 +254,7 @@ func (o *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 				row.ConnectActivated(func() {
 					obj, err := o.GetReference(o.ctx, *prop.Reference)
 					if err != nil {
-						log.Printf("error resolving reference '%v': %v", prop.Reference, err.Error())
+						klog.Infof("error resolving reference '%v': %v", prop.Reference, err.Error())
 						return
 					}
 					ctx, cancel := context.WithCancel(o.ctx)

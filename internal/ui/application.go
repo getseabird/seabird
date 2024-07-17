@@ -2,7 +2,6 @@ package ui
 
 import (
 	"context"
-	"log"
 	"os"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -12,6 +11,7 @@ import (
 	"github.com/getseabird/seabird/internal/icon"
 	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
+	"k8s.io/klog/v2"
 )
 
 const ApplicationName = "Seabird"
@@ -30,7 +30,7 @@ func NewApplication(version string) (*Application, error) {
 	}
 
 	if err := icon.Register(); err != nil {
-		log.Printf("failed to load icons: %v", err)
+		klog.Infof("failed to load icons: %v", err)
 	}
 
 	ctx := context.Background()
