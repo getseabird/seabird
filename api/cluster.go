@@ -6,6 +6,7 @@ import (
 	"reflect"
 	"slices"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/getseabird/seabird/internal/util"
@@ -263,6 +264,9 @@ func InformerConnectProperty[T client.Object](ctx context.Context, cluster *Clus
 			klog.Warning("list all: %v", err)
 			return
 		}
+		slices.SortFunc(objects, func(a, b T) int {
+			return strings.Compare(a.GetName(), b.GetName())
+		})
 		prop.Update(objects)
 	}, 100*time.Millisecond)
 	defer updateProperty()
