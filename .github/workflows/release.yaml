@@ -89,14 +89,15 @@ jobs:
           key: ${{ runner.os }}-go
       - name: Build
         run: |
+          set -x
+
           git clone --depth 1 --branch go1.22.5 https://github.com/golang/go.git
           pushd go/src
           curl https://patch-diff.githubusercontent.com/raw/golang/go/pull/68409.patch | git apply
-          cmd //c make.bat
+          GOROOT_BOOTSTRAP=/mingw64/lib/go cmd //c make.bat
           popd
           export PATH="$PWD/go/bin:$PATH" GOROOT="$PWD/go" GOPATH=/go GOCACHE=/go/build
 
-          set -x
           #export PATH="/mingw64/bin:$PATH" GOROOT=/mingw64/lib/go GOPATH=/go GOCACHE=/go/build
           go run github.com/goreleaser/goreleaser@latest build -f build/windows/.goreleaser.yaml --single-target --snapshot
           dist="$(pwd)/dist/seabird_windows_amd64_v1/"
