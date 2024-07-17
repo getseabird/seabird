@@ -88,7 +88,7 @@ func (w *WelcomeWindow) createContent(first bool) *adw.NavigationView {
 	box.Append(page)
 
 	if clusters := w.Preferences.Value().Clusters; len(clusters) > 0 {
-		if first && !style.Eq(style.Windows) && w.Preferences.Value().License == nil && rand.IntN(5) == 0 {
+		if first && !style.Eq(style.Windows) && w.Preferences.Value().License == nil && rand.IntN(10) == 0 {
 			w.nav.Push(w.createPurchasePage())
 		}
 
@@ -290,7 +290,7 @@ func (w *WelcomeWindow) showUpdateNotification() {
 		return
 	}
 
-	if strings.Contains(Version, release.TagName) {
+	if strings.Contains(Version, strings.TrimPrefix(release.TagName, "v")) {
 		return
 	}
 

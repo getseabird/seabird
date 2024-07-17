@@ -433,24 +433,28 @@ func (n *Navigation) createResourceRow(resource *metav1.APIResource, idx int, fa
 	statusBox.SetVAlign(gtk.AlignCenter)
 	box.Append(statusBox)
 
-	errorBox := gtk.NewBox(gtk.OrientationHorizontal, 4)
-	errorBox.SetVisible(false)
-	statusBox.Append(errorBox)
-	errorBox.AddCSSClass("warning")
-	errorBox.AddCSSClass("pill")
-	// icon := gtk.NewImageFromIconName("dialog-warning-symbolic")
-	// errorBox.Append(icon)
 	errorLabel := gtk.NewLabel("")
-	errorBox.Append(errorLabel)
+	errorLabel.AddCSSClass("warning")
+	errorLabel.AddCSSClass("pill")
+	errorLabel.SetVisible(false)
+	statusBox.Append(errorLabel)
+	readyLabel := gtk.NewLabel("")
+	readyLabel.AddCSSClass("success")
+	readyLabel.AddCSSClass("pill")
+	readyLabel.SetVisible(false)
+	statusBox.Append(readyLabel)
 
 	if fav && n.Scheme.IsGroupRegistered(resource.Group) && slices.Contains(resource.Verbs, "watch") {
 		go func() {
 			informer := n.Cluster.GetInformer(util.GVRForResource(resource))
 			h := bindStatusCount(n.ctx, informer, func(m map[widget.StatusType]int) {
 				glib.IdleAdd(func() {
+					readys := m[widget.StatusSuccess]
+					readyLabel.SetVisible(readys > 0)
+					readyLabel.SetText(fmt.Sprintf("%d", readys))
 					errors := m[widget.StatusError] + m[widget.StatusWarning]
-					errorBox.SetVisible(errors > 0)
-					errorLabel.SetMarkup(fmt.Sprintf("<b>%d</b>", errors))
+					errorLabel.SetVisible(errors > 0)
+					errorLabel.SetText(fmt.Sprintf("%d", errors))
 				})
 			})
 			if h != nil {

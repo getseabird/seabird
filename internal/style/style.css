@@ -17,9 +17,12 @@ columnview>listview>row:selected {
 } */
 
 box.pill, label.pill {
-  background-color: @card_bg_color;
-  border-radius: 99px;
-  padding: 4px 12px;
+  font-weight: bold;
+  font-size: 0.8em;
+  border-radius: 10px;
+  min-width: 0.7em;
+  padding: 2px 5px;
+  background-color: alpha(currentColor, 0.15);
 }
 
 /* label.pill.success {
