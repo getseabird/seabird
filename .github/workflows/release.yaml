@@ -9,19 +9,15 @@ permissions:
 
 jobs:
   goreleaser:
-    runs-on: ubuntu-latest
-    container:
-      image: ubuntu:24.04 #debian:trixie
-      env:
-        DEBIAN_FRONTEND: noninteractive
+    runs-on: ubuntu-24.04
     steps:
       - if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         run: echo "flags=--snapshot" >> $GITHUB_ENV
       - name: Install dependencies
         run: |
           # dpkg --add-architecture arm64
-          apt update
-          apt install -yq libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev git zip golang-go libglib2.0-dev-bin libvte-2.91-gtk4-dev
+          sudo apt update
+          sudo apt install -yq libgtk-4-dev libgtksourceview-5-dev libadwaita-1-dev libgirepository1.0-dev git zip golang-go libglib2.0-dev-bin libvte-2.91-gtk4-dev
           # apt install -yq gcc-aarch64-linux-gnu libc6-dev-arm64-cross libgtk-4-dev:arm64 libgtksourceview-5-dev:arm64 libadwaita-1-dev:arm64 libgirepository1.0-dev:arm64
           git config --global --add safe.directory '*'
       - name: Checkout
@@ -59,87 +55,95 @@ jobs:
           path: |
             dist
             source.zip
-  # msys2:
-  #   needs: goreleaser
-  #   runs-on: windows-latest
-  #   defaults:
-  #     run:
-  #       shell: msys2 {0}
-  #   steps:
-  #     - name: Checkout
-  #       uses: actions/checkout@v4
-  #       with:
-  #         fetch-depth: 0
-  #     - name: Set up msys
-  #       uses: msys2/setup-msys2@v2
-  #       with:
-  #         msystem: MINGW64
-  #         update: true
-  #         install: |
-  #           git zip
-  #           mingw-w64-x86_64-gcc
-  #           mingw-w64-x86_64-pkg-config
-  #           mingw-w64-x86_64-gtk4
-  #           mingw-w64-x86_64-libadwaita
-  #           mingw-w64-x86_64-gtksourceview5
-  #           mingw-w64-x86_64-gobject-introspection
-  #           mingw-w64-x86_64-glib2
-  #           mingw-w64-x86_64-go
-  #     - name: Cache Go
-  #       id: go
-  #       uses: actions/cache@v4
-  #       with:
-  #         path: ${{ runner.temp }}/msys64/go
-  #         key: ${{ runner.os }}-go
-  #     - name: Build
-  #       run: |
-  #         set -x
-  #         export PATH="/mingw64/bin:$PATH" GOROOT=/mingw64/lib/go GOPATH=/go GOCACHE=/go/build
-  #         go run github.com/goreleaser/goreleaser@latest build -f build/windows/.goreleaser.yaml --single-target --snapshot
-  #         dist="$(pwd)/dist/seabird_windows_amd64_v1/"
-  #         pushd $dist
-  #         ldd seabird.exe | grep "=> /mingw64/bin/" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
-  #         for run in {1..5}; do
-  #           ldd *.dll | { grep "=> /mingw64/bin/" || true; } | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
-  #         done
-  #         cp /mingw64/bin/librsvg*.dll  /mingw64/bin/gdbus.exe ../../README.md ../../LICENSE .
-  #         pushd /mingw64 && cp --parents -r ./share/glib-2.0/schemas/gschemas.compiled ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons ./lib/gdk-pixbuf-2.0 $dist && popd
-  #     - uses: caphyon/advinst-github-action@main
-  #       with:
-  #         advinst-enable-automation: true
-  #     - name: Use Advinst Automation
-  #       shell: pwsh
-  #       run: |
-  #         $advinst = new-object -com advancedinstaller
+  msys2:
+    needs: goreleaser
+    runs-on: windows-latest
+    defaults:
+      run:
+        shell: msys2 {0}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up msys
+        uses: msys2/setup-msys2@v2
+        with:
+          msystem: MINGW64
+          update: true
+          install: |
+            git zip
+            mingw-w64-x86_64-gcc
+            mingw-w64-x86_64-pkg-config
+            mingw-w64-x86_64-gtk4
+            mingw-w64-x86_64-libadwaita
+            mingw-w64-x86_64-gtksourceview5
+            mingw-w64-x86_64-gobject-introspection
+            mingw-w64-x86_64-glib2
+            mingw-w64-x86_64-go
+      - name: Cache Go
+        id: go
+        uses: actions/cache@v4
+        with:
+          path: ${{ runner.temp }}/msys64/go
+          key: ${{ runner.os }}-go
+      - name: Build
+        run: |
+          set -x
 
-  #         $aip = join-path $env:GITHUB_WORKSPACE "build\windows\installer.aip"
-  #         $project = $advinst.LoadProject($aip)
-  #         $project.FilesComponent.AddFolderContent($project.PredefinedFolders.ApplicationFolder, "${{ github.workspace }}\dist\seabird_windows_amd64_v1")
+          git clone --depth 1 --branch go1.22.5 https://github.com/golang/go.git
+          pushd go/src
+          curl https://patch-diff.githubusercontent.com/raw/golang/go/pull/68409.patch | git apply
+          GOROOT_BOOTSTRAP=/mingw64/lib/go cmd //c make.bat
+          popd
+          export PATH="$PWD/go/bin:$PATH" GOROOT="$PWD/go" GOPATH=/go GOCACHE=/go/build
 
-  #         $exe = $project.FilesComponent.FindFileBySourcePath("${{ github.workspace }}\dist\seabird_windows_amd64_v1\seabird.exe")
-  #         $shortcut = $project.ShortcutsComponent.CreateFileShortcut($project.PredefinedFolders.ShortcutFolder, $exe)
-  #         $shortcut.Name = "tmp" # Can't rename from lowercase: "A file with the same name already exists in this folder"
-  #         $shortcut.Name = "Seabird"
+          #export PATH="/mingw64/bin:$PATH" GOROOT=/mingw64/lib/go GOPATH=/go GOCACHE=/go/build
+          go run github.com/goreleaser/goreleaser@latest build -f build/windows/.goreleaser.yaml --single-target --snapshot
+          dist="$(pwd)/dist/seabird_windows_amd64_v1/"
+          pushd $dist
+          ldd seabird.exe | grep "=> /mingw64/bin/" | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
+          for run in {1..5}; do
+            ldd *.dll | { grep "=> /mingw64/bin/" || true; } | cut -d ' ' -f1 | xargs -I{} cp /mingw64/bin/{} .
+          done
+          cp /mingw64/bin/librsvg*.dll  /mingw64/bin/gdbus.exe ../../README.md ../../LICENSE .
+          pushd /mingw64 && cp --parents -r ./share/glib-2.0/schemas/gschemas.compiled ./share/gtk-4.0 ./share/gtksourceview-5 ./share/icons ./lib/gdk-pixbuf-2.0 $dist && popd
+      - uses: caphyon/advinst-github-action@main
+        with:
+          advinst-enable-automation: true
+      - name: Use Advinst Automation
+        shell: pwsh
+        run: |
+          $advinst = new-object -com advancedinstaller
 
-  #         $project.BuildComponent.Builds[0].OutputFolder = "${{ github.workspace }}\dist"
-  #         $project.BuildComponent.Builds[0].PackageName = "seabird_windows_amd64"
-  #         $tag = git describe --tags --abbrev=0
-  #         $project.ProductDetails.Version = $tag.replace('v', '')
-  #         $project.ProductDetails.ProductCode.GenerateAll()
+          $aip = join-path $env:GITHUB_WORKSPACE "build\windows\installer.aip"
+          $project = $advinst.LoadProject($aip)
+          $project.FilesComponent.AddFolderContent($project.PredefinedFolders.ApplicationFolder, "${{ github.workspace }}\dist\seabird_windows_amd64_v1")
 
-  #         $project.Build()
-  #     - uses: actions/upload-artifact@v4
-  #       with:
-  #         name: msys2
-  #         path: dist\seabird_windows_amd64.msi
-  #         if-no-files-found: error
-  #     - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
-  #       name: Upload binaries to release
-  #       uses: svenstaro/upload-release-action@v2
-  #       with:
-  #         repo_token: ${{ secrets.GITHUB_TOKEN }}
-  #         file: dist\seabird_windows_amd64.msi
-  #         tag: ${{ github.ref }}
+          $exe = $project.FilesComponent.FindFileBySourcePath("${{ github.workspace }}\dist\seabird_windows_amd64_v1\seabird.exe")
+          $shortcut = $project.ShortcutsComponent.CreateFileShortcut($project.PredefinedFolders.ShortcutFolder, $exe)
+          $shortcut.Name = "tmp" # Can't rename from lowercase: "A file with the same name already exists in this folder"
+          $shortcut.Name = "Seabird"
+
+          $project.BuildComponent.Builds[0].OutputFolder = "${{ github.workspace }}\dist"
+          $project.BuildComponent.Builds[0].PackageName = "seabird_windows_amd64"
+          $tag = git describe --tags --abbrev=0
+          $project.ProductDetails.Version = $tag.replace('v', '')
+          $project.ProductDetails.ProductCode.GenerateAll()
+
+          $project.Build()
+      - uses: actions/upload-artifact@v4
+        with:
+          name: msys2
+          path: dist\seabird_windows_amd64.msi
+          if-no-files-found: error
+      - if: ${{ startsWith(github.ref, 'refs/tags/v') }}
+        name: Upload binaries to release
+        uses: svenstaro/upload-release-action@v2
+        with:
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: dist\seabird_windows_amd64.msi
+          tag: ${{ github.ref }}
   darwin:
     needs: goreleaser
     strategy:
