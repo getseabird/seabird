@@ -26,12 +26,18 @@ import (
 )
 
 func init() {
-	Extensions = append(Extensions, func(cluster *api.Cluster) Extension {
-		return &Core{Cluster: cluster, portforward: PortForwarder{cluster, map[types.NamespacedName]*portforward.PortForwarder{}}}
-	})
+	Extensions = append(Extensions, NewCore)
+}
+
+func NewCore(_ context.Context, cluster *api.Cluster) (Extension, error) {
+	return &Core{
+		Cluster:     cluster,
+		portforward: PortForwarder{cluster, map[types.NamespacedName]*portforward.PortForwarder{}},
+	}, nil
 }
 
 type Core struct {
+	Noop
 	*api.Cluster
 	portforward PortForwarder
 }
@@ -45,12 +51,12 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 				Priority: 70,
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
 					box := gtk.NewBox(gtk.OrientationHorizontal, 4)
-					for _, icon := range widget.ObjectStatus(object).Icons() {
+					for _, icon := range api.NewStatusWithObject(object).Icons() {
 						box.Append(icon)
 					}
 					listitem.SetChild(box)
 				},
-				Compare: widget.CompareObjectStatus,
+				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Memory",
@@ -172,9 +178,9 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(widget.ObjectStatus(object).Icon())
+					listitem.SetChild(api.NewStatusWithObject(object).Icon())
 				},
-				Compare: widget.CompareObjectStatus,
+				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Pods",
@@ -423,7 +429,7 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				Widget: func(w gtk.Widgetter, nav *adw.NavigationView) {
 					switch row := w.(type) {
 					case *adw.ExpanderRow:
-						row.AddPrefix(widget.ObjectStatus(object).Icon())
+						row.AddPrefix(api.NewStatusWithObject(object).Icon())
 						if cpu != nil {
 							req := container.Resources.Requests.Cpu()
 							if req == nil || req.IsZero() {
@@ -579,7 +585,7 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
 					switch row := w.(type) {
 					case *adw.ActionRow:
-						row.AddPrefix(widget.ObjectStatus(&pod).Icon())
+						row.AddPrefix(api.NewStatusWithObject(&pod).Icon())
 					}
 				},
 			})

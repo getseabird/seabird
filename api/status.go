@@ -1,4 +1,4 @@
-package widget
+package api
 
 import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -29,7 +29,7 @@ func NewStatus(cond string, reason string, typ StatusType) *Status {
 	return &Status{Condition: cond, Reason: reason, Type: typ}
 }
 
-func ObjectStatus(object client.Object) *Status {
+func NewStatusWithObject(object client.Object) *Status {
 	switch object := object.(type) {
 	case *corev1.Pod:
 		var children []*Status
@@ -170,7 +170,7 @@ func ObjectStatus(object client.Object) *Status {
 }
 
 func CompareObjectStatus(a, b client.Object) int {
-	s1, s2 := ObjectStatus(a).Int(), ObjectStatus(b).Int()
+	s1, s2 := NewStatusWithObject(a).Int(), NewStatusWithObject(b).Int()
 	if s1 > s2 {
 		return 1
 	}

@@ -16,12 +16,15 @@ import (
 )
 
 func init() {
-	Extensions = append(Extensions, func(cluster *api.Cluster) Extension {
-		return &Networking{Cluster: cluster}
-	})
+	Extensions = append(Extensions, NewNetworking)
+}
+
+func NewNetworking(_ context.Context, cluster *api.Cluster) (Extension, error) {
+	return &Networking{Cluster: cluster}, nil
 }
 
 type Networking struct {
+	Noop
 	*api.Cluster
 }
 

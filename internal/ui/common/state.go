@@ -69,7 +69,11 @@ func (s *State) NewClusterState(ctx context.Context, clusterPrefs observer.Prope
 	}
 
 	for _, new := range extension.Extensions {
-		state.Extensions = append(state.Extensions, new(cluster))
+		ext, err := new(ctx, cluster)
+		if err != nil {
+			klog.Error("failed to load extension: %s", err)
+		}
+		state.Extensions = append(state.Extensions, ext)
 	}
 
 	return &state, nil

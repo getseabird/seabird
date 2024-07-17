@@ -23,7 +23,6 @@ import (
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/util"
-	"github.com/getseabird/seabird/widget"
 	"github.com/imkira/go-observer/v2"
 	"github.com/zmwangx/debounce"
 	appsv1 "k8s.io/api/apps/v1"
@@ -447,12 +446,12 @@ func (n *Navigation) createResourceRow(resource *metav1.APIResource, idx int, fa
 	if fav && n.Scheme.IsGroupRegistered(resource.Group) && slices.Contains(resource.Verbs, "watch") {
 		go func() {
 			informer := n.Cluster.GetInformer(util.GVRForResource(resource))
-			h := bindStatusCount(n.ctx, informer, func(m map[widget.StatusType]int) {
+			h := bindStatusCount(n.ctx, informer, func(m map[api.StatusType]int) {
 				glib.IdleAdd(func() {
-					readys := m[widget.StatusSuccess]
+					readys := m[api.StatusSuccess]
 					readyLabel.SetVisible(readys > 0)
 					readyLabel.SetText(fmt.Sprintf("%d", readys))
-					errors := m[widget.StatusError] + m[widget.StatusWarning]
+					errors := m[api.StatusError] + m[api.StatusWarning]
 					errorLabel.SetVisible(errors > 0)
 					errorLabel.SetText(fmt.Sprintf("%d", errors))
 				})
@@ -652,7 +651,7 @@ func resourceImage(gvk schema.GroupVersionKind) *gtk.Image {
 	return gtk.NewImageFromIconName("blocks")
 }
 
-func bindStatusCount(ctx context.Context, informer informers.GenericInformer, callback func(map[widget.StatusType]int)) cache.ResourceEventHandlerRegistration {
+func bindStatusCount(ctx context.Context, informer informers.GenericInformer, callback func(map[api.StatusType]int)) cache.ResourceEventHandlerRegistration {
 	if !cache.WaitForCacheSync(ctx.Done(), informer.Informer().HasSynced) {
 		return nil
 	}
@@ -667,9 +666,9 @@ func bindStatusCount(ctx context.Context, informer informers.GenericInformer, ca
 			return
 		}
 
-		statuses := map[widget.StatusType]int{}
+		statuses := map[api.StatusType]int{}
 		for _, o := range objects {
-			status := widget.ObjectStatus(o)
+			status := api.NewStatusWithObject(o)
 			statuses[status.Type]++
 		}
 		callback(statuses)

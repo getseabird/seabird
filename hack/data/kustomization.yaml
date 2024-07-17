@@ -1,0 +1,3 @@
+resources:
+  - flux/helmrelease.yaml
+  - flux/helmrepository.yaml

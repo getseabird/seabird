@@ -10,7 +10,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/util"
-	"github.com/getseabird/seabird/widget"
 	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -20,12 +19,15 @@ import (
 )
 
 func init() {
-	Extensions = append(Extensions, func(cluster *api.Cluster) Extension {
-		return &Batch{Cluster: cluster}
-	})
+	Extensions = append(Extensions, NewBatch)
+}
+
+func NewBatch(_ context.Context, cluster *api.Cluster) (Extension, error) {
+	return &Batch{Cluster: cluster}, nil
 }
 
 type Batch struct {
+	Noop
 	*api.Cluster
 }
 
@@ -37,9 +39,9 @@ func (e *Batch) CreateColumns(ctx context.Context, resource *metav1.APIResource,
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(widget.ObjectStatus(object).Icon())
+					listitem.SetChild(api.NewStatusWithObject(object).Icon())
 				},
-				Compare: widget.CompareObjectStatus,
+				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Completions",
@@ -111,7 +113,7 @@ func (e *Batch) CreateObjectProperties(ctx context.Context, resource *metav1.API
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
 					switch row := w.(type) {
 					case *adw.ActionRow:
-						row.AddPrefix(widget.ObjectStatus(&pod).Icon())
+						row.AddPrefix(api.NewStatusWithObject(&pod).Icon())
 					}
 				},
 			})

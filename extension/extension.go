@@ -10,7 +10,7 @@ import (
 
 var Extensions []Constructor
 
-type Constructor func(*api.Cluster) Extension
+type Constructor func(ctx context.Context, cluster *api.Cluster) (Extension, error)
 
 type Extension interface {
 	CreateColumns(ctx context.Context, resource *metav1.APIResource, columns []api.Column) []api.Column

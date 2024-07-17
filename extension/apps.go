@@ -8,7 +8,6 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/util"
-	"github.com/getseabird/seabird/widget"
 	appsv1 "k8s.io/api/apps/v1"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -17,12 +16,15 @@ import (
 )
 
 func init() {
-	Extensions = append(Extensions, func(cluster *api.Cluster) Extension {
-		return &Apps{Cluster: cluster}
-	})
+	Extensions = append(Extensions, NewApps)
+}
+
+func NewApps(_ context.Context, cluster *api.Cluster) (Extension, error) {
+	return &Apps{Cluster: cluster}, nil
 }
 
 type Apps struct {
+	Noop
 	*api.Cluster
 }
 
@@ -34,9 +36,9 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(widget.ObjectStatus(object).Icon())
+					listitem.SetChild(api.NewStatusWithObject(object).Icon())
 				},
-				Compare: widget.CompareObjectStatus,
+				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Available",
@@ -55,9 +57,9 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(widget.ObjectStatus(object).Icon())
+					listitem.SetChild(api.NewStatusWithObject(object).Icon())
 				},
-				Compare: widget.CompareObjectStatus,
+				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Available",
@@ -76,9 +78,9 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 				Name:     "Status",
 				Priority: 70,
 				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(widget.ObjectStatus(object).Icon())
+					listitem.SetChild(api.NewStatusWithObject(object).Icon())
 				},
-				Compare: widget.CompareObjectStatus,
+				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Available",
@@ -111,7 +113,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
 					switch row := w.(type) {
 					case *adw.ActionRow:
-						row.AddPrefix(widget.ObjectStatus(&pod).Icon())
+						row.AddPrefix(api.NewStatusWithObject(&pod).Icon())
 					}
 				},
 			})
@@ -131,7 +133,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
 					switch row := w.(type) {
 					case *adw.ActionRow:
-						row.AddPrefix(widget.ObjectStatus(&pod).Icon())
+						row.AddPrefix(api.NewStatusWithObject(&pod).Icon())
 					}
 				},
 			})
@@ -159,7 +161,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 				Widget: func(w gtk.Widgetter, nv *adw.NavigationView) {
 					switch row := w.(type) {
 					case *adw.ActionRow:
-						row.AddPrefix(widget.ObjectStatus(&pod).Icon())
+						row.AddPrefix(api.NewStatusWithObject(&pod).Icon())
 					}
 				},
 			})
@@ -185,7 +187,7 @@ func (e *Apps) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 							switch row := w.(type) {
 							case *adw.ActionRow:
 								if pv != nil {
-									row.AddPrefix(widget.ObjectStatus(pv).Icon())
+									row.AddPrefix(api.NewStatusWithObject(pv).Icon())
 								}
 							}
 						},

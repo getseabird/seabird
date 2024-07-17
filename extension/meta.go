@@ -17,12 +17,15 @@ import (
 )
 
 func init() {
-	Extensions = append(Extensions, func(cluster *api.Cluster) Extension {
-		return &Meta{Cluster: cluster}
-	})
+	Extensions = append(Extensions, NewMeta)
+}
+
+func NewMeta(_ context.Context, cluster *api.Cluster) (Extension, error) {
+	return &Meta{Cluster: cluster}, nil
 }
 
 type Meta struct {
+	Noop
 	*api.Cluster
 }
 
