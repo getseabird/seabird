@@ -24,6 +24,7 @@ import (
 	"k8s.io/apimachinery/pkg/api/meta"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/apis/meta/v1/unstructured"
+	"k8s.io/apimachinery/pkg/labels"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"k8s.io/apimachinery/pkg/types"
@@ -254,35 +255,27 @@ func (c *Cluster) AddInformerEventHandler(ctx context.Context, gvr schema.GroupV
 }
 
 func InformerConnectProperty[T client.Object](ctx context.Context, cluster *Cluster, gvr schema.GroupVersionResource, prop observer.Property[[]T]) error {
-	var objects []T
 	updateProperty, _ := debounce.Debounce(func() {
+		var objects []T
+		err := cache.ListAll(cluster.GetInformer(gvr).Informer().GetIndexer(), labels.Everything(), func(m interface{}) {
+			objects = append(objects, m.(T))
+		})
+		if err != nil {
+			klog.Warning("list all: %v", err)
+			return
+		}
 		prop.Update(objects)
 	}, 100*time.Millisecond)
 	defer updateProperty()
 
 	return cluster.AddInformerEventHandler(ctx, gvr, cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			objects = append(objects, obj.(T))
+		AddFunc: func(_ interface{}) {
 			updateProperty()
 		},
-		UpdateFunc: func(oldObj, o interface{}) {
-			obj := o.(client.Object)
-			for i, o := range objects {
-				if o.GetUID() == obj.GetUID() {
-					objects[i] = obj.(T)
-					break
-				}
-			}
+		UpdateFunc: func(_, _ interface{}) {
 			updateProperty()
 		},
-		DeleteFunc: func(o interface{}) {
-			obj := o.(client.Object)
-			for i, o := range objects {
-				if o.GetUID() == obj.GetUID() {
-					objects = slices.Delete(objects, i, i+1)
-					break
-				}
-			}
+		DeleteFunc: func(_ interface{}) {
 			updateProperty()
 		},
 	})
