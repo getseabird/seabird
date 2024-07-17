@@ -428,30 +428,30 @@ func (n *Navigation) createResourceRow(resource *metav1.APIResource, idx int, fa
 	row.SetChild(box)
 
 	statusBox := gtk.NewBox(gtk.OrientationHorizontal, 4)
-	// statusBox.AddCSSClass("linked")
 	statusBox.SetHExpand(true)
 	statusBox.SetHAlign(gtk.AlignEnd)
 	statusBox.SetVAlign(gtk.AlignCenter)
 	box.Append(statusBox)
+
+	errorBox := gtk.NewBox(gtk.OrientationHorizontal, 4)
+	errorBox.SetVisible(false)
+	statusBox.Append(errorBox)
+	errorBox.AddCSSClass("warning")
+	errorBox.AddCSSClass("pill")
+	// icon := gtk.NewImageFromIconName("dialog-warning-symbolic")
+	// errorBox.Append(icon)
 	errorLabel := gtk.NewLabel("")
-	errorLabel.AddCSSClass("pill")
-	errorLabel.AddCSSClass("error")
-	errorLabel.AddCSSClass("heading")
-	errorLabel.SetVisible(false)
-	statusBox.Append(errorLabel)
-	successLabel := gtk.NewLabel("")
-	successLabel.AddCSSClass("pill")
-	successLabel.AddCSSClass("success")
-	successLabel.AddCSSClass("heading")
-	successLabel.SetVisible(false)
-	statusBox.Append(successLabel)
+	errorBox.Append(errorLabel)
 
 	if fav && n.Scheme.IsGroupRegistered(resource.Group) && slices.Contains(resource.Verbs, "watch") {
 		go func() {
 			informer := n.Cluster.GetInformer(util.GVRForResource(resource))
-			h := bindStatusLabels(n.ctx, informer, map[*gtk.Label][]widget.StatusType{
-				errorLabel:   []widget.StatusType{widget.StatusError, widget.StatusWarning},
-				successLabel: []widget.StatusType{widget.StatusInfo, widget.StatusSuccess},
+			h := bindStatusCount(n.ctx, informer, func(m map[widget.StatusType]int) {
+				glib.IdleAdd(func() {
+					errors := m[widget.StatusError] + m[widget.StatusWarning]
+					errorBox.SetVisible(errors > 0)
+					errorLabel.SetMarkup(fmt.Sprintf("<b>%d</b>", errors))
+				})
 			})
 			if h != nil {
 				glib.IdleAdd(func() {
@@ -648,7 +648,7 @@ func resourceImage(gvk schema.GroupVersionKind) *gtk.Image {
 	return gtk.NewImageFromIconName("blocks")
 }
 
-func bindStatusLabels(ctx context.Context, informer informers.GenericInformer, widgets map[*gtk.Label][]widget.StatusType) cache.ResourceEventHandlerRegistration {
+func bindStatusCount(ctx context.Context, informer informers.GenericInformer, callback func(map[widget.StatusType]int)) cache.ResourceEventHandlerRegistration {
 	if !cache.WaitForCacheSync(ctx.Done(), informer.Informer().HasSynced) {
 		return nil
 	}
@@ -663,7 +663,12 @@ func bindStatusLabels(ctx context.Context, informer informers.GenericInformer, w
 			return
 		}
 
-		updateStatusLabels(objects, widgets)
+		statuses := map[widget.StatusType]int{}
+		for _, o := range objects {
+			status := widget.ObjectStatus(o)
+			statuses[status.Type]++
+		}
+		callback(statuses)
 	}, time.Second)
 
 	reg, _ := informer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
@@ -676,24 +681,4 @@ func bindStatusLabels(ctx context.Context, informer informers.GenericInformer, w
 	})
 
 	return reg
-}
-
-func updateStatusLabels(objects []client.Object, labels map[*gtk.Label][]widget.StatusType) {
-	matches := map[*gtk.Label]int{}
-	for _, o := range objects {
-		status := widget.ObjectStatus(o)
-		for label, statuses := range labels {
-			if slices.Contains(statuses, status.Type) {
-				matches[label]++
-			}
-		}
-	}
-
-	for label := range labels {
-		glib.IdleAdd(func() {
-			num := matches[label]
-			label.SetText(fmt.Sprint(num))
-			label.SetVisible(num > 0)
-		})
-	}
 }
