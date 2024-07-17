@@ -9,11 +9,7 @@ permissions:
 
 jobs:
   goreleaser:
-    runs-on: ubuntu-latest
-    container:
-      image: ubuntu:24.04 #debian:trixie
-      env:
-        DEBIAN_FRONTEND: noninteractive
+    runs-on: ubuntu-24.04
     steps:
       - if: ${{ !startsWith(github.ref, 'refs/tags/v') }}
         run: echo "flags=--snapshot" >> $GITHUB_ENV
@@ -94,7 +90,7 @@ jobs:
       - name: Build
         run: |
           git clone --depth 1 --branch go1.22.5 https://github.com/golang/go.git
-          pushd go
+          pushd go/src
           curl https://patch-diff.githubusercontent.com/raw/golang/go/pull/68409.patch | git apply
           cmd //c make.bat
           popd
