@@ -78,8 +78,9 @@ func (e *Apiextensions) CreateObjectProperties(ctx context.Context, resource *me
 			Priority: column.Priority * -1,
 		})
 	}
-	props = append(props, &group)
-
+	if len(group.Children) > 0 {
+		props = append(props, &group)
+	}
 	return props
 }
 
