@@ -35,19 +35,19 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 			api.Column{
 				Name:     "Status",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(api.NewStatusWithObject(object).Icon())
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
+					cell.SetChild(api.NewStatusWithObject(object).Icon())
 				},
 				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Available",
 				Priority: 60,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					deployment := object.(*appsv1.Deployment)
 					label := gtk.NewLabel(fmt.Sprintf("%d/%d", deployment.Status.AvailableReplicas, deployment.Status.Replicas))
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 		)
@@ -56,19 +56,19 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 			api.Column{
 				Name:     "Status",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(api.NewStatusWithObject(object).Icon())
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
+					cell.SetChild(api.NewStatusWithObject(object).Icon())
 				},
 				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Available",
 				Priority: 60,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					replicaSet := object.(*appsv1.ReplicaSet)
 					label := gtk.NewLabel(fmt.Sprintf("%d/%d", replicaSet.Status.AvailableReplicas, replicaSet.Status.Replicas))
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 		)
@@ -77,19 +77,19 @@ func (e *Apps) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 			api.Column{
 				Name:     "Status",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(api.NewStatusWithObject(object).Icon())
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
+					cell.SetChild(api.NewStatusWithObject(object).Icon())
 				},
 				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Available",
 				Priority: 60,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					statefulSet := object.(*appsv1.StatefulSet)
 					label := gtk.NewLabel(fmt.Sprintf("%d/%d", statefulSet.Status.AvailableReplicas, statefulSet.Status.Replicas))
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 		)

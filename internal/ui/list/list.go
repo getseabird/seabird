@@ -167,6 +167,7 @@ func (l *List) createColumns() []*gtk.ColumnViewColumn {
 		})
 		column := gtk.NewColumnViewColumn(col.Name, &factory.ListItemFactory)
 		column.SetExpand(true)
+		column.SetResizable(true)
 
 		if col.Compare != nil {
 			column.SetSorter(&gtk.NewCustomSorter(

@@ -7,7 +7,7 @@ import (
 
 type Column struct {
 	Name     string
-	Priority int8
+	Priority int32
 	Bind     func(cell *gtk.ColumnViewCell, object client.Object)
 	Compare  func(a, b client.Object) int
 }

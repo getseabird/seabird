@@ -38,19 +38,19 @@ func (e *Batch) CreateColumns(ctx context.Context, resource *metav1.APIResource,
 			api.Column{
 				Name:     "Status",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(api.NewStatusWithObject(object).Icon())
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
+					cell.SetChild(api.NewStatusWithObject(object).Icon())
 				},
 				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Completions",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					job := object.(*batchv1.Job)
 					label := gtk.NewLabel(fmt.Sprintf("%d/%d", job.Status.Succeeded, ptr.Deref(job.Spec.Completions, 1)))
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 		)
@@ -59,13 +59,13 @@ func (e *Batch) CreateColumns(ctx context.Context, resource *metav1.APIResource,
 			api.Column{
 				Name:     "Last schedule",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					cron := object.(*batchv1.CronJob)
 					if cron.Status.LastScheduleTime != nil {
 						duration := time.Since(cron.Status.LastScheduleTime.Time)
 						label := gtk.NewLabel(util.HumanizeApproximateDuration(duration))
 						label.SetHAlign(gtk.AlignStart)
-						listitem.SetChild(label)
+						cell.SetChild(label)
 					}
 				},
 			},

@@ -47,7 +47,8 @@ type Apiextensions struct {
 func (e *Apiextensions) CreateColumns(ctx context.Context, resource *metav1.APIResource, columns []api.Column) []api.Column {
 	for column, path := range e.getAdditionalColumnPaths(resource) {
 		columns = append(columns, api.Column{
-			Name: column.Name,
+			Name:     column.Name,
+			Priority: column.Priority * -1,
 			Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 				value, err := e.resolvePath(path, object)
 				if err != nil {
@@ -72,8 +73,9 @@ func (e *Apiextensions) CreateObjectProperties(ctx context.Context, resource *me
 			continue
 		}
 		group.Children = append(group.Children, &api.TextProperty{
-			Name:  column.Name,
-			Value: ptr.Deref(value, ""),
+			Name:     column.Name,
+			Value:    ptr.Deref(value, ""),
+			Priority: column.Priority * -1,
 		})
 	}
 	props = append(props, &group)

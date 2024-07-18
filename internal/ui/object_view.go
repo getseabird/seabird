@@ -289,6 +289,9 @@ func (o *ObjectView) renderObjectProperty(level, index int, prop api.Property) g
 		}
 
 	case *api.GroupProperty:
+		sort.Slice(prop.Children, func(i, j int) bool {
+			return prop.Children[i].GetPriority() > prop.Children[j].GetPriority()
+		})
 		switch level {
 		case 0:
 			group := adw.NewPreferencesGroup()

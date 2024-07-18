@@ -10,11 +10,12 @@ import (
 
 type Property interface {
 	GetID() string
-	GetPriority() int8
+	GetPriority() int32
 }
 
 type TextProperty struct {
 	ID        string
+	Priority  int32
 	Name      string
 	Value     string
 	Reference *corev1.ObjectReference
@@ -28,13 +29,13 @@ func (p *TextProperty) GetID() string {
 	return p.ID
 }
 
-func (p *TextProperty) GetPriority() int8 {
+func (p *TextProperty) GetPriority() int32 {
 	return 0
 }
 
 type GroupProperty struct {
 	ID       string
-	Priority int8
+	Priority int32
 	Name     string
 	Children []Property
 	Widget   func(gtk.Widgetter, *adw.NavigationView)
@@ -47,6 +48,6 @@ func (p *GroupProperty) GetID() string {
 	return p.ID
 }
 
-func (p *GroupProperty) GetPriority() int8 {
+func (p *GroupProperty) GetPriority() int32 {
 	return p.Priority
 }

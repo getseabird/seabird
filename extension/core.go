@@ -49,19 +49,19 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			api.Column{
 				Name:     "Status",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					box := gtk.NewBox(gtk.OrientationHorizontal, 4)
 					for _, icon := range api.NewStatusWithObject(object).Icons() {
 						box.Append(icon)
 					}
-					listitem.SetChild(box)
+					cell.SetChild(box)
 				},
 				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Memory",
 				Priority: 50,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					pod := object.(*corev1.Pod)
 					req := resource.NewQuantity(0, resource.DecimalSI)
 					for _, container := range pod.Spec.Containers {
@@ -76,13 +76,13 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					}
 					bar := widget.NewResourceBar(use, req, "")
 					bar.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(bar)
+					cell.SetChild(bar)
 				},
 			},
 			api.Column{
 				Name:     "CPU",
 				Priority: 40,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					pod := object.(*corev1.Pod)
 					req := resource.NewQuantity(0, resource.DecimalSI)
 					for _, container := range pod.Spec.Containers {
@@ -97,7 +97,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					}
 					bar := widget.NewResourceBar(use, req, "")
 					bar.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(bar)
+					cell.SetChild(bar)
 				},
 			},
 		)
@@ -106,32 +106,32 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			api.Column{
 				Name:     "Size",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					pvc := object.(*corev1.PersistentVolumeClaim)
 					label := gtk.NewLabel(pvc.Spec.Resources.Requests.Storage().String())
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 			api.Column{
 				Name:     "Class",
 				Priority: 60,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					pvc := object.(*corev1.PersistentVolumeClaim)
 					label := gtk.NewLabel(ptr.Deref(pvc.Spec.StorageClassName, ""))
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 			api.Column{
 				Name:     "Volume",
 				Priority: 60,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					pvc := object.(*corev1.PersistentVolumeClaim)
 					label := gtk.NewLabel(pvc.Spec.VolumeName)
 					label.SetHAlign(gtk.AlignStart)
 					label.SetEllipsize(pango.EllipsizeEnd)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 		)
@@ -140,33 +140,33 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			api.Column{
 				Name:     "Size",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					pv := object.(*corev1.PersistentVolume)
 					label := gtk.NewLabel(pv.Spec.Capacity.Storage().String())
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 			api.Column{
 				Name:     "Phase",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					pv := object.(*corev1.PersistentVolume)
 					label := gtk.NewLabel(string(pv.Status.Phase))
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 			api.Column{
 				Name:     "Claim",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					pv := object.(*corev1.PersistentVolume)
 					if pv.Spec.ClaimRef != nil {
 						label := gtk.NewLabel(string(pv.Spec.ClaimRef.Name))
 						label.SetHAlign(gtk.AlignStart)
 						label.SetEllipsize(pango.EllipsizeEnd)
-						listitem.SetChild(label)
+						cell.SetChild(label)
 					}
 				},
 			},
@@ -177,27 +177,27 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			api.Column{
 				Name:     "Status",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
-					listitem.SetChild(api.NewStatusWithObject(object).Icon())
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
+					cell.SetChild(api.NewStatusWithObject(object).Icon())
 				},
 				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
 				Name:     "Pods",
 				Priority: 60,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					pod := object.(*corev1.Node)
 					var pods corev1.PodList
 					e.List(ctx, &pods, client.MatchingFieldsSelector{Selector: fields.OneTermEqualSelector("spec.nodeName", pod.Name)})
 					label := gtk.NewLabel(fmt.Sprintf("%d", len(pods.Items)))
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 			api.Column{
 				Name:     "Memory",
 				Priority: 50,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					node := object.(*corev1.Node)
 					metrics := e.Metrics.Node(node.Name)
 					if metrics == nil {
@@ -205,13 +205,13 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					}
 					bar := widget.NewResourceBar(metrics.Usage.Memory(), node.Status.Allocatable.Memory(), "")
 					bar.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(bar)
+					cell.SetChild(bar)
 				},
 			},
 			api.Column{
 				Name:     "CPU",
 				Priority: 40,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					node := object.(*corev1.Node)
 					metrics := e.Metrics.Node(node.Name)
 					if metrics == nil {
@@ -219,7 +219,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					}
 					bar := widget.NewResourceBar(metrics.Usage.Cpu(), node.Status.Allocatable.Cpu(), "")
 					bar.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(bar)
+					cell.SetChild(bar)
 				},
 			},
 		)
@@ -228,11 +228,11 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			api.Column{
 				Name:     "Phase",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					ns := object.(*corev1.Namespace)
 					label := gtk.NewLabel(string(ns.Status.Phase))
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 		)
@@ -241,7 +241,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			api.Column{
 				Name:     "Keys",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					configmap := object.(*corev1.ConfigMap)
 					var keys []string
 					for key := range configmap.Data {
@@ -250,7 +250,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					label := gtk.NewLabel(strings.Join(keys, ", "))
 					label.SetHAlign(gtk.AlignStart)
 					label.SetEllipsize(pango.EllipsizeEnd)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 		)
@@ -259,7 +259,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			api.Column{
 				Name:     "Keys",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					secret := object.(*corev1.Secret)
 					var keys []string
 					for key := range secret.Data {
@@ -268,7 +268,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					label := gtk.NewLabel(strings.Join(keys, ", "))
 					label.SetHAlign(gtk.AlignStart)
 					label.SetEllipsize(pango.EllipsizeEnd)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 		)
@@ -277,17 +277,17 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 			api.Column{
 				Name:     "Type",
 				Priority: 70,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					service := object.(*corev1.Service)
 					label := gtk.NewLabel(string(service.Spec.Type))
 					label.SetHAlign(gtk.AlignStart)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 			api.Column{
 				Name:     "Ports",
 				Priority: 60,
-				Bind: func(listitem *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
 					svc := object.(*corev1.Service)
 					var ports []string
 					for _, port := range svc.Spec.Ports {
@@ -296,7 +296,7 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					label := gtk.NewLabel(strings.Join(ports, ", "))
 					label.SetHAlign(gtk.AlignStart)
 					label.SetEllipsize(pango.EllipsizeEnd)
-					listitem.SetChild(label)
+					cell.SetChild(label)
 				},
 			},
 		)
