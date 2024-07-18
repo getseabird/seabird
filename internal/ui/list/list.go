@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 	"sort"
-	"strconv"
 	"strings"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
+	"github.com/diamondburned/gotk4/pkg/core/gioutil"
 	coreglib "github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
@@ -26,7 +26,8 @@ type List struct {
 	*common.ClusterState
 	ctx         context.Context
 	watchCancel context.CancelFunc
-	model       *gtk.StringList
+	model       *gioutil.ListModel[client.Object]
+	sortModel   *gtk.SortListModel
 	columnView  *gtk.ColumnView
 	columns     []*gtk.ColumnViewColumn
 	columnType  *metav1.APIResource
@@ -45,16 +46,16 @@ func NewList(ctx context.Context, state *common.ClusterState, dialog *adw.Dialog
 	l.AddTopBar(newListHeader(ctx, state, editor))
 
 	l.columnView = gtk.NewColumnView(nil)
-	l.model = gtk.NewStringList([]string{})
-	l.columnView.SetModel(gtk.NewNoSelection(gtk.NewSortListModel(l.model, l.columnView.Sorter())))
+	l.model = gioutil.NewListModel[client.Object]()
+	l.sortModel = gtk.NewSortListModel(l.model, l.columnView.Sorter())
+	l.columnView.SetModel(gtk.NewNoSelection(l.sortModel))
 	l.columnView.SetSingleClickActivate(true)
 	l.columnView.SetMarginStart(16)
 	l.columnView.SetMarginEnd(16)
 	l.columnView.SetMarginBottom(16)
 
 	l.columnView.ConnectActivate(func(position uint) {
-		i, _ := strconv.Atoi(l.columnView.Model().Item(position).Cast().(*gtk.StringObject).String())
-		obj := l.Objects.Value()[i]
+		obj := gioutil.ObjectValue[client.Object](l.columnView.Model().Item(position))
 		l.SelectedObject.Update(obj)
 		l.dialog.Present(l)
 	})
@@ -101,7 +102,7 @@ func (l *List) onObjectsChange(objects []client.Object) {
 	if resource == nil {
 		return
 	}
-	l.model.Splice(0, l.model.NItems(), nil)
+	l.model.Splice(0, int(l.model.NItems()))
 
 	if l.columnType == nil || !util.ResourceEquals(l.columnType, resource) {
 		l.columnType = resource
@@ -116,20 +117,20 @@ func (l *List) onObjectsChange(objects []client.Object) {
 	}
 
 	filter := l.SearchFilter.Value()
-	for i, o := range objects {
+	for _, o := range objects {
 		if !filter.Test(o) {
 			continue
 		}
-		l.model.Append(strconv.Itoa(i))
+		l.model.Append(o)
 	}
 
 }
 
 func (l *List) onSearchFilterChange(filter common.SearchFilter) {
-	l.model.Splice(0, l.model.NItems(), nil)
-	for i, object := range l.Objects.Value() {
+	l.model.Splice(0, int(l.model.NItems()))
+	for _, object := range l.Objects.Value() {
 		if filter.Test(object) {
-			l.model.Append(strconv.Itoa(i))
+			l.model.Append(object)
 		}
 	}
 }
@@ -148,10 +149,9 @@ func (l *List) createColumns() []*gtk.ColumnViewColumn {
 	for _, col := range columns {
 		factory := gtk.NewSignalListItemFactory()
 		gvk := util.GVKForResource(l.SelectedResource.Value()).String()
-		factory.ConnectBind(func(o *coreglib.Object) {
-			cell := o.Cast().(*gtk.ColumnViewCell)
-			idx, _ := strconv.Atoi(cell.Item().Cast().(*gtk.StringObject).String())
-			object := l.Objects.Value()[idx]
+		factory.ConnectBind(func(c *coreglib.Object) {
+			cell := c.Cast().(*gtk.ColumnViewCell)
+			object := gioutil.ObjectValue[client.Object](cell.Item())
 
 			// Very fast resource switches (e.g. holding tab in the ui) can cause panics
 			// This is a safeguard to make sure we don't send the wrong type
@@ -171,10 +171,8 @@ func (l *List) createColumns() []*gtk.ColumnViewColumn {
 
 		if col.Compare != nil {
 			column.SetSorter(&gtk.NewCustomSorter(
-				glib.NewObjectComparer[*gtk.StringObject](func(a, b *gtk.StringObject) int {
-					ia, _ := strconv.Atoi(a.String())
-					ib, _ := strconv.Atoi(b.String())
-					return col.Compare(l.Objects.Value()[ia], l.Objects.Value()[ib])
+				glib.NewObjectComparer(func(a, b *coreglib.Object) int {
+					return col.Compare(gioutil.ObjectValue[client.Object](a), gioutil.ObjectValue[client.Object](b))
 				}),
 			).Sorter)
 		}
