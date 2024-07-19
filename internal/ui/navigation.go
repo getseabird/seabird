@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"slices"
 	"strconv"
 	"strings"
@@ -499,7 +498,7 @@ func (n *Navigation) createHeaderRow(label string) *gtk.ListBoxRow {
 func (n *Navigation) createPin(object client.Object) *gtk.ListBoxRow {
 	ref, err := reference.GetReference(n.Scheme, object)
 	if err != nil {
-		log.Print("createPin: %s", err)
+		klog.Warningf("createPin: %s", err)
 		return nil
 	}
 
@@ -553,7 +552,7 @@ outer:
 func (n *Navigation) AddPin(object client.Object) {
 	ref, err := reference.GetReference(n.Scheme, object)
 	if err != nil {
-		log.Print(err.Error())
+		klog.Warning(err.Error())
 		return
 	}
 	prefs := n.ClusterPreferences.Value()
@@ -582,7 +581,7 @@ pins:
 func (n *Navigation) RemovePin(object client.Object) {
 	ref, err := reference.GetReference(n.Scheme, object)
 	if err != nil {
-		log.Print(err.Error())
+		klog.Warning(err.Error())
 		return
 	}
 

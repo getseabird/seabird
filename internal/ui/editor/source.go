@@ -138,6 +138,7 @@ func (page *sourcePage) updateKind(gvk schema.GroupVersionKind) error {
 	if err != nil {
 		return err
 	}
+	resolver := resolver{page.schema}
 
 	s := strings.Split(gvk.Group, ".")
 	slices.Reverse(s)
@@ -154,7 +155,7 @@ func (page *sourcePage) updateKind(gvk schema.GroupVersionKind) error {
 	}
 
 	page.ref = fmt.Sprintf("#/components/schemas/%s.%s.%s", rdns, gvk.Version, gvk.Kind)
-	if resolveRef(page.schema, page.ref) == nil {
+	if resolver.resolve(page.ref) == nil {
 		return errors.New("component schema not found")
 	}
 
@@ -189,25 +190,6 @@ func loadSchema(ctx context.Context, gvk schema.GroupVersionKind) (*openapi3.T, 
 	}
 
 	return openapi3.NewLoader().LoadFromData(bytes)
-}
-
-func innerType(schema *openapi3.Schema) *openapi3.SchemaRef {
-	if schema.Items != nil {
-		return innerType(schema.Items.Value)
-	}
-	switch {
-	case len(schema.AllOf) > 0:
-		return schema.AllOf[0]
-	case len(schema.AnyOf) > 0:
-		return schema.AnyOf[0]
-	}
-
-	return nil
-}
-
-func resolveRef(t *openapi3.T, ref string) *openapi3.SchemaRef {
-	ref = strings.TrimPrefix(ref, "#/components/schemas/")
-	return t.Components.Schemas[ref]
 }
 
 func refName(ref string) string {
