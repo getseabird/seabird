@@ -40,7 +40,7 @@ func NewApplication(version string) (*Application, error) {
 		return nil, err
 	}
 
-	common.OnChange(ctx, state.Preferences, func(p api.Preferences) {
+	state.Preferences.Sub(ctx, func(p api.Preferences) {
 		adw.StyleManagerGetDefault().SetColorScheme(adw.ColorScheme(p.ColorScheme))
 	})
 

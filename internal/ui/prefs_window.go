@@ -7,8 +7,8 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/pubsub"
 	"github.com/getseabird/seabird/internal/ui/common"
-	"github.com/imkira/go-observer/v2"
 )
 
 type PrefsWindow struct {
@@ -63,7 +63,7 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 		if prefs.ColorScheme == adw.ColorSchemePreferLight {
 			prefs.ColorScheme = adw.ColorSchemeForceDark
 		}
-		w.Preferences.Update(prefs)
+		w.Preferences.Pub(prefs)
 	})
 	general.Add(colorScheme)
 
@@ -73,7 +73,7 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	addCluster.AddCSSClass("flat")
 	addCluster.SetIconName("list-add")
 	addCluster.ConnectClicked(func() {
-		page := NewClusterPrefPage(w.ctx, w.State, observer.NewProperty(api.ClusterPreferences{}))
+		page := NewClusterPrefPage(w.ctx, w.State, pubsub.NewProperty(api.ClusterPreferences{}))
 		w.navigationView.Push(page.NavigationPage)
 	})
 

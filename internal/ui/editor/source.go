@@ -15,9 +15,9 @@ import (
 	"github.com/getkin/kin-openapi/openapi3"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/pubsub"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
-	"github.com/imkira/go-observer/v2"
 	"github.com/zmwangx/debounce"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -34,14 +34,14 @@ type sourcePage struct {
 	object client.Object
 	schema *openapi3.T
 	ref    string
-	title  observer.Property[string]
+	title  pubsub.Property[string]
 }
 
-func newSourcePage(ctx context.Context, gvk *schema.GroupVersionKind, object client.Object, title observer.Property[string]) (*sourcePage, error) {
+func newSourcePage(ctx context.Context, gvk *schema.GroupVersionKind, object client.Object, title pubsub.Property[string]) (*sourcePage, error) {
 	cluster := ctxt.MustFrom[*api.Cluster](ctx)
 	buf := gtksource.NewBufferWithLanguage(gtksource.LanguageManagerGetDefault().Language("yaml"))
 	if object != nil {
-		title.Update(object.GetName())
+		title.Pub(object.GetName())
 		yaml, err := cluster.Encoder.EncodeYAML(object)
 		if err != nil {
 			widget.ShowErrorDialog(ctx, "Error encoding object", err)
@@ -104,7 +104,7 @@ func newSourcePage(ctx context.Context, gvk *schema.GroupVersionKind, object cli
 			}
 
 			if title.Value() != obj.GetName() {
-				title.Update(obj.GetName())
+				title.Pub(obj.GetName())
 			}
 
 			gvk := obj.GetObjectKind().GroupVersionKind()

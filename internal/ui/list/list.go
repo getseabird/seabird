@@ -56,7 +56,7 @@ func NewList(ctx context.Context, state *common.ClusterState, dialog *adw.Dialog
 
 	l.columnView.ConnectActivate(func(position uint) {
 		obj := gioutil.ObjectValue[client.Object](l.columnView.Model().Item(position))
-		l.SelectedObject.Update(obj)
+		l.SelectedObject.Pub(obj)
 		l.dialog.Present(l)
 	})
 
@@ -69,14 +69,14 @@ func NewList(ctx context.Context, state *common.ClusterState, dialog *adw.Dialog
 	sw.SetChild(vp)
 	l.SetContent(sw)
 
-	common.OnChange(ctx, l.SelectedResource, l.onSelectedResourceChange)
-	common.OnChange(ctx, l.Objects, l.onObjectsChange)
-	common.OnChange(ctx, l.SearchFilter, l.onSearchFilterChange)
+	l.SelectedResource.Sub(ctx, l.onSelectedResourceChange)
+	l.Objects.Sub(ctx, l.onObjectsChange)
+	l.SearchFilter.Sub(ctx, l.onSearchFilterChange)
 
 	filterNamespace := gio.NewSimpleAction("filterNamespace", glib.NewVariantType("s"))
 	filterNamespace.ConnectActivate(func(parameter *glib.Variant) {
 		text := strings.Trim(fmt.Sprintf("%s ns:%s", l.SearchText.Value(), parameter.String()), " ")
-		l.SearchText.Update(text)
+		l.SearchText.Pub(text)
 	})
 	actionGroup := gio.NewSimpleActionGroup()
 	actionGroup.AddAction(filterNamespace)

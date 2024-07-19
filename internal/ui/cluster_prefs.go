@@ -10,10 +10,10 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/pubsub"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
-	"github.com/imkira/go-observer/v2"
 	"golang.org/x/exp/maps"
 	"k8s.io/client-go/tools/clientcmd"
 )
@@ -23,7 +23,7 @@ type ClusterPrefPage struct {
 	*common.State
 	ctx        context.Context
 	content    *adw.Bin
-	prefs      observer.Property[api.ClusterPreferences]
+	prefs      pubsub.Property[api.ClusterPreferences]
 	name       *adw.EntryRow
 	host       *adw.EntryRow
 	cert       *adw.EntryRow
@@ -36,7 +36,7 @@ type ClusterPrefPage struct {
 	actions    *adw.Bin
 }
 
-func NewClusterPrefPage(ctx context.Context, state *common.State, prefs observer.Property[api.ClusterPreferences]) *ClusterPrefPage {
+func NewClusterPrefPage(ctx context.Context, state *common.State, prefs pubsub.Property[api.ClusterPreferences]) *ClusterPrefPage {
 	box := gtk.NewBox(gtk.OrientationVertical, 0)
 	content := adw.NewBin()
 	p := ClusterPrefPage{
@@ -54,7 +54,7 @@ func NewClusterPrefPage(ctx context.Context, state *common.State, prefs observer
 	box.Append(content)
 	content.SetChild(p.createContent())
 
-	common.OnChange(ctx, p.prefs, func(prefs api.ClusterPreferences) {
+	p.prefs.Sub(ctx, func(prefs api.ClusterPreferences) {
 		p.updateValues(prefs)
 		p.actions.SetChild(p.createActions())
 	})
@@ -142,18 +142,18 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		}
 
 		go func() {
-			_, err := p.NewClusterState(p.ctx, observer.NewProperty(cluster))
+			_, err := p.NewClusterState(p.ctx, pubsub.NewProperty(cluster))
 			glib.IdleAdd(func() {
 				defer spinner.Stop()
 				if err != nil {
 					widget.ShowErrorDialog(p.ctx, "Cluster connection failed", err)
 					return
 				}
-				p.prefs.Update(cluster)
+				p.prefs.Pub(cluster)
 				if util.Index(p.Preferences.Value().Clusters, p.prefs) < 0 {
 					prefs := p.Preferences.Value()
 					prefs.Clusters = append(prefs.Clusters, p.prefs)
-					p.Preferences.Update(prefs)
+					p.Preferences.Pub(prefs)
 				}
 
 				p.Parent().(*adw.NavigationView).Pop()
@@ -203,7 +203,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 					prefs := p.Preferences.Value()
 					if i := util.Index(prefs.Clusters, p.prefs); i >= 0 {
 						prefs.Clusters = append(prefs.Clusters[:i], prefs.Clusters[i+1:]...)
-						p.Preferences.Update(prefs)
+						p.Preferences.Pub(prefs)
 						p.Parent().(*adw.NavigationView).Pop()
 					}
 				}
@@ -271,7 +271,7 @@ func (p *ClusterPrefPage) showContextSelection(path string) {
 				widget.ShowErrorDialog(p.ctx, "Error loading kubeconfig", err)
 				return
 			}
-			p.prefs.Update(prefs)
+			p.prefs.Pub(prefs)
 		}
 	})
 }

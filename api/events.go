@@ -3,7 +3,7 @@ package api
 import (
 	"context"
 
-	"github.com/imkira/go-observer/v2"
+	"github.com/getseabird/seabird/internal/pubsub"
 	v1 "k8s.io/api/core/v1"
 	eventsv1 "k8s.io/api/events/v1"
 	"k8s.io/apimachinery/pkg/fields"
@@ -13,12 +13,12 @@ import (
 )
 
 type Events struct {
-	events observer.Property[[]*eventsv1.Event]
+	events pubsub.Property[[]*eventsv1.Event]
 }
 
 func newEvents(ctx context.Context, clientset *kubernetes.Clientset) *Events {
 	e := Events{
-		events: observer.NewProperty([]*eventsv1.Event{}),
+		events: pubsub.NewProperty([]*eventsv1.Event{}),
 	}
 	var event eventsv1.Event
 	var events []*eventsv1.Event
@@ -28,14 +28,14 @@ func newEvents(ctx context.Context, clientset *kubernetes.Clientset) *Events {
 		cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				events = append(events, obj.(*eventsv1.Event))
-				e.events.Update(events)
+				e.events.Pub(events)
 			},
 			DeleteFunc: func(o interface{}) {
 				obj := o.(*eventsv1.Event)
 				for i, o := range events {
 					if o.GetUID() == obj.GetUID() {
 						events = append(events[:i], events[i+1:]...)
-						e.events.Update(events)
+						e.events.Pub(events)
 						break
 					}
 				}
@@ -45,7 +45,7 @@ func newEvents(ctx context.Context, clientset *kubernetes.Clientset) *Events {
 				for i, o := range events {
 					if o.GetUID() == obj.GetUID() {
 						events[i] = obj
-						e.events.Update(events)
+						e.events.Pub(events)
 						break
 					}
 				}

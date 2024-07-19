@@ -14,6 +14,7 @@ import (
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
 	"github.com/getseabird/seabird/internal/ui/list"
+	"github.com/getseabird/seabird/internal/ui/single"
 	"github.com/getseabird/seabird/widget"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -25,7 +26,7 @@ type ClusterWindow struct {
 	cancel       context.CancelFunc
 	navigation   *Navigation
 	listView     *list.List
-	objectView   *ObjectView
+	objectView   *single.SingleView
 	toastOverlay *adw.ToastOverlay
 	dialog       *adw.Dialog
 }
@@ -76,11 +77,6 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 
 	w.dialog = adw.NewDialog()
 	w.dialog.SetPresentationMode(adw.DialogBottomSheet)
-	common.OnChange(ctx, state.SelectedObject, func(object client.Object) {
-		if object == nil {
-			w.dialog.Close()
-		}
-	})
 	go func() {
 		for {
 			select {
@@ -102,7 +98,17 @@ func NewClusterWindow(ctx context.Context, app *gtk.Application, state *common.C
 	paned.SetStartChild(w.navigation)
 
 	navView := adw.NewNavigationView()
-	w.objectView = NewObjectView(ctx, w.ClusterState, editor, navView, w.navigation)
+	w.objectView = single.NewSingleView(ctx, w.ClusterState, editor, navView)
+	w.objectView.PinAdded.Sub(ctx, func(obj client.Object) {
+		if selected := w.objectView.SelectedObject.Value(); selected != nil && obj.GetUID() == selected.GetUID() {
+			w.dialog.Close()
+		}
+		w.navigation.AddPin(obj)
+	})
+	w.objectView.PinRemoved.Sub(ctx, w.navigation.RemovePin)
+	w.objectView.Deleted.Sub(ctx, func(object client.Object) {
+		w.dialog.Close()
+	})
 	navView.Add(w.objectView.NavigationPage)
 	w.dialog.SetChild(navView)
 	w.dialog.ConnectClosed(func() {

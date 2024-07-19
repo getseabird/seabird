@@ -13,7 +13,6 @@ require (
 	github.com/go-logr/logr v1.4.2
 	github.com/google/uuid v1.6.0
 	github.com/hexops/gotextdiff v1.0.3
-	github.com/imkira/go-observer/v2 v2.0.0-20230629064422-8e0b61f11f1b
 	github.com/jgillich/gotk4-vte v0.0.0-20240131190304-a4aecd4a69b4
 	github.com/leaanthony/go-ansi-parser v1.6.1
 	github.com/zmwangx/debounce v1.0.0

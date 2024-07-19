@@ -6,8 +6,8 @@ import (
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/extension"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/pubsub"
 	"github.com/go-logr/logr"
-	"github.com/imkira/go-observer/v2"
 	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime/schema"
@@ -17,19 +17,19 @@ import (
 )
 
 type State struct {
-	Preferences observer.Property[api.Preferences]
+	Preferences pubsub.Property[api.Preferences]
 }
 
 type ClusterState struct {
 	*State
 	*api.Cluster
 	Extensions       []extension.Extension
-	Namespaces       observer.Property[[]*corev1.Namespace]
-	SelectedResource observer.Property[*metav1.APIResource]
-	SearchText       observer.Property[string]
-	SearchFilter     observer.Property[SearchFilter]
-	SelectedObject   observer.Property[client.Object]
-	Objects          observer.Property[[]client.Object]
+	Namespaces       pubsub.Property[[]*corev1.Namespace]
+	SelectedResource pubsub.Property[*metav1.APIResource]
+	SearchText       pubsub.Property[string]
+	SearchFilter     pubsub.Property[SearchFilter]
+	SelectedObject   pubsub.Property[client.Object]
+	Objects          pubsub.Property[[]client.Object]
 }
 
 func NewState() (*State, error) {
@@ -40,11 +40,11 @@ func NewState() (*State, error) {
 	prefs.Defaults()
 
 	return &State{
-		Preferences: observer.NewProperty(*prefs),
+		Preferences: pubsub.NewProperty(*prefs),
 	}, nil
 }
 
-func (s *State) NewClusterState(ctx context.Context, clusterPrefs observer.Property[api.ClusterPreferences]) (*ClusterState, error) {
+func (s *State) NewClusterState(ctx context.Context, clusterPrefs pubsub.Property[api.ClusterPreferences]) (*ClusterState, error) {
 	logf.SetLogger(logr.Discard())
 
 	cluster, err := api.NewCluster(ctx, clusterPrefs)
@@ -56,12 +56,12 @@ func (s *State) NewClusterState(ctx context.Context, clusterPrefs observer.Prope
 	state := ClusterState{
 		State:            s,
 		Cluster:          cluster,
-		Namespaces:       observer.NewProperty([]*corev1.Namespace{}),
-		SelectedResource: observer.NewProperty[*metav1.APIResource](nil),
-		SearchText:       observer.NewProperty(""),
-		SearchFilter:     observer.NewProperty(SearchFilter{}),
-		SelectedObject:   observer.NewProperty[client.Object](nil),
-		Objects:          observer.NewProperty[[]client.Object](nil),
+		Namespaces:       pubsub.NewProperty([]*corev1.Namespace{}),
+		SelectedResource: pubsub.NewProperty[*metav1.APIResource](nil),
+		SearchText:       pubsub.NewProperty(""),
+		SearchFilter:     pubsub.NewProperty(SearchFilter{}),
+		SelectedObject:   pubsub.NewProperty[client.Object](nil),
+		Objects:          pubsub.NewProperty[[]client.Object](nil),
 	}
 
 	if err := api.InformerConnectProperty(ctx, cluster, schema.GroupVersionResource{Version: "v1", Resource: "namespaces"}, state.Namespaces); err != nil {

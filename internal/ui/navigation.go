@@ -19,11 +19,12 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/pubsub"
 	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/ui/editor"
+	"github.com/getseabird/seabird/internal/ui/single"
 	"github.com/getseabird/seabird/internal/util"
-	"github.com/imkira/go-observer/v2"
 	"github.com/zmwangx/debounce"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -196,7 +197,7 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 		}
 	})
 
-	common.OnChange(ctx, n.ClusterPreferences, func(prefs api.ClusterPreferences) {
+	n.ClusterPreferences.Sub(ctx, func(prefs api.ClusterPreferences) {
 		resbin.SetChild(n.createResourceList(prefs))
 		n.updatePins(prefs.Navigation.Pins)
 	})
@@ -225,7 +226,7 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 		id, _ := strconv.Atoi(idx.String())
 		prefs := n.ClusterPreferences.Value()
 		prefs.Navigation.Favourites = append(prefs.Navigation.Favourites, util.GVRForResource(&n.Resources[id]))
-		n.ClusterPreferences.Update(prefs)
+		n.ClusterPreferences.Pub(prefs)
 	})
 	actionGroup.AddAction(pin)
 	unpin := gio.NewSimpleAction("unpin", glib.NewVariantType("s"))
@@ -235,7 +236,7 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 		for i, f := range prefs.Navigation.Favourites {
 			if util.GVREquals(f, util.GVRForResource(&n.Resources[id])) {
 				prefs.Navigation.Favourites = slices.Delete(prefs.Navigation.Favourites, i, i+1)
-				n.ClusterPreferences.Update(prefs)
+				n.ClusterPreferences.Pub(prefs)
 				break
 			}
 		}
@@ -273,7 +274,7 @@ func (n *Navigation) createResourceList(prefs api.ClusterPreferences) *gtk.ListB
 		}
 		for _, res := range n.Resources {
 			if util.GVREquals(util.GVRForResource(&res), gvr) && !util.ResourceEquals(n.SelectedResource.Value(), &res) {
-				n.SelectedResource.Update(&res)
+				n.SelectedResource.Pub(&res)
 				break
 			}
 		}
@@ -362,7 +363,7 @@ outer:
 			if errors.IsNotFound(err) {
 				prefs := n.ClusterPreferences.Value()
 				prefs.Navigation.Pins = slices.Delete(pins, i, i+1)
-				n.ClusterPreferences.Update(prefs)
+				n.ClusterPreferences.Pub(prefs)
 			} else {
 				klog.Infof("updatePins: %s %v", err, pin)
 			}
@@ -507,12 +508,14 @@ func (n *Navigation) createPin(object client.Object) *gtk.ListBoxRow {
 	n.pinList.Append(row)
 
 	state := *n.ClusterState
-	state.SelectedObject = observer.NewProperty[client.Object](object)
+	state.SelectedObject = pubsub.NewProperty(object)
 	navView := adw.NewNavigationView()
 	navView.SetName(fmt.Sprintf("%s/%s", ref.Namespace, ref.Name))
 	ctx, cancel := context.WithCancel(n.ctx)
 	n.cancelFuncs[fmt.Sprintf("%s/%s", ref.Namespace, ref.Name)] = cancel
-	navView.Push(NewObjectView(ctx, &state, n.editor, navView, n).NavigationPage)
+	single := single.NewSingleView(ctx, &state, n.editor, navView)
+	navView.Push(single.NavigationPage)
+	single.PinRemoved.Sub(n.ctx, n.RemovePin)
 	n.pinViews = append(n.pinViews, navView)
 
 	page := n.viewStack.AddChild(navView)
@@ -560,7 +563,7 @@ func (n *Navigation) AddPin(object client.Object) {
 		}
 	}
 	prefs.Navigation.Pins = append(prefs.Navigation.Pins, *ref)
-	n.ClusterPreferences.Update(prefs)
+	n.ClusterPreferences.Pub(prefs)
 	n.updatePins(prefs.Navigation.Pins)
 
 pins:
@@ -592,7 +595,7 @@ func (n *Navigation) RemovePin(object client.Object) {
 			break
 		}
 	}
-	n.ClusterPreferences.Update(prefs)
+	n.ClusterPreferences.Pub(prefs)
 
 	if len(n.pinRows) == 0 {
 		n.resourcesToggle.SetActive(true)

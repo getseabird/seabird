@@ -51,10 +51,10 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	box.Append(entry)
 	entry.ConnectSearchChanged(func() {
 		if entry.Text() != state.SearchText.Value() {
-			state.SearchText.Update(entry.Text())
+			state.SearchText.Pub(entry.Text())
 		}
 	})
-	common.OnChange(ctx, state.SearchText, func(txt string) {
+	state.SearchText.Sub(ctx, func(txt string) {
 		if txt != entry.Text() {
 			entry.SetText(txt)
 		}
@@ -65,7 +65,7 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	filterButton.SetTooltipText("Filter")
 	box.Append(filterButton)
 	namespace := gio.NewMenu()
-	common.OnChange(ctx, state.Namespaces, func(ns []*corev1.Namespace) {
+	state.Namespaces.Sub(ctx, func(ns []*corev1.Namespace) {
 		namespace.RemoveAll()
 		for _, ns := range ns {
 			namespace.Append(ns.GetName(), fmt.Sprintf("list.filterNamespace('%s')", ns.GetName()))
@@ -77,10 +77,10 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	filterButton.SetPopover(popover)
 
 	entry.ConnectSearchChanged(func() {
-		state.SearchFilter.Update(common.NewSearchFilter(entry.Text()))
+		state.SearchFilter.Pub(common.NewSearchFilter(entry.Text()))
 	})
 
-	common.OnChange(ctx, state.ClusterPreferences, func(prefs api.ClusterPreferences) {
+	state.ClusterPreferences.Sub(ctx, func(prefs api.ClusterPreferences) {
 		createButton.SetVisible(!prefs.ReadOnly)
 	})
 

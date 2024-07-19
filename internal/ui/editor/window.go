@@ -11,14 +11,13 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
-	"github.com/getseabird/seabird/internal/ui/common"
+	"github.com/getseabird/seabird/internal/pubsub"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/getseabird/seabird/widget"
 	"github.com/google/uuid"
 	"github.com/hexops/gotextdiff"
 	"github.com/hexops/gotextdiff/myers"
 	"github.com/hexops/gotextdiff/span"
-	"github.com/imkira/go-observer/v2"
 	"k8s.io/apimachinery/pkg/runtime/schema"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -108,14 +107,14 @@ func (w *EditorWindow) AddPage(gvk *schema.GroupVersionKind, object client.Objec
 			}
 		}
 	}
-	title := observer.NewProperty[string]("New Object")
+	title := pubsub.NewProperty("New Object")
 	page, err := newSourcePage(w.ctx, gvk, object, title)
 	if err != nil {
 		return err
 	}
 	tabpage := w.tabview.Append(page)
 	tabpage.SetKeyword(uuid.NewString())
-	common.OnChange(w.ctx, title, tabpage.SetTitle)
+	title.Sub(w.ctx, tabpage.SetTitle)
 	w.tabview.SetSelectedPage(tabpage)
 	w.pages[tabpage] = page
 	return nil

@@ -9,7 +9,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
-	"github.com/imkira/go-observer/v2"
+	"github.com/getseabird/seabird/internal/pubsub"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/client-go/util/jsonpath"
@@ -35,13 +35,13 @@ func NewApiextensions(ctx context.Context, cluster *api.Cluster) (Extension, err
 		return nil, err
 	}
 
-	return &Apiextensions{Cluster: cluster, crds: observer.NewProperty(crds.Items)}, nil
+	return &Apiextensions{Cluster: cluster, crds: pubsub.NewProperty(crds.Items)}, nil
 }
 
 type Apiextensions struct {
 	Noop
 	*api.Cluster
-	crds observer.Property[[]apiextensionsv1.CustomResourceDefinition]
+	crds pubsub.Property[[]apiextensionsv1.CustomResourceDefinition]
 }
 
 func (e *Apiextensions) CreateColumns(ctx context.Context, resource *metav1.APIResource, columns []api.Column) []api.Column {

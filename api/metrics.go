@@ -5,7 +5,7 @@ import (
 	"errors"
 	"time"
 
-	"github.com/imkira/go-observer/v2"
+	"github.com/getseabird/seabird/internal/pubsub"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -15,14 +15,14 @@ import (
 )
 
 type Metrics struct {
-	podMetrics  observer.Property[[]metricsv1beta1.PodMetrics]
-	nodeMetrics observer.Property[[]metricsv1beta1.NodeMetrics]
+	podMetrics  pubsub.Property[[]metricsv1beta1.PodMetrics]
+	nodeMetrics pubsub.Property[[]metricsv1beta1.NodeMetrics]
 }
 
 func newMetrics(ctx context.Context, client client.Client, resources []metav1.APIResource) (*Metrics, error) {
 	m := Metrics{
-		podMetrics:  observer.NewProperty([]metricsv1beta1.PodMetrics{}),
-		nodeMetrics: observer.NewProperty([]metricsv1beta1.NodeMetrics{}),
+		podMetrics:  pubsub.NewProperty([]metricsv1beta1.PodMetrics{}),
+		nodeMetrics: pubsub.NewProperty([]metricsv1beta1.NodeMetrics{}),
 	}
 
 	if !metricsAPIAvailable(resources) {
@@ -39,13 +39,13 @@ func newMetrics(ctx context.Context, client client.Client, resources []metav1.AP
 				if err := client.List(ctx, &podMetricsList); err != nil {
 					klog.Infof("unable to fetch pod metrics: %s", err.Error())
 				}
-				m.podMetrics.Update(podMetricsList.Items)
+				m.podMetrics.Pub(podMetricsList.Items)
 
 				var nodeMetricsList metricsv1beta1.NodeMetricsList
 				if err := client.List(ctx, &nodeMetricsList); err != nil {
 					klog.Infof("unable to fetch node metrics: %s", err.Error())
 				}
-				m.nodeMetrics.Update(nodeMetricsList.Items)
+				m.nodeMetrics.Pub(nodeMetricsList.Items)
 
 				time.Sleep(1 * time.Minute)
 			}

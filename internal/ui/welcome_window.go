@@ -19,10 +19,10 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
+	"github.com/getseabird/seabird/internal/pubsub"
 	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/widget"
-	"github.com/imkira/go-observer/v2"
 	"k8s.io/klog/v2"
 )
 
@@ -100,7 +100,7 @@ func (w *WelcomeWindow) createContent(first bool) *adw.NavigationView {
 		add.AddCSSClass("flat")
 		add.SetIconName("list-add")
 		add.ConnectClicked(func() {
-			pref := NewClusterPrefPage(w.ctx, w.State, observer.NewProperty(api.ClusterPreferences{}))
+			pref := NewClusterPrefPage(w.ctx, w.State, pubsub.NewProperty(api.ClusterPreferences{}))
 			w.nav.Push(pref.NavigationPage)
 		})
 
@@ -153,7 +153,7 @@ func (w *WelcomeWindow) createContent(first bool) *adw.NavigationView {
 		status.SetDescription("Connect to a cluster to get started.")
 		btn := gtk.NewButton()
 		btn.ConnectClicked(func() {
-			pref := NewClusterPrefPage(w.ctx, w.State, observer.NewProperty(api.ClusterPreferences{}))
+			pref := NewClusterPrefPage(w.ctx, w.State, pubsub.NewProperty(api.ClusterPreferences{}))
 			w.nav.Push(pref.NavigationPage)
 		})
 		btn.SetHAlign(gtk.AlignCenter)
@@ -247,7 +247,7 @@ func (w *WelcomeWindow) createPurchasePage() *adw.NavigationPage {
 				Key:       res.LicenseKey.Key,
 				ExpiresAt: res.LicenseKey.ExpiresAt,
 			}
-			w.Preferences.Update(prefs)
+			w.Preferences.Pub(prefs)
 			w.toast.AddToast(adw.NewToast("License activated. Thank you!"))
 			w.nav.Pop()
 		default:

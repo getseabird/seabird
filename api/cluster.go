@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/getseabird/seabird/internal/pubsub"
 	"github.com/getseabird/seabird/internal/util"
-	"github.com/imkira/go-observer/v2"
 	"github.com/zmwangx/debounce"
 	appsv1 "k8s.io/api/apps/v1"
 	batchv1 "k8s.io/api/batch/v1"
@@ -46,7 +46,7 @@ type Cluster struct {
 	client.Client
 	*kubernetes.Clientset
 	Config                 *rest.Config
-	ClusterPreferences     observer.Property[ClusterPreferences]
+	ClusterPreferences     pubsub.Property[ClusterPreferences]
 	Metrics                *Metrics
 	Events                 *Events
 	RESTMapper             meta.RESTMapper
@@ -60,7 +60,7 @@ type Cluster struct {
 	sharedInformers        map[schema.GroupVersionResource]informers.GenericInformer
 }
 
-func NewCluster(ctx context.Context, clusterPrefs observer.Property[ClusterPreferences]) (*Cluster, error) {
+func NewCluster(ctx context.Context, clusterPrefs pubsub.Property[ClusterPreferences]) (*Cluster, error) {
 	config := &rest.Config{
 		Host:            clusterPrefs.Value().Host,
 		BearerToken:     clusterPrefs.Value().BearerToken,
@@ -254,7 +254,7 @@ func (c *Cluster) AddInformerEventHandler(ctx context.Context, gvr schema.GroupV
 	return nil
 }
 
-func InformerConnectProperty[T client.Object](ctx context.Context, cluster *Cluster, gvr schema.GroupVersionResource, prop observer.Property[[]T]) error {
+func InformerConnectProperty[T client.Object](ctx context.Context, cluster *Cluster, gvr schema.GroupVersionResource, prop pubsub.Property[[]T]) error {
 	updateProperty, _ := debounce.Debounce(func() {
 		var objects []T
 		err := cache.ListAll(cluster.GetInformer(gvr).Informer().GetIndexer(), labels.Everything(), func(m interface{}) {
@@ -267,7 +267,7 @@ func InformerConnectProperty[T client.Object](ctx context.Context, cluster *Clus
 		slices.SortFunc(objects, func(a, b T) int {
 			return strings.Compare(a.GetName(), b.GetName())
 		})
-		prop.Update(objects)
+		prop.Pub(objects)
 	}, 100*time.Millisecond)
 	defer updateProperty()
 
