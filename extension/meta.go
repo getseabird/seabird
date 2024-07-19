@@ -7,8 +7,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/util"
 	corev1 "k8s.io/api/core/v1"
@@ -33,11 +31,8 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 	columns = append(columns, api.Column{
 		Name:     "Name",
 		Priority: 100,
-		Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
-			label := gtk.NewLabel(object.GetName())
-			label.SetHAlign(gtk.AlignStart)
-			label.SetEllipsize(pango.EllipsizeEnd)
-			cell.SetChild(label)
+		Bind: func(cell api.Cell, object client.Object) {
+			cell.SetLabel(object.GetName())
 		},
 		Compare: func(a, b client.Object) int {
 			return strings.Compare(a.GetName(), b.GetName())
@@ -48,11 +43,8 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 		columns = append(columns, api.Column{
 			Name:     "Namespace",
 			Priority: 90,
-			Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
-				label := gtk.NewLabel(object.GetNamespace())
-				label.SetHAlign(gtk.AlignStart)
-				label.SetEllipsize(pango.EllipsizeEnd)
-				cell.SetChild(label)
+			Bind: func(cell api.Cell, object client.Object) {
+				cell.SetLabel(object.GetNamespace())
 			},
 			Compare: func(a, b client.Object) int {
 				return strings.Compare(a.GetNamespace(), b.GetNamespace())
@@ -63,11 +55,9 @@ func (e *Meta) CreateColumns(ctx context.Context, resource *metav1.APIResource, 
 	columns = append(columns, api.Column{
 		Name:     "Age",
 		Priority: 80,
-		Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
+		Bind: func(cell api.Cell, object client.Object) {
 			duration := time.Since(object.GetCreationTimestamp().Time)
-			label := gtk.NewLabel(util.HumanizeApproximateDuration(duration))
-			label.SetHAlign(gtk.AlignStart)
-			cell.SetChild(label)
+			cell.SetLabel(util.HumanizeApproximateDuration(duration))
 		},
 		Compare: func(a, b client.Object) int {
 			return a.GetCreationTimestamp().Compare(b.GetCreationTimestamp().Time)

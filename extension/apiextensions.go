@@ -6,8 +6,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/pubsub"
 	apiextensionsv1 "k8s.io/apiextensions-apiserver/pkg/apis/apiextensions/v1"
@@ -49,15 +47,12 @@ func (e *Apiextensions) CreateColumns(ctx context.Context, resource *metav1.APIR
 		columns = append(columns, api.Column{
 			Name:     column.Name,
 			Priority: column.Priority * -1,
-			Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
+			Bind: func(cell api.Cell, object client.Object) {
 				value, err := e.resolvePath(path, object)
 				if err != nil {
 					return
 				}
-				label := gtk.NewLabel(ptr.Deref(value, ""))
-				label.SetHAlign(gtk.AlignStart)
-				label.SetEllipsize(pango.EllipsizeEnd)
-				cell.SetChild(label)
+				cell.SetLabel(ptr.Deref(value, ""))
 			},
 		})
 	}

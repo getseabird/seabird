@@ -5,8 +5,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/diamondburned/gotk4/pkg/gtk/v4"
-	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/util"
 	networkingv1 "k8s.io/api/networking/v1"
@@ -35,16 +33,13 @@ func (e *Networking) CreateColumns(ctx context.Context, resource *metav1.APIReso
 			api.Column{
 				Name:     "Hosts",
 				Priority: 70,
-				Bind: func(cell *gtk.ColumnViewCell, object client.Object) {
+				Bind: func(cell api.Cell, object client.Object) {
 					ingress := object.(*networkingv1.Ingress)
 					var hosts []string
 					for _, r := range ingress.Spec.Rules {
 						hosts = append(hosts, r.Host)
 					}
-					label := gtk.NewLabel(strings.Join(hosts, ", "))
-					label.SetHAlign(gtk.AlignStart)
-					label.SetEllipsize(pango.EllipsizeEnd)
-					cell.SetChild(label)
+					cell.SetLabel(strings.Join(hosts, ", "))
 				},
 			},
 		)

@@ -163,7 +163,7 @@ func (l *List) createColumns() []*gtk.ColumnViewColumn {
 					return
 				}
 			}
-			col.Bind(cell, object)
+			col.Bind(api.Cell{ColumnViewCell: cell}, object)
 		})
 		column := gtk.NewColumnViewColumn(col.Name, &factory.ListItemFactory)
 		column.SetExpand(true)
