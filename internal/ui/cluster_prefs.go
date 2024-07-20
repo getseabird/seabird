@@ -96,7 +96,7 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.exec.SetTitle("Exec")
 	p.exec.AddCSSClass("property")
 	p.execDelete = gtk.NewButton()
-	p.execDelete.SetIconName("edit-delete-symbolic")
+	p.execDelete.SetIconName("x-symbolic")
 	p.execDelete.AddCSSClass("flat")
 	p.execDelete.ConnectClicked(func() {
 		p.exec.SetSubtitle("")

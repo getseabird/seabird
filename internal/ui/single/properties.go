@@ -38,7 +38,7 @@ func (p *propertiesView) Render(ctx context.Context, level int, prop api.Propert
 			}
 			if prop.Reference == nil {
 				copy := gtk.NewButton()
-				copy.SetIconName("edit-copy-symbolic")
+				copy.SetIconName("copy-symbolic")
 				copy.AddCSSClass("flat")
 				copy.AddCSSClass("dim-label")
 				copy.SetVAlign(gtk.AlignCenter)

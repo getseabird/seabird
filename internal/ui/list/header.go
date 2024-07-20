@@ -26,7 +26,7 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	header.SetShowStartTitleButtons(false)
 
 	createButton := gtk.NewButton()
-	createButton.SetIconName("document-new-symbolic")
+	createButton.SetIconName("file-plus-symbolic")
 	createButton.SetTooltipText("New Resource")
 	createButton.ConnectClicked(func() {
 		gvk := util.GVKForResource(state.SelectedResource.Value())
@@ -61,7 +61,7 @@ func newListHeader(ctx context.Context, state *common.ClusterState, editor *edit
 	})
 
 	filterButton := gtk.NewMenuButton()
-	filterButton.SetIconName("funnel-symbolic")
+	filterButton.SetIconName("filter-symbolic")
 	filterButton.SetTooltipText("Filter")
 	box.Append(filterButton)
 	namespace := gio.NewMenu()

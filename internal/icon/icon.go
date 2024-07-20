@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 )
 
+//go:generate go run cmd/main.go
 //go:generate glib-compile-resources --target=icon.gresource gresource.xml
 
 //go:embed icon.gresource

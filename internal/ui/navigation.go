@@ -18,6 +18,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/icon"
 	"github.com/getseabird/seabird/internal/pubsub"
 	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
@@ -25,10 +26,7 @@ import (
 	"github.com/getseabird/seabird/internal/ui/single"
 	"github.com/getseabird/seabird/internal/util"
 	"github.com/zmwangx/debounce"
-	appsv1 "k8s.io/api/apps/v1"
-	batchv1 "k8s.io/api/batch/v1"
 	corev1 "k8s.io/api/core/v1"
-	networkingv1 "k8s.io/api/networking/v1"
 	"k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/labels"
@@ -81,7 +79,7 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 	header.SetShowStartTitleButtons(style.Eq(style.Darwin))
 
 	button := gtk.NewMenuButton()
-	button.SetIconName("open-menu-symbolic")
+	button.SetIconName("menu-symbolic")
 
 	windowSection := gio.NewMenu()
 	windowSection.Append("New Window", "win.newWindow")
@@ -111,13 +109,13 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 	content.Append(toggleBox)
 	n.resourcesToggle = gtk.NewToggleButton()
 	n.resourcesToggle.AddCSSClass("flat")
-	n.resourcesToggle.SetIconName("view-list-symbolic")
+	n.resourcesToggle.SetIconName("list-symbolic")
 	n.resourcesToggle.SetHExpand(true)
 	n.resourcesToggle.SetActive(true)
 	toggleBox.Append(n.resourcesToggle)
 	n.pinsToggle = gtk.NewToggleButton()
 	n.pinsToggle.AddCSSClass("flat")
-	n.pinsToggle.SetIconName("view-pin-symbolic")
+	n.pinsToggle.SetIconName("star-symbolic")
 	n.pinsToggle.SetHExpand(true)
 	toggleBox.Append(n.pinsToggle)
 
@@ -385,7 +383,7 @@ func createObjectRow(ref corev1.ObjectReference) *gtk.ListBoxRow {
 	box := gtk.NewBox(gtk.OrientationHorizontal, 8)
 	box.SetMarginTop(4)
 	box.SetMarginBottom(4)
-	box.Append(resourceImage(ref.GroupVersionKind()))
+	box.Append(icon.Kind(ref.GroupVersionKind()))
 	row.SetChild(box)
 	label := gtk.NewLabel(ref.Name)
 	label.SetHAlign(gtk.AlignStart)
@@ -407,7 +405,7 @@ func (n *Navigation) createResourceRow(resource *metav1.APIResource, idx int, fa
 	box := gtk.NewBox(gtk.OrientationHorizontal, 8)
 	box.SetMarginTop(4)
 	box.SetMarginBottom(4)
-	box.Append(resourceImage(util.GVKForResource(resource)))
+	box.Append(icon.Kind(util.GVKForResource(resource)))
 	vbox := gtk.NewBox(gtk.OrientationVertical, 2)
 	vbox.SetVAlign(gtk.AlignCenter)
 	box.Append(vbox)
@@ -602,55 +600,6 @@ func (n *Navigation) RemovePin(object client.Object) {
 		n.pinList.SelectRow(n.pinRows[0])
 		n.pinList.SelectedRow().Activate()
 	}
-}
-
-func resourceImage(gvk schema.GroupVersionKind) *gtk.Image {
-	switch gvk.Group {
-	case corev1.GroupName:
-		{
-			switch gvk.Kind {
-			case "Pod":
-				return gtk.NewImageFromIconName("box-symbolic")
-			case "ConfigMap":
-				return gtk.NewImageFromIconName("file-sliders-symbolic")
-			case "Secret":
-				return gtk.NewImageFromIconName("file-key-2-symbolic")
-			case "Namespace":
-				return gtk.NewImageFromIconName("orbit-symbolic")
-			case "Service":
-				return gtk.NewImageFromIconName("waypoints-symbolic")
-			case "Node":
-				return gtk.NewImageFromIconName("server-symbolic")
-			case "PersistentVolume":
-				return gtk.NewImageFromIconName("hard-drive-download-symbolic")
-			case "PersistentVolumeClaim":
-				return gtk.NewImageFromIconName("hard-drive-upload-symbolic")
-			}
-		}
-	case appsv1.GroupName:
-		switch gvk.Kind {
-		case "ReplicaSet":
-			return gtk.NewImageFromIconName("layers-2-symbolic")
-		case "Deployment":
-			return gtk.NewImageFromIconName("layers-3-symbolic")
-		case "StatefulSet":
-			return gtk.NewImageFromIconName("database-symbolic")
-		}
-	case batchv1.GroupName:
-		switch gvk.Kind {
-		case "Job":
-			return gtk.NewImageFromIconName("briefcase-symbolic")
-		case "CronJob":
-			return gtk.NewImageFromIconName("timer-reset-symbolic")
-		}
-	case networkingv1.GroupName:
-		switch gvk.Kind {
-		case "Ingress":
-			return gtk.NewImageFromIconName("radio-tower-symbolic")
-		}
-	}
-
-	return gtk.NewImageFromIconName("blocks")
 }
 
 func bindStatusCount(ctx context.Context, informer informers.GenericInformer, callback func(map[api.StatusType]int)) cache.ResourceEventHandlerRegistration {

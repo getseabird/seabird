@@ -66,7 +66,7 @@ func NewSingleView(ctx context.Context, state *common.ClusterState, editor *edit
 	delete.SetTooltipText("Delete")
 	delete.ConnectClicked(func() {
 		selected := view.SelectedObject.Value()
-		dialog := adw.NewAlertDialog("Delete object?", selected.GetName())
+		dialog := adw.NewAlertDialog(fmt.Sprintf("Delete %s?", selected.GetObjectKind().GroupVersionKind().Kind), selected.GetName())
 		defer dialog.Present(view)
 		dialog.AddResponse("cancel", "Cancel")
 		dialog.AddResponse("delete", "Delete")
@@ -83,7 +83,7 @@ func NewSingleView(ctx context.Context, state *common.ClusterState, editor *edit
 	header.PackEnd(delete)
 
 	edit := gtk.NewButton()
-	edit.SetIconName("document-edit-symbolic")
+	edit.SetIconName("file-pen-line-symbolic")
 	edit.SetTooltipText("Edit")
 	edit.ConnectClicked(func() {
 		gvk := view.SelectedObject.Value().GetObjectKind().GroupVersionKind()
@@ -96,7 +96,7 @@ func NewSingleView(ctx context.Context, state *common.ClusterState, editor *edit
 	header.PackEnd(edit)
 
 	pin := gtk.NewToggleButton()
-	pin.SetIconName("view-pin-symbolic")
+	pin.SetIconName("star-symbolic")
 	pin.SetTooltipText("Pin")
 	pin.ConnectClicked(func() {
 		if pin.Active() {
@@ -116,7 +116,7 @@ func NewSingleView(ctx context.Context, state *common.ClusterState, editor *edit
 	header.PackStart(kind)
 
 	stack := adw.NewViewStack()
-	stack.AddTitledWithIcon(view.prefPage, "properties", "Properties", "info-outline-symbolic")
+	stack.AddTitledWithIcon(view.prefPage, "properties", "Properties", "table-properties-symbolic")
 	stack.AddTitledWithIcon(view.createSource(), "source", "Yaml", "code-symbolic")
 	content.Append(stack)
 

@@ -98,7 +98,7 @@ func (w *WelcomeWindow) createContent(first bool) *adw.NavigationView {
 
 		add := gtk.NewButton()
 		add.AddCSSClass("flat")
-		add.SetIconName("list-add")
+		add.SetIconName("plus-symbolic")
 		add.ConnectClicked(func() {
 			pref := NewClusterPrefPage(w.ctx, w.State, pubsub.NewProperty(api.ClusterPreferences{}))
 			w.nav.Push(pref.NavigationPage)

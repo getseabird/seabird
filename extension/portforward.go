@@ -83,7 +83,7 @@ func (p *PortForwarder) Close(name types.NamespacedName) error {
 func (p *PortForwarder) UpdateButton(ctx context.Context, btn *gtk.Button, name types.NamespacedName, ports []string) {
 	var handle glib.SignalHandle
 	if fwd, err := p.GetPorts(name); err != nil {
-		btn.SetIconName("mail-forward-symbolic")
+		btn.SetIconName("plug-zap-symbolic")
 		btn.SetTooltipText("Forward port to localhost")
 		btn.AddCSSClass("flat")
 		handle = btn.ConnectClicked(func() {

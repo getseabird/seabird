@@ -37,7 +37,7 @@ func NewPreferencesWindow(ctx context.Context, state *common.State) *PrefsWindow
 	stack := adw.NewViewStack()
 	generalPage := adw.NewBin()
 	generalPage.SetChild(w.createGeneralPage())
-	stack.AddTitledWithIcon(generalPage, "general", "General", "document-properties-symbolic")
+	stack.AddTitled(generalPage, "general", "General")
 	content.Append(stack)
 	view.SetStack(stack)
 
@@ -71,7 +71,7 @@ func (w *PrefsWindow) createGeneralPage() gtk.Widgetter {
 	clusters.SetTitle("Clusters")
 	addCluster := gtk.NewButton()
 	addCluster.AddCSSClass("flat")
-	addCluster.SetIconName("list-add")
+	addCluster.SetIconName("plus-symbolic")
 	addCluster.ConnectClicked(func() {
 		page := NewClusterPrefPage(w.ctx, w.State, pubsub.NewProperty(api.ClusterPreferences{}))
 		w.navigationView.Push(page.NavigationPage)
