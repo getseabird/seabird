@@ -58,29 +58,8 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 				Compare: api.CompareObjectStatus,
 			},
 			api.Column{
-				Name:     "Memory",
-				Priority: 50,
-				Bind: func(cell api.Cell, object client.Object) {
-					pod := object.(*corev1.Pod)
-					req := resource.NewQuantity(0, resource.DecimalSI)
-					for _, container := range pod.Spec.Containers {
-						if mem := container.Resources.Requests.Memory(); mem != nil {
-							req.Add(*mem)
-						}
-					}
-					use, _ := e.Metrics.PodSum(types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace})
-					req.RoundUp(resource.Mega)
-					if use != nil {
-						use.RoundUp(resource.Mega)
-					}
-					bar := widget.NewResourceBar(use, req, "")
-					bar.SetHAlign(gtk.AlignStart)
-					cell.SetChild(bar)
-				},
-			},
-			api.Column{
 				Name:     "CPU",
-				Priority: 40,
+				Priority: 50,
 				Bind: func(cell api.Cell, object client.Object) {
 					pod := object.(*corev1.Pod)
 					req := resource.NewQuantity(0, resource.DecimalSI)
@@ -93,6 +72,27 @@ func (e *Core) CreateColumns(ctx context.Context, res *metav1.APIResource, colum
 					req.RoundUp(resource.Milli)
 					if use != nil {
 						use.RoundUp(resource.Milli)
+					}
+					bar := widget.NewResourceBar(use, req, "")
+					bar.SetHAlign(gtk.AlignStart)
+					cell.SetChild(bar)
+				},
+			},
+			api.Column{
+				Name:     "Memory",
+				Priority: 40,
+				Bind: func(cell api.Cell, object client.Object) {
+					pod := object.(*corev1.Pod)
+					req := resource.NewQuantity(0, resource.DecimalSI)
+					for _, container := range pod.Spec.Containers {
+						if mem := container.Resources.Requests.Memory(); mem != nil {
+							req.Add(*mem)
+						}
+					}
+					use, _ := e.Metrics.PodSum(types.NamespacedName{Name: pod.Name, Namespace: pod.Namespace})
+					req.RoundUp(resource.Mega)
+					if use != nil {
+						use.RoundUp(resource.Mega)
 					}
 					bar := widget.NewResourceBar(use, req, "")
 					bar.SetHAlign(gtk.AlignStart)
@@ -374,24 +374,33 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 			}
 			props = append(props, ports)
 
-			var cpu *resource.Quantity
-			var mem *resource.Quantity
+			cpu := &api.GroupProperty{
+				Name: "CPU",
+			}
 			if metrics != nil {
-				if cpu = metrics.Usage.Cpu(); cpu != nil {
-					cpu.RoundUp(resource.Milli)
-					cpu.Format = resource.DecimalSI
-					props = append(props, &api.TextProperty{Name: "CPU", Value: fmt.Sprintf("%v", cpu)})
-				}
-
-				if mem = metrics.Usage.Memory(); mem != nil {
-					mem.RoundUp(resource.Mega)
-					mem.Format = resource.DecimalSI
-					props = append(props, &api.TextProperty{
-						Name:  "Memory",
-						Value: fmt.Sprintf("%v", mem),
-					})
+				if current := metrics.Usage.Cpu(); current != nil {
+					current.RoundUp(resource.Milli)
+					current.Format = resource.DecimalSI
+					cpu.Children = append(cpu.Children, &api.TextProperty{Name: "Current", Value: current.String()})
 				}
 			}
+			cpu.Children = append(cpu.Children, &api.TextProperty{Name: "Request", Value: container.Resources.Requests.Cpu().String()})
+			cpu.Children = append(cpu.Children, &api.TextProperty{Name: "Limit", Value: container.Resources.Limits.Cpu().String()})
+			props = append(props, cpu)
+
+			mem := &api.GroupProperty{
+				Name: "Memory",
+			}
+			if metrics != nil {
+				if current := metrics.Usage.Memory(); current != nil {
+					current.RoundUp(resource.Mega)
+					current.Format = resource.DecimalSI
+					mem.Children = append(mem.Children, &api.TextProperty{Name: "Current", Value: current.String()})
+				}
+			}
+			mem.Children = append(mem.Children, &api.TextProperty{Name: "Request", Value: container.Resources.Requests.Memory().String()})
+			mem.Children = append(mem.Children, &api.TextProperty{Name: "Limit", Value: container.Resources.Limits.Memory().String()})
+			props = append(props, mem)
 
 			containers = append(containers, &api.GroupProperty{
 				ID:   fmt.Sprintf("containers.%d", i),
@@ -400,19 +409,21 @@ func (e *Core) CreateObjectProperties(ctx context.Context, _ *metav1.APIResource
 					switch row := w.(type) {
 					case *adw.ExpanderRow:
 						row.AddPrefix(api.NewStatusWithObject(object).Icon())
-						if cpu != nil {
-							req := container.Resources.Requests.Cpu()
-							if req == nil || req.IsZero() {
-								req = container.Resources.Limits.Cpu()
+						if metrics != nil {
+							if mem := metrics.Usage.Memory(); mem != nil {
+								req := container.Resources.Requests.Memory()
+								if req == nil || req.IsZero() {
+									req = container.Resources.Limits.Memory()
+								}
+								row.AddSuffix(widget.NewResourceBar(mem, req, "memory-stick-symbolic"))
 							}
-							row.AddSuffix(widget.NewResourceBar(cpu, req, "cpu-symbolic"))
-						}
-						if mem != nil {
-							req := container.Resources.Requests.Memory()
-							if req == nil || req.IsZero() {
-								req = container.Resources.Limits.Memory()
+							if cpu := metrics.Usage.Cpu(); cpu != nil {
+								req := container.Resources.Requests.Cpu()
+								if req == nil || req.IsZero() {
+									req = container.Resources.Limits.Cpu()
+								}
+								row.AddSuffix(widget.NewResourceBar(cpu, req, "cpu-symbolic"))
 							}
-							row.AddSuffix(widget.NewResourceBar(mem, req, "memory-stick-symbolic"))
 						}
 
 						logs := adw.NewActionRow()
