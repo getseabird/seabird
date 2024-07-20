@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path"
+	"strings"
 	"time"
 
 	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
@@ -94,7 +95,7 @@ func LoadPreferences() (*Preferences, error) {
 	}
 
 	home, _ := os.UserHomeDir()
-	for _, path := range []string{path.Join(home, ".kube/config"), os.Getenv("KUBECONFIG")} {
+	for _, path := range append([]string{path.Join(home, ".kube/config")}, strings.Split(os.Getenv("KUBECONFIG"), ":")...) {
 		if _, err := os.Stat(path); err != nil {
 			continue
 		}
@@ -229,6 +230,7 @@ func UpdateClusterPreferences(prefs *ClusterPreferences, path, context string) e
 
 	prefs.Host = config.Host
 	prefs.Exec = config.ExecProvider
+	prefs.TLS = config.TLSClientConfig
 
 	if prefs.Name == "" {
 		prefs.Name = context
@@ -246,8 +248,7 @@ func UpdateClusterPreferences(prefs *ClusterPreferences, path, context string) e
 			return err
 		}
 		prefs.TLS.CertData = data
-	} else {
-		prefs.TLS.CertData = config.CertData
+		prefs.TLS.CertFile = ""
 	}
 	if config.KeyFile != "" {
 		data, err := os.ReadFile(config.KeyFile)
@@ -255,8 +256,7 @@ func UpdateClusterPreferences(prefs *ClusterPreferences, path, context string) e
 			return err
 		}
 		prefs.TLS.KeyData = data
-	} else {
-		prefs.TLS.KeyData = config.KeyData
+		prefs.TLS.KeyFile = ""
 	}
 	if config.CAFile != "" {
 		data, err := os.ReadFile(config.CAFile)
@@ -264,8 +264,7 @@ func UpdateClusterPreferences(prefs *ClusterPreferences, path, context string) e
 			return err
 		}
 		prefs.TLS.CAData = data
-	} else {
-		prefs.TLS.CAData = config.CAData
+		prefs.TLS.CAFile = ""
 	}
 	if config.BearerTokenFile != "" {
 		data, err := os.ReadFile(config.BearerTokenFile)
@@ -273,8 +272,6 @@ func UpdateClusterPreferences(prefs *ClusterPreferences, path, context string) e
 			return err
 		}
 		prefs.BearerToken = string(data)
-	} else {
-		prefs.BearerToken = config.BearerToken
 	}
 
 	return nil

@@ -172,7 +172,7 @@ func (p *ClusterPrefPage) createActions() *adw.PreferencesGroup {
 	load.SetActivatable(true)
 	load.SetSensitive(p.prefs.Value().Kubeconfig == nil)
 	load.AddSuffix(gtk.NewImageFromIconName("go-next-symbolic"))
-	load.SetTitle("Load kubeconfig")
+	load.SetTitle("Import kubeconfig")
 
 	load.ConnectActivated(func() {
 		fileChooser := gtk.NewFileChooserNative("Select kubeconfig", ctxt.MustFrom[*gtk.Window](p.ctx), gtk.FileChooserActionOpen, "Open", "Cancel")
