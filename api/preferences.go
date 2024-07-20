@@ -272,6 +272,8 @@ func UpdateClusterPreferences(prefs *ClusterPreferences, path, context string) e
 			return err
 		}
 		prefs.BearerToken = string(data)
+	} else {
+		prefs.BearerToken = config.BearerToken
 	}
 
 	return nil
