@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg height="16px" viewBox="0 0 16 16" width="16px" xmlns="http://www.w3.org/2000/svg">
+    <g fill="#222222">
+        <path d="m 1 0 v 1 h 1 v 1 h -1 v 5 h 1 v 1 h -1 v 1 h 14 v -3 h -1 v -3 h 1 v -3 z m 2 1 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m -11 2 h 3 v 3 h -3 z m 4 0 h 3 v 3 h -3 z m 4 0 h 3 v 3 h -3 z m -7 4 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m 2 0 h 1 v 1 h -1 z m 0 0"/>
+        <path d="m 1 11 v 5 h 14 v -5 z m 6 1 h 1 v 1 h 2 v 0.5 h 1 v -1 h 1 v 0.5 h 2.5 v 1 h -1.5 v 1 h -1 v -0.5 h -1 v -0.5 h -1 v 1 h -1 v -1 h -1 v 1.5 h -1 v -0.5 h -1 v -1 h -1 v 1 h -1 v -0.5 h -1 v -0.5 h -1.5 v -1 h 1.5 v -0.5 h 1 v -0.5 h 1 v 1.5 h 1 v -0.5 h 1 z m 0 0"/>
+    </g>
+</svg>

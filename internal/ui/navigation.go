@@ -79,7 +79,7 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 	header.SetShowStartTitleButtons(style.Eq(style.Darwin))
 
 	button := gtk.NewMenuButton()
-	button.SetIconName("menu-symbolic")
+	button.SetIconName("open-menu-symbolic")
 
 	windowSection := gio.NewMenu()
 	windowSection.Append("New Window", "win.newWindow")
@@ -109,13 +109,13 @@ func NewNavigation(ctx context.Context, state *common.ClusterState, viewStack *g
 	content.Append(toggleBox)
 	n.resourcesToggle = gtk.NewToggleButton()
 	n.resourcesToggle.AddCSSClass("flat")
-	n.resourcesToggle.SetIconName("list-symbolic")
+	n.resourcesToggle.SetIconName("view-list-symbolic")
 	n.resourcesToggle.SetHExpand(true)
 	n.resourcesToggle.SetActive(true)
 	toggleBox.Append(n.resourcesToggle)
 	n.pinsToggle = gtk.NewToggleButton()
 	n.pinsToggle.AddCSSClass("flat")
-	n.pinsToggle.SetIconName("star-symbolic")
+	n.pinsToggle.SetIconName("pin-symbolic")
 	n.pinsToggle.SetHExpand(true)
 	toggleBox.Append(n.pinsToggle)
 

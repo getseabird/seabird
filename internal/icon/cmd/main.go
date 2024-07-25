@@ -4,43 +4,52 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"path"
 	"strings"
 )
-
-// Must convert strokes to fills when adding icons from Lucide
-// npm i -g oslllo-svg-fixer svgo
-// sed -i 's/stroke-width="2"/stroke-width="3"/' lucide/*.svg
-// oslllo-svg-fixer -s lucide -d lucide
-// svgo -f lucide -o lucide
-// TODO increase stroke with to 2.5
 
 func main() {
 	xml :=
 		`<?xml version="1.0" encoding="UTF-8"?>
 	<gresources>
-		<gresource prefix="/hicolor/symbolic/actions">
-			<file alias="edit-find-symbolic.svg">seabird.svg</file>
-		</gresource>
 		<gresource prefix="/dev/skynomads/Seabird/icons/scalable/actions/">
 			<file preprocess="xml-stripblanks">seabird.svg</file>
-			<file alias="edit-find-symbolic.svg">seabird.svg</file> <!-- TODO doesn't work -->
 `
 
-	for _, dir := range []string{"lucide"} {
-		files, err := os.ReadDir(dir)
+	icons := map[string]string{}
+
+	for _, root := range []string{"icon-development-kit"} {
+		files, err := os.ReadDir(root)
 		if err != nil {
 			log.Fatal(err)
 		}
-		for _, f := range files {
-			if f.Type().IsDir() || !strings.HasSuffix(f.Name(), ".svg") {
-				continue
+		for _, f1 := range files {
+			if f1.Type().IsDir() {
+				files, err := os.ReadDir(path.Join(root, f1.Name()))
+				if err != nil {
+					log.Fatal(err)
+				}
+				for _, f2 := range files {
+					if f2.Type().IsDir() || !strings.HasSuffix(f2.Name(), ".svg") {
+						continue
+					}
+					icons[strings.TrimSuffix(strings.TrimSuffix(f2.Name(), ".svg"), "-symbolic")] = path.Join(root, f1.Name(), f2.Name())
+				}
+			} else {
+				if !strings.HasSuffix(f1.Name(), ".svg") {
+					continue
+				}
+				icons[strings.TrimSuffix(strings.TrimSuffix(f1.Name(), ".svg"), "-symbolic")] = path.Join(root, f1.Name())
 			}
-			xml += fmt.Sprintf(
-				`			<file alias="%s-symbolic.svg" preprocess="xml-stripblanks">%s/%s</file>
-`,
-				strings.TrimSuffix(strings.TrimSuffix(f.Name(), ".svg"), "-symbolic"), dir, f.Name(),
-			)
 		}
+	}
+
+	for name, path := range icons {
+		xml += fmt.Sprintf(
+			`			<file alias="%s-symbolic.svg" preprocess="xml-stripblanks">%s</file>
+`,
+			strings.TrimSuffix(strings.TrimSuffix(name, ".svg"), "-symbolic"), path,
+		)
 	}
 
 	xml += `		</gresource>

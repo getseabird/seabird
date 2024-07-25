@@ -207,22 +207,22 @@ func (status *Status) Int() int {
 func (status *Status) Icon() *gtk.Image {
 	switch status.Type {
 	case StatusSuccess, StatusInfo:
-		icon := gtk.NewImageFromIconName("circle-check-symbolic")
+		icon := gtk.NewImageFromIconName("verified-checkmark-symbolic")
 		icon.AddCSSClass(string(status.Type))
 		icon.SetHAlign(gtk.AlignStart)
 		return icon
 	case StatusWarning:
-		icon := gtk.NewImageFromIconName("circle-alert-symbolic")
+		icon := gtk.NewImageFromIconName("dialog-warning-symbolic")
 		icon.AddCSSClass(string(status.Type))
 		icon.SetHAlign(gtk.AlignStart)
 		return icon
 	case StatusError:
-		icon := gtk.NewImageFromIconName("circle-minus-symbolic")
+		icon := gtk.NewImageFromIconName("dialog-error-symbolic")
 		icon.AddCSSClass(string(status.Type))
 		icon.SetHAlign(gtk.AlignStart)
 		return icon
 	default:
-		icon := gtk.NewImageFromIconName("circle-help-symbolic")
+		icon := gtk.NewImageFromIconName("dialog-question-symbolic")
 		icon.SetHAlign(gtk.AlignStart)
 		return icon
 	}

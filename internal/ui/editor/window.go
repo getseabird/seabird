@@ -86,7 +86,7 @@ func NewEditorWindow(ctx context.Context) *EditorWindow {
 	toolbar.AddTopBar(tabbar)
 
 	new := gtk.NewButton()
-	new.SetIconName("square-plus-symbolic")
+	new.SetIconName("text-editor-symbolic")
 	new.ConnectClicked(func() {
 		w.AddPage(nil, nil)
 	})

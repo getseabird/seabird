@@ -83,7 +83,7 @@ func (p *PortForwarder) Close(name types.NamespacedName) error {
 func (p *PortForwarder) UpdateButton(ctx context.Context, btn *gtk.Button, name types.NamespacedName, ports []string) {
 	var handle glib.SignalHandle
 	if fwd, err := p.GetPorts(name); err != nil {
-		btn.SetIconName("plug-zap-symbolic")
+		btn.SetIconName("vertical-arrows-long-symbolic")
 		btn.SetTooltipText("Forward port to localhost")
 		btn.AddCSSClass("flat")
 		handle = btn.ConnectClicked(func() {
@@ -96,7 +96,7 @@ func (p *PortForwarder) UpdateButton(ctx context.Context, btn *gtk.Button, name 
 		})
 	} else {
 		box := gtk.NewBox(gtk.OrientationHorizontal, 2)
-		icon := gtk.NewImageFromIconName("window-close-symbolic")
+		icon := gtk.NewImageFromIconName("cross-small-symbolic")
 		icon.AddCSSClass("error")
 		box.Append(icon)
 		box.Append(gtk.NewLabel(fmt.Sprintf("%d", fwd[0].Local)))

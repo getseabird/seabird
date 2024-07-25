@@ -20,85 +20,82 @@ func Kind(gvk schema.GroupVersionKind) *gtk.Image {
 		{
 			switch gvk.Kind {
 			case "Pod":
-				return gtk.NewImageFromIconName("box-symbolic")
+				return gtk.NewImageFromIconName("application-x-executable-symbolic")
 			case "ConfigMap":
-				return gtk.NewImageFromIconName("file-sliders-symbolic")
+				return gtk.NewImageFromIconName("rich-text-symbolic")
 			case "Secret":
-				return gtk.NewImageFromIconName("file-key-2-symbolic")
+				return gtk.NewImageFromIconName("key-symbolic")
 			case "Namespace":
-				return gtk.NewImageFromIconName("orbit-symbolic")
+				return gtk.NewImageFromIconName("globe-symbolic")
 			case "Service":
-				return gtk.NewImageFromIconName("waypoints-symbolic")
+				return gtk.NewImageFromIconName("network-proxy-server-symbolic")
 			case "Node":
-				return gtk.NewImageFromIconName("server-symbolic")
+				return gtk.NewImageFromIconName("network-server-symbolic")
 			case "PersistentVolume":
-				return gtk.NewImageFromIconName("hard-drive-download-symbolic")
+				return gtk.NewImageFromIconName("harddisk-symbolic")
 			case "PersistentVolumeClaim":
-				return gtk.NewImageFromIconName("hard-drive-upload-symbolic")
+				return gtk.NewImageFromIconName("harddisk-inverted-symbolic")
 			case "Event":
-				return gtk.NewImageFromIconName("dialog-information-symbolic")
+				return gtk.NewImageFromIconName("bullhorn-symbolic")
 			case "Endpoints":
 			case "LimitRange":
 			case "PodTemplate":
 			case "ResourceQuota":
 			case "ReplicationController":
 			case "ServiceAccount":
-				return gtk.NewImageFromIconName("user-symbolic")
+				return gtk.NewImageFromIconName("people-symbolic")
 			}
 		}
 	case appsv1.GroupName:
 		switch gvk.Kind {
 		case "ReplicaSet":
-			return gtk.NewImageFromIconName("layers-2-symbolic")
+			return gtk.NewImageFromIconName("grid-symbolic")
 		case "Deployment":
-			return gtk.NewImageFromIconName("layers-3-symbolic")
+			return gtk.NewImageFromIconName("grid-large-symbolic")
 		case "StatefulSet":
-			return gtk.NewImageFromIconName("database-symbolic")
+			return gtk.NewImageFromIconName("raid-symbolic")
 		case "DaemonSet":
-			return gtk.NewImageFromIconName("server-cog-symbolic")
+			return gtk.NewImageFromIconName("display-with-window-symbolic")
 		case "ControllerRevision":
 		}
 	case batchv1.GroupName:
 		switch gvk.Kind {
 		case "Job":
-			return gtk.NewImageFromIconName("cloud-cog-symbolic")
+			return gtk.NewImageFromIconName("meeting-symbolic")
 		case "CronJob":
-			return gtk.NewImageFromIconName("timer-reset-symbolic")
+			return gtk.NewImageFromIconName("clock-alt-symbolic")
 		}
 	case networkingv1.GroupName:
 		switch gvk.Kind {
 		case "Ingress":
-			return gtk.NewImageFromIconName("radio-tower-symbolic")
+			return gtk.NewImageFromIconName("network-transmit-receive-symbolic")
 		case "IngressClass":
-			return gtk.NewImageFromIconName("cast-symbolic")
+			return gtk.NewImageFromIconName("network-no-route-symbolic")
 		case "NetworkPolicy":
-			return gtk.NewImageFromIconName("globe-lock-symbolic")
+			return gtk.NewImageFromIconName("network-error-symbolic")
 		}
 	case eventsv1.GroupName:
 		switch gvk.Kind {
 		case "Event":
-			return gtk.NewImageFromIconName("dialog-information-symbolic")
+			return gtk.NewImageFromIconName("bullhorn-symbolic")
 		}
 	case apiextensionsv1.GroupName:
 		switch gvk.Kind {
 		case "CustomResourceDefinition":
-			return gtk.NewImageFromIconName("toy-brick-symbolic")
+			return gtk.NewImageFromIconName("puzzle-piece-symbolic")
 		}
 	case storagev1.GroupName:
 		switch gvk.Kind {
 		case "CSIDriver":
-			return gtk.NewImageFromIconName("warehouse-symbolic")
 		case "CSINode":
-			return gtk.NewImageFromIconName("cylinder-symbolic")
 		case "CSIStorageCapacity":
 		case "StorageClass":
-			return gtk.NewImageFromIconName("import-symbolic")
 		case "VolumeAttachment":
 		}
 	case "helm.toolkit.fluxcd.io":
 		switch gvk.Kind {
 		case "HelmRelease":
-			return gtk.NewImageFromIconName("package-open-symbolic")
+			return gtk.NewImageFromIconName("package-x-generic-symbolic")
 		}
 	case "source.toolkit.fluxcd.io":
 		switch gvk.Kind {
@@ -107,11 +104,11 @@ func Kind(gvk schema.GroupVersionKind) *gtk.Image {
 		case "HelmRepository":
 			return gtk.NewImageFromIconName("library-symbolic")
 		case "GitRepository":
-			return gtk.NewImageFromIconName("folder-git-symbolic")
+			return gtk.NewImageFromIconName("git-symbolic")
 		case "Bucket":
-			return gtk.NewImageFromIconName("paint-bucket-symbolic")
+			return gtk.NewImageFromIconName("fill-tool-symbolic")
 		case "OCIRepository":
-			return gtk.NewImageFromIconName("container-symbolic")
+			return gtk.NewImageFromIconName("image-symbolic")
 		}
 	case "monitoring.coreos.com":
 		switch gvk.Kind {
@@ -119,7 +116,6 @@ func Kind(gvk schema.GroupVersionKind) *gtk.Image {
 		case "Alertmanager":
 		case "PrometheusAgent":
 		case "PodMonitor":
-			return gtk.NewImageFromIconName("package-search-symbolic")
 		case "Probe":
 		case "PrometheusRole":
 		case "Prometheus":
@@ -129,5 +125,5 @@ func Kind(gvk schema.GroupVersionKind) *gtk.Image {
 		}
 	}
 
-	return gtk.NewImageFromIconName("blocks-symbolic")
+	return gtk.NewImageFromIconName("puzzle-piece-symbolic")
 }
