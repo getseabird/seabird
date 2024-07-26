@@ -2,6 +2,7 @@ package api
 
 import (
 	"context"
+	"time"
 
 	"github.com/getseabird/seabird/internal/pubsub"
 	v1 "k8s.io/api/core/v1"
@@ -20,33 +21,40 @@ func newEvents(ctx context.Context, clientset *kubernetes.Clientset) *Events {
 	e := Events{
 		events: pubsub.NewProperty([]*eventsv1.Event{}),
 	}
-	var event eventsv1.Event
 	var events []*eventsv1.Event
 	watchlist := cache.NewListWatchFromClient(clientset.EventsV1().RESTClient(), "events", v1.NamespaceAll,
 		fields.Everything())
-	_, controller := cache.NewInformer(watchlist, &event, 0,
+	_, controller := cache.NewInformer(watchlist, &eventsv1.Event{}, time.Minute*10,
 		cache.ResourceEventHandlerFuncs{
-			AddFunc: func(obj interface{}) {
-				events = append(events, obj.(*eventsv1.Event))
-				e.events.Pub(events)
-			},
-			DeleteFunc: func(o interface{}) {
-				obj := o.(*eventsv1.Event)
-				for i, o := range events {
-					if o.GetUID() == obj.GetUID() {
-						events = append(events[:i], events[i+1:]...)
-						e.events.Pub(events)
-						break
-					}
+			AddFunc: func(o interface{}) {
+				switch obj := o.(type) {
+				case *eventsv1.Event:
+					events = append(events, obj)
+					e.events.Pub(events)
 				}
 			},
+			DeleteFunc: func(o interface{}) {
+				switch obj := o.(type) {
+				case *eventsv1.Event:
+					for i, o := range events {
+						if o.GetUID() == obj.GetUID() {
+							events = append(events[:i], events[i+1:]...)
+							e.events.Pub(events)
+							break
+						}
+					}
+				}
+
+			},
 			UpdateFunc: func(oldObj, newObj interface{}) {
-				obj := newObj.(*eventsv1.Event)
-				for i, o := range events {
-					if o.GetUID() == obj.GetUID() {
-						events[i] = obj
-						e.events.Pub(events)
-						break
+				switch obj := newObj.(type) {
+				case *eventsv1.Event:
+					for i, o := range events {
+						if o.GetUID() == obj.GetUID() {
+							events[i] = obj
+							e.events.Pub(events)
+							break
+						}
 					}
 				}
 			},
