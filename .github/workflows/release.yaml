@@ -223,6 +223,7 @@ jobs:
           file: seabird_darwin_${{ matrix.arch }}.dmg
           tag: ${{ github.ref }}
   automerge:
+    runs-on: ubuntu-latest
     if: github.event_name == 'pull_request' && github.actor == 'dependabot[bot]'
     needs:
       - linux
