@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"net/http"
 	"reflect"
 	"slices"
 	"sort"
@@ -66,6 +67,7 @@ func NewCluster(ctx context.Context, clusterPrefs pubsub.Property[ClusterPrefere
 		BearerToken:     clusterPrefs.Value().BearerToken,
 		TLSClientConfig: clusterPrefs.Value().TLS,
 		ExecProvider:    clusterPrefs.Value().Exec,
+		Proxy:           http.ProxyFromEnvironment,
 	}
 
 	scheme := runtime.NewScheme()
