@@ -18,12 +18,12 @@ func (m *AdwViewStack) Type() reflect.Type {
 	return reflect.TypeFor[*adw.ViewStack]()
 }
 
-func (model *AdwViewStack) Create(ctx context.Context) gtk.Widgetter {
+func (m *AdwViewStack) Create(ctx context.Context) gtk.Widgetter {
 	w := adw.NewViewStack()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *AdwViewStack) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *AdwViewStack) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 }

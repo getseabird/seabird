@@ -1,4 +1,4 @@
-package component
+package cluster
 
 import (
 	"context"
@@ -9,24 +9,20 @@ import (
 	"github.com/getseabird/seabird/internal/ui/common"
 )
 
-type Cluster struct {
-	r.BaseComponent
+type Window struct {
+	r.BaseComponent[*Window]
 	*adw.Application
 	*common.ClusterState
 }
 
-func (c *Cluster) Init(ctx context.Context, ch chan<- any) {
-
-}
-
-func (c *Cluster) Update(ctx context.Context, message any, ch chan<- any) bool {
+func (c *Window) Update(ctx context.Context, message any) bool {
 	switch message.(type) {
 	default:
 		return false
 	}
 }
 
-func (c *Cluster) View(ctx context.Context, ch chan<- any) r.Model {
+func (c *Window) View(ctx context.Context) r.Model {
 	return &r.AdwApplicationWindow{
 		ApplicationWindow: r.ApplicationWindow{
 			Application: &c.Application.Application,
@@ -45,13 +41,14 @@ func (c *Cluster) View(ctx context.Context, ch chan<- any) r.Model {
 						Child: &r.Box{
 							Orientation: gtk.OrientationVertical,
 							Children: []r.Model{
-								&r.AdwHeaderBar{},
 								&r.Box{
 									Children: []r.Model{
-										r.CreateComponent(&Navigation{resources: c.Resources}),
+										&r.Paned{
+											StartChild: r.CreateComponent(&Navigation{resources: c.Resources, ClusterState: c.ClusterState}),
+											EndChild:   r.CreateComponent(&Resources{ClusterState: c.ClusterState}),
+										},
 									},
 								},
-								&r.Label{Label: "foo"},
 							},
 						},
 					},
@@ -61,7 +58,7 @@ func (c *Cluster) View(ctx context.Context, ch chan<- any) r.Model {
 	}
 }
 
-func (c *Cluster) On(hook r.Hook, widget gtk.Widgetter) {
+func (c *Window) On(hook r.Hook, widget gtk.Widgetter) {
 	switch hook {
 	case r.HookCreate:
 		c.Application.ConnectActivate(func() {

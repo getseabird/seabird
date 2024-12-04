@@ -18,14 +18,14 @@ func (m *Box) Type() reflect.Type {
 	return reflect.TypeFor[*gtk.Box]()
 }
 
-func (model *Box) Create(ctx context.Context) gtk.Widgetter {
-	w := gtk.NewBox(model.Orientation, model.Spacing)
-	model.Update(ctx, w)
+func (m *Box) Create(ctx context.Context) gtk.Widgetter {
+	w := gtk.NewBox(m.Orientation, m.Spacing)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *Box) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *Box) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 
 	box := w.(*gtk.Box)
 	// does not care about child types
@@ -36,7 +36,7 @@ func (model *Box) Update(ctx context.Context, w gtk.Widgetter) {
 	// })
 
 	next := box.FirstChild()
-	for _, child := range model.Children {
+	for _, child := range m.Children {
 		if next == nil {
 			new := createChild(ctx, child)
 			box.Append(new)

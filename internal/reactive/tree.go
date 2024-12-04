@@ -17,10 +17,11 @@ func NewTree(ctx context.Context, model Model) gtk.Widgetter {
 	root.ctx = ctxt.With[*Node](ctx, root)
 
 	root.widget = model.Create(root.ctx)
-	glib.Bind[*Node](root.widget, root)
 	if c := model.Component(); c != nil {
 		root.component = c
 	}
+
+	glib.Bind[*Node](root.widget, root)
 
 	go func() {
 		for {
@@ -48,12 +49,8 @@ type Node struct {
 	component      Component
 	children       []*Node
 	signalHandlers map[string]glib.SignalHandle
-	state          []any
+	// state          []any
 }
-
-// func (r *Node) Render(model Model) gtk.Widgetter {
-// 	return nil
-// }
 
 func (n *Node) CreateChild(ctx context.Context, model Model) gtk.Widgetter {
 	child := &Node{parent: n, ch: n.ch}
@@ -85,9 +82,9 @@ func (n *Node) RemoveChild(widget gtk.Widgetter) {
 
 func (n *Node) message(msg any, rerender bool) {
 	if n.component != nil {
-		if n.component.Update(n.ctx, msg, n.ch) && rerender {
+		if n.component.Update(n.ctx, msg) && rerender {
 			rerender = false
-			n.component.View(n.ctx, n.ch).Update(n.ctx, n.widget)
+			n.component.View(n.ctx).Update(n.ctx, n.widget)
 		}
 	}
 	for _, c := range n.children {

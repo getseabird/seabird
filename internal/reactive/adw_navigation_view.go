@@ -17,18 +17,18 @@ func (m *AdwNavigationView) Type() reflect.Type {
 	return reflect.TypeFor[*adw.NavigationView]()
 }
 
-func (model *AdwNavigationView) Create(ctx context.Context) gtk.Widgetter {
+func (m *AdwNavigationView) Create(ctx context.Context) gtk.Widgetter {
 	w := adw.NewNavigationView()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *AdwNavigationView) Update(ctx context.Context, wi gtk.Widgetter) {
+func (m *AdwNavigationView) Update(ctx context.Context, wi gtk.Widgetter) {
 	w := wi.(*adw.NavigationView)
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 
 	mergeChildren(
-		ctx, w, Map(model.Pages, func(p AdwNavigationPage) Model { return &p }),
+		ctx, w, Map(m.Pages, func(p AdwNavigationPage) Model { return &p }),
 		func(c gtk.Widgetter, pos int) { w.Add(c.(*adw.NavigationPage)) },
 		func(c gtk.Widgetter) { w.Remove(c.(*adw.NavigationPage)) },
 	)

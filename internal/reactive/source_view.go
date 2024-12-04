@@ -21,12 +21,12 @@ func (m *SourceView) Type() reflect.Type {
 	return reflect.TypeFor[*gtksource.View]()
 }
 
-func (model *SourceView) Create(ctx context.Context) gtk.Widgetter {
-	w := gtksource.NewViewWithBuffer(model.Buffer)
-	model.Update(ctx, w)
+func (m *SourceView) Create(ctx context.Context) gtk.Widgetter {
+	w := gtksource.NewViewWithBuffer(m.Buffer)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *SourceView) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *SourceView) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 }

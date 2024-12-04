@@ -19,20 +19,20 @@ func (m *AdwViewSwitcher) Type() reflect.Type {
 	return reflect.TypeFor[*adw.ViewSwitcher]()
 }
 
-func (model *AdwViewSwitcher) Create(ctx context.Context) gtk.Widgetter {
+func (m *AdwViewSwitcher) Create(ctx context.Context) gtk.Widgetter {
 	w := adw.NewViewSwitcher()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *AdwViewSwitcher) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *AdwViewSwitcher) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 
 	switcher := w.(*adw.ViewSwitcher)
 
 	glib.IdleAdd(func() {
-		if model.ViewStack != nil {
-			switcher.SetStack(model.ViewStack)
+		if m.ViewStack != nil {
+			switcher.SetStack(m.ViewStack)
 		}
 	})
 }

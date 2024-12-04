@@ -18,13 +18,13 @@ func (m *AdwNavigationPage) Type() reflect.Type {
 	return reflect.TypeFor[*adw.NavigationPage]()
 }
 
-func (model *AdwNavigationPage) Create(ctx context.Context) gtk.Widgetter {
-	w := adw.NewNavigationPage(createChild(ctx, model.Child), model.Title)
-	model.Update(ctx, w)
+func (m *AdwNavigationPage) Create(ctx context.Context) gtk.Widgetter {
+	w := adw.NewNavigationPage(createChild(ctx, m.Child), m.Title)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *AdwNavigationPage) Update(ctx context.Context, wi gtk.Widgetter) {
+func (m *AdwNavigationPage) Update(ctx context.Context, wi gtk.Widgetter) {
 	w := wi.(*adw.NavigationPage)
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 }

@@ -17,18 +17,18 @@ func (m *AdwPreferencesPage) Type() reflect.Type {
 	return reflect.TypeFor[*adw.PreferencesPage]()
 }
 
-func (model *AdwPreferencesPage) Create(ctx context.Context) gtk.Widgetter {
+func (m *AdwPreferencesPage) Create(ctx context.Context) gtk.Widgetter {
 	w := adw.NewPreferencesPage()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *AdwPreferencesPage) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *AdwPreferencesPage) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 	page := w.(*adw.PreferencesPage)
 
 	mergeChildren[*adw.PreferencesGroup](
-		ctx, page, Map(model.Groups, func(g AdwPreferencesGroup) Model { return &g }),
+		ctx, page, Map(m.Groups, func(g AdwPreferencesGroup) Model { return &g }),
 		func(w *adw.PreferencesGroup, pos int) { page.Add(w) },
 		func(w *adw.PreferencesGroup) { page.Remove(w) },
 	)

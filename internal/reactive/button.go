@@ -18,12 +18,12 @@ func (m *Button) Type() reflect.Type {
 	return reflect.TypeFor[*gtk.Button]()
 }
 
-func (model *Button) Create(ctx context.Context) gtk.Widgetter {
+func (m *Button) Create(ctx context.Context) gtk.Widgetter {
 	w := gtk.NewButton()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *Button) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *Button) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 }

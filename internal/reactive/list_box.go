@@ -9,25 +9,26 @@ import (
 
 type ListBox struct {
 	Widget
-	Children []Model
+	RowSelected func(listBox *gtk.ListBox, listBoxRow *gtk.ListBoxRow) `gtk:"row-selected,signal"`
+	Children    []Model
 }
 
 func (m *ListBox) Type() reflect.Type {
 	return reflect.TypeFor[*gtk.ListBox]()
 }
 
-func (model *ListBox) Create(ctx context.Context) gtk.Widgetter {
+func (m *ListBox) Create(ctx context.Context) gtk.Widgetter {
 	w := gtk.NewListBox()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *ListBox) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *ListBox) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 	box := w.(*gtk.ListBox)
 
 	next := box.FirstChild()
-	for _, child := range model.Children {
+	for _, child := range m.Children {
 		if next == nil {
 			new := createChild(ctx, child)
 			box.Append(new)

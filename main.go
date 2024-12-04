@@ -33,7 +33,7 @@ func main() {
 
 	gtk.Init()
 
-	app := &component.App{Application: adw.NewApplication("dev.skynomads.Seabird", gio.ApplicationFlagsNone)}
+	app := &component.Start{Application: adw.NewApplication("dev.skynomads.Seabird2", gio.ApplicationFlagsNone)}
 
 	app.ConnectActivate(func() {
 		tree := reactive.NewTree(context.Background(), reactive.CreateComponent(app))

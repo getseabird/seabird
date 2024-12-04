@@ -15,12 +15,12 @@ func (m *ToggleButton) Type() reflect.Type {
 	return reflect.TypeFor[*gtk.ToggleButton]()
 }
 
-func (model *ToggleButton) Create(ctx context.Context) gtk.Widgetter {
+func (m *ToggleButton) Create(ctx context.Context) gtk.Widgetter {
 	w := gtk.NewToggleButton()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *ToggleButton) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Button, &w.(*gtk.ToggleButton).Button)
+func (m *ToggleButton) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Button, &w.(*gtk.ToggleButton).Button)
 }

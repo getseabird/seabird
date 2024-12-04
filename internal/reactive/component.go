@@ -4,8 +4,6 @@ import (
 	"context"
 	"reflect"
 
-	"github.com/diamondburned/gotk4-adwaita/pkg/adw"
-	"github.com/diamondburned/gotk4/pkg/core/glib"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/internal/ctxt"
 )
@@ -17,21 +15,45 @@ const (
 	HookUpdate
 )
 
+func CreateComponent(component Component) Model {
+	return &ComponentModel{component: component}
+}
+
 type Component interface {
-	Init(ctx context.Context, ch chan<- any)
-	Update(ctx context.Context, message any, ch chan<- any) bool
-	View(ctx context.Context, ch chan<- any) Model
+	Init(ctx context.Context)
+	Update(ctx context.Context, message any) bool
+	View(ctx context.Context) Model
 	On(hook Hook, widget gtk.Widgetter)
 }
 
-type BaseComponent struct {
+type Sender[T any] interface {
+	// Update self
+	Self(ctx context.Context, updater func(component T))
+	// stop after one?
+	// Up(message any)
+	// Down(message any)
+	Broadcast(ctx context.Context, message any)
 }
 
-func (c *BaseComponent) Init(ctx context.Context, ch chan<- any) {}
-func (c *BaseComponent) Update(ctx context.Context, message any, ch chan<- any) bool {
+type BaseComponent[T any] struct {
+}
+
+func (c *BaseComponent[T]) Init(ctx context.Context) {}
+func (c *BaseComponent[T]) Update(ctx context.Context, message any) bool {
 	return false
 }
-func (c *BaseComponent) On(hook Hook, widget gtk.Widgetter) {}
+func (c *BaseComponent[T]) On(hook Hook, widget gtk.Widgetter) {}
+
+func (c *BaseComponent[T]) SetState(ctx context.Context, updater func(component T)) {
+	node := ctxt.MustFrom[*Node](ctx)
+	updater(node.component.(T))
+	node.component.View(ctx).Update(ctx, node.widget)
+}
+
+func (m *BaseComponent[T]) Broadcast(ctx context.Context, message any) {
+	node := ctxt.MustFrom[*Node](ctx)
+	node.ch <- message
+}
 
 type ComponentModel struct {
 	Widget
@@ -39,35 +61,31 @@ type ComponentModel struct {
 }
 
 func (m *ComponentModel) Type() reflect.Type {
-	return reflect.TypeFor[*adw.Bin]()
+	return reflect.TypeFor[Component]()
 }
 
-func (c *ComponentModel) Create(ctx context.Context) gtk.Widgetter {
-	node := ctxt.MustFrom[*Node](ctx)
-	c.component.Init(ctx, node.ch)
-
-	w := c.component.View(ctx, node.ch).Create(ctx)
-	c.component.On(HookCreate, node.widget)
+func (m *ComponentModel) Create(ctx context.Context) gtk.Widgetter {
+	// node := ctxt.MustFrom[*Node](ctx)
+	// node.component = m.component
+	m.component.Init(ctx)
+	w := m.component.View(ctx).Create(ctx)
+	// node.widget = w
+	m.component.On(HookCreate, w)
 	return w
 }
 
-func (c *ComponentModel) Update(ctx context.Context, w gtk.Widgetter) {
-	node := ctxt.MustFrom[*Node](ctx)
+func (m *ComponentModel) Update(ctx context.Context, w gtk.Widgetter) {
+	// node := ctxt.MustFrom[*Node](ctx)
+	// m.component = node.component
+	model := m.component.View(ctx)
+	// if model.Component() != nil && reflect.TypeOf(m.component) != reflect.TypeOf(model.Component()) {
 
-	if component := glib.Bounded[Component](w); component != nil {
-		c.component = *component
-	} else {
-		glib.Bind(w, c.Component)
-	}
-
-	c.component.View(ctx, node.ch).Update(ctx, w)
-	c.component.On(HookUpdate, w)
+	// }
+	model.Update(ctx, w)
+	// updateChild(w, )
+	m.component.On(HookUpdate, w)
 }
 
 func (m *ComponentModel) Component() Component {
 	return m.component
-}
-
-func CreateComponent(component Component) Model {
-	return &ComponentModel{component: component}
 }

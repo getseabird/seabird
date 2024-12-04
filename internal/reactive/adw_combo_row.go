@@ -20,14 +20,14 @@ func (m *AdwComboRow) Type() reflect.Type {
 	return reflect.TypeFor[*adw.ComboRow]()
 }
 
-func (model *AdwComboRow) Create(ctx context.Context) gtk.Widgetter {
+func (m *AdwComboRow) Create(ctx context.Context) gtk.Widgetter {
 	w := adw.NewComboRow()
-	w.SetModel(model.Model)
-	model.Update(ctx, w)
+	w.SetModel(m.Model)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *AdwComboRow) Update(ctx context.Context, w gtk.Widgetter) {
+func (m *AdwComboRow) Update(ctx context.Context, w gtk.Widgetter) {
 	row := w.(*adw.ComboRow)
-	model.update(ctx, model, w, &model.AdwPreferencesRow, &row.PreferencesRow)
+	m.update(ctx, m, w, &m.AdwPreferencesRow, &row.PreferencesRow)
 }

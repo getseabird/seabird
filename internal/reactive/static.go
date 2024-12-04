@@ -20,8 +20,8 @@ func (m *static[T]) Type() reflect.Type {
 	return reflect.TypeFor[T]()
 }
 
-func (model *static[T]) Create(ctx context.Context) gtk.Widgetter {
-	return model.w
+func (m *static[T]) Create(ctx context.Context) gtk.Widgetter {
+	return m.w
 }
 
-func (model *static[T]) Update(ctx context.Context, w gtk.Widgetter) {}
+func (m *static[T]) Update(ctx context.Context, w gtk.Widgetter) {}

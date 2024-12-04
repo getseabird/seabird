@@ -10,21 +10,30 @@ import (
 
 type AdwHeaderBar struct {
 	Widget
-	TitleWidget Model
+	TitleWidget           Model `gtk:"title-widget"`
+	ShowStartTitleButtons bool  `gtk:"show-start-title-buttons"`
+	ShowEndTitleButtons   bool  `gtk:"show-end-title-buttons"`
+	Start                 []Model
+	End                   []Model
 }
 
 func (m *AdwHeaderBar) Type() reflect.Type {
 	return reflect.TypeFor[*adw.HeaderBar]()
 }
 
-func (model *AdwHeaderBar) Create(ctx context.Context) gtk.Widgetter {
+func (m *AdwHeaderBar) Create(ctx context.Context) gtk.Widgetter {
 	w := adw.NewHeaderBar()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
+	for _, s := range m.Start {
+		child := createChild(ctx, s)
+		w.PackStart(child)
+	}
+
 	return w
 }
 
-func (model *AdwHeaderBar) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *AdwHeaderBar) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 	// bar := w.(*adw.HeaderBar)
 
 }

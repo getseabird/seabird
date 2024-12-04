@@ -21,9 +21,15 @@ type Model interface {
 }
 
 type Widget struct {
-	Margin  [4]int
-	VExpand bool `gtk:"vexpand"`
-	HExpand bool `gtk:"hexpand"`
+	// margin top end bottom start
+	Margin      [4]int
+	VExpand     bool      `gtk:"vexpand"`
+	HExpand     bool      `gtk:"hexpand"`
+	HAlign      gtk.Align `gtk:"halign"`
+	VAlign      gtk.Align `gtk:"valign"`
+	Name        string    `gtk:"name"`
+	Opacity     float64   `gtk:"opacity"`
+	TooltipText string    `gtk:"tooltip-text"`
 	//`gtk:"css-classes"` type []string not implemented
 	CSSClasses []string
 	Signals    map[string]any
@@ -38,6 +44,8 @@ func (m *Widget) Create(ctx context.Context) gtk.Widgetter {
 }
 
 func (m *Widget) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, nil, nil)
+
 	node := ctxt.MustFrom[*Node](ctx)
 
 	w.SetObjectProperty("margin-top", m.Margin[0])
@@ -106,12 +114,14 @@ func removeChild(widget gtk.Widgetter) {
 }
 
 func (m *Widget) update(ctx context.Context, model Model, w gtk.Widgetter, parent Model, parentW gtk.Widgetter) {
-	defer parent.Update(ctx, parentW)
+	if parent != nil {
+		defer parent.Update(ctx, parentW)
+	}
 
-	v := reflect.Indirect(reflect.ValueOf(model))
-	t := v.Type()
-	for i := 0; i < t.NumField(); i++ {
-		field := t.Field(i)
+	val := reflect.Indirect(reflect.ValueOf(model))
+	typ := val.Type()
+	for i := 0; i < typ.NumField(); i++ {
+		field := typ.Field(i)
 		tags, err := structtag.Parse(string(field.Tag))
 		if err != nil {
 			panic(err)
@@ -122,17 +132,35 @@ func (m *Widget) update(ctx context.Context, model Model, w gtk.Widgetter, paren
 			continue
 		}
 
-		if v.Field(i).IsZero() {
+		if val.Field(i).IsZero() {
+			continue
+		}
+
+		if slices.Contains(tag.Options, "interface") {
+			vv := val.Field(i)
+			tt := vv.Type()
+			for i := 0; i < tt.NumField(); i++ {
+				field := tt.Field(i)
+				tags, err := structtag.Parse(string(field.Tag))
+				if err != nil {
+					panic(err)
+				}
+				tag, err := tags.Get("gtk")
+				if err != nil || vv.Field(i).IsZero() {
+					continue
+				}
+				w.SetObjectProperty(tag.Name, vv.Field(i).Interface())
+			}
 			continue
 		}
 
 		if slices.Contains(tag.Options, "ref") {
-			v.Field(i).Elem().FieldByName("Ref").Set(reflect.ValueOf(w))
+			val.Field(i).Elem().FieldByName("Ref").Set(reflect.ValueOf(w))
 			continue
 		}
 
 		if slices.Contains(tag.Options, "signal") {
-			model.Connect(tag.Name, v.Field(i).Interface())
+			model.Connect(tag.Name, val.Field(i).Interface())
 			continue
 		}
 
@@ -143,8 +171,8 @@ func (m *Widget) update(ctx context.Context, model Model, w gtk.Widgetter, paren
 			continue
 		}
 
-		if v.Field(i).Type() == reflect.TypeFor[Model]() {
-			model := v.Field(i).Interface().(Model)
+		if val.Field(i).Type() == reflect.TypeFor[Model]() {
+			model := val.Field(i).Interface().(Model)
 			if val := reflect.ValueOf(w).MethodByName(field.Name).Call([]reflect.Value{}); val[0].IsValid() && !val[0].IsNil() && reflect.ValueOf(val[0].Interface()).Type() == model.Type() {
 				updateChild(val[0].Interface().(gtk.Widgetter), model)
 			} else {
@@ -152,7 +180,7 @@ func (m *Widget) update(ctx context.Context, model Model, w gtk.Widgetter, paren
 				reflect.ValueOf(w).MethodByName(fmt.Sprintf("Set%v", field.Name)).Call([]reflect.Value{val})
 			}
 		} else {
-			val := v.Field(i).Interface()
+			val := val.Field(i).Interface()
 			w.SetObjectProperty(tag.Name, val)
 		}
 	}

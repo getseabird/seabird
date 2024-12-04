@@ -8,6 +8,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/glib/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/getseabird/seabird/api"
+	"github.com/getseabird/seabird/internal/component/cluster"
 	"github.com/getseabird/seabird/internal/icon"
 	"github.com/getseabird/seabird/internal/pubsub"
 	r "github.com/getseabird/seabird/internal/reactive"
@@ -17,7 +18,7 @@ import (
 	"k8s.io/utils/ptr"
 )
 
-type App struct {
+type Start struct {
 	*adw.Application
 	*common.State
 	*common.ClusterState
@@ -26,7 +27,7 @@ type App struct {
 
 type clusterConnected *common.ClusterState
 
-func (c *App) Init(ctx context.Context, ch chan<- any) {
+func (c *Start) Init(ctx context.Context) {
 	c.toast = &r.Ref[*adw.ToastOverlay]{}
 
 	switch style.Get() {
@@ -50,9 +51,10 @@ func (c *App) Init(ctx context.Context, ch chan<- any) {
 	style.Load()
 }
 
-func (c *App) Update(ctx context.Context, message any, ch chan<- any) bool {
+func (c *Start) Update(ctx context.Context, message any) bool {
 	switch message := message.(type) {
 	case clusterConnected:
+		log.Printf("connected")
 		c.ClusterState = message
 		return true
 	default:
@@ -60,9 +62,9 @@ func (c *App) Update(ctx context.Context, message any, ch chan<- any) bool {
 	}
 }
 
-func (c *App) View(ctx context.Context, ch chan<- any) r.Model {
+func (c *Start) View(ctx context.Context) r.Model {
 	if c.ClusterState != nil {
-		return r.CreateComponent(&Cluster{
+		return r.CreateComponent(&cluster.Window{
 			Application:  c.Application,
 			ClusterState: c.ClusterState,
 		})
@@ -93,7 +95,7 @@ func (c *App) View(ctx context.Context, ch chan<- any) r.Model {
 										r.AdwPreferencesGroup{
 											Title: "Clusters",
 											Children: r.Map(c.Preferences.Value().Clusters, func(p pubsub.Property[api.ClusterPreferences]) r.Model {
-												return r.CreateComponent(&ClusterConnectActionRow{Prefs: p, State: c.State})
+												return r.CreateComponent(&ClusterConnectActionRow{Prefs: p, State: c.State, ctx: ctx})
 											}),
 										},
 									},
@@ -107,7 +109,7 @@ func (c *App) View(ctx context.Context, ch chan<- any) r.Model {
 	}
 }
 
-func (c *App) On(hook r.Hook, widget gtk.Widgetter) {
+func (c *Start) On(hook r.Hook, widget gtk.Widgetter) {
 	switch hook {
 	case r.HookCreate:
 		c.Application.ConnectActivate(func() {
@@ -117,40 +119,40 @@ func (c *App) On(hook r.Hook, widget gtk.Widgetter) {
 }
 
 type ClusterConnectActionRow struct {
-	r.BaseComponent
+	r.BaseComponent[*ClusterConnectActionRow]
 	*common.State
 	Prefs   pubsub.Property[api.ClusterPreferences]
 	loading bool
+	ctx     context.Context
 }
 
-type loading bool
-
-func (c *ClusterConnectActionRow) Update(ctx context.Context, message any, ch chan<- any) bool {
-	switch message := message.(type) {
-	case loading:
-		c.loading = bool(message)
-		return true
+func (c *ClusterConnectActionRow) Update(ctx context.Context, message any) bool {
+	switch message.(type) {
 	default:
 		return false
 	}
 }
 
-func (c *ClusterConnectActionRow) View(ctx context.Context, ch chan<- any) r.Model {
+func (c *ClusterConnectActionRow) View(ctx context.Context) r.Model {
 	cluster := c.Prefs.Value()
 
 	return &r.AdwActionRow{
 		Activated: func(actionRow *adw.ActionRow) {
-			ch <- loading(true)
+			c.SetState(ctx, func(component *ClusterConnectActionRow) {
+				component.loading = true
+			})
 			go func() {
-				state, err := c.NewClusterState(ctx, c.Prefs)
-				ch <- loading(false)
+				state, err := c.NewClusterState(c.ctx, c.Prefs)
+				c.SetState(ctx, func(component *ClusterConnectActionRow) {
+					component.loading = false
+				})
 				if err != nil {
 					glib.IdleAdd(func() {
 						r.AddToast(ctx, adw.NewToast(err.Error()))
 					})
 					return
 				}
-				ch <- clusterConnected(state)
+				c.Broadcast(ctx, clusterConnected(state))
 			}()
 		},
 		AdwPreferencesRow: r.AdwPreferencesRow{

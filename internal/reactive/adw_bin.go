@@ -17,12 +17,12 @@ func (m *AdwBin) Type() reflect.Type {
 	return reflect.TypeFor[*adw.Bin]()
 }
 
-func (model *AdwBin) Create(ctx context.Context) gtk.Widgetter {
+func (m *AdwBin) Create(ctx context.Context) gtk.Widgetter {
 	w := adw.NewBin()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *AdwBin) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *AdwBin) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 }

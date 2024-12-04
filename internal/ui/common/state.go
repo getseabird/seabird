@@ -53,11 +53,19 @@ func (s *State) NewClusterState(ctx context.Context, clusterPrefs pubsub.Propert
 	}
 	ctx = ctxt.With[*api.Cluster](ctx, cluster)
 
+	selected := &cluster.Resources[0]
+	for _, r := range cluster.Resources {
+		if r.Name == "pods" && r.Group == "" {
+			selected = &r
+			break
+		}
+	}
+
 	state := ClusterState{
 		State:            s,
 		Cluster:          cluster,
 		Namespaces:       pubsub.NewProperty([]*corev1.Namespace{}),
-		SelectedResource: pubsub.NewProperty[*metav1.APIResource](nil),
+		SelectedResource: pubsub.NewProperty[*metav1.APIResource](selected),
 		SearchText:       pubsub.NewProperty(""),
 		SearchFilter:     pubsub.NewProperty(SearchFilter{}),
 		SelectedObject:   pubsub.NewProperty[client.Object](nil),

@@ -16,12 +16,12 @@ func (m *ScrolledWindow) Type() reflect.Type {
 	return reflect.TypeFor[*gtk.ScrolledWindow]()
 }
 
-func (model *ScrolledWindow) Create(ctx context.Context) gtk.Widgetter {
+func (m *ScrolledWindow) Create(ctx context.Context) gtk.Widgetter {
 	w := gtk.NewScrolledWindow()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *ScrolledWindow) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *ScrolledWindow) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 }

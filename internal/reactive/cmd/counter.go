@@ -11,14 +11,11 @@ import (
 type Increment struct{}
 
 type SampleComponent struct {
+	r.BaseComponent[*SampleComponent]
 	counter int
 }
 
-func (c *SampleComponent) Init(ctx context.Context, ch chan<- any) {
-
-}
-
-func (c *SampleComponent) Update(ctx context.Context, message any, ch chan<- any) bool {
+func (c *SampleComponent) Update(ctx context.Context, message any) bool {
 	switch message.(type) {
 	case Increment:
 		c.counter++
@@ -28,7 +25,7 @@ func (c *SampleComponent) Update(ctx context.Context, message any, ch chan<- any
 	}
 }
 
-func (c *SampleComponent) View(ctx context.Context, ch chan<- any) r.Model {
+func (c *SampleComponent) View(ctx context.Context) r.Model {
 	return &r.Box{
 		Orientation: gtk.OrientationVertical,
 		Spacing:     5,
@@ -42,7 +39,7 @@ func (c *SampleComponent) View(ctx context.Context, ch chan<- any) r.Model {
 			&r.Button{
 				Label: "Click me",
 				Clicked: func(button *gtk.Button) {
-					ch <- Increment{}
+					c.Broadcast(ctx, Increment{})
 				},
 			},
 		},

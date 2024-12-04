@@ -21,21 +21,21 @@ func (m *Window) Type() reflect.Type {
 	return reflect.TypeFor[*gtk.Window]()
 }
 
-func (model *Window) Create(ctx context.Context) gtk.Widgetter {
+func (m *Window) Create(ctx context.Context) gtk.Widgetter {
 	w := gtk.NewWindow()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *Window) Update(ctx context.Context, wi gtk.Widgetter) {
+func (m *Window) Update(ctx context.Context, wi gtk.Widgetter) {
 	w := wi.(*gtk.Window)
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 
-	if model.Child != nil {
-		if child := w.Child(); model.Child.Type() == reflect.TypeOf(child) {
-			updateChild(child, model.Child)
+	if m.Child != nil {
+		if child := w.Child(); m.Child.Type() == reflect.TypeOf(child) {
+			updateChild(child, m.Child)
 		} else {
-			w.SetChild(createChild(ctxt.With(ctx, w), model.Child))
+			w.SetChild(createChild(ctxt.With(ctx, w), m.Child))
 		}
 	}
 }

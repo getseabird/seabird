@@ -17,10 +17,10 @@ func (m *AdwWindow) Type() reflect.Type {
 	return reflect.TypeFor[*adw.Window]()
 }
 
-func (model *AdwWindow) Create(ctx context.Context) gtk.Widgetter {
+func (m *AdwWindow) Create(ctx context.Context) gtk.Widgetter {
 	return adw.NewWindow()
 }
 
-func (model *AdwWindow) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *AdwWindow) Update(ctx context.Context, w gtk.Widgetter) {
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 }
