@@ -32,6 +32,7 @@ type ClusterPrefPage struct {
 	bearer     *adw.EntryRow
 	exec       *adw.ActionRow
 	readonly   *adw.SwitchRow
+	insecure   *adw.SwitchRow
 	execDelete *gtk.Button
 	actions    *adw.Bin
 }
@@ -73,9 +74,14 @@ func (p *ClusterPrefPage) createContent() *adw.PreferencesPage {
 	p.host = adw.NewEntryRow()
 	p.host.SetTitle("Host")
 	general.Add(p.host)
+
 	p.readonly = adw.NewSwitchRow()
 	p.readonly.SetTitle("Read-only")
 	general.Add(p.readonly)
+
+	p.insecure = adw.NewSwitchRow()
+	p.insecure.SetTitle("Skip TLS Verification")
+	general.Add(p.insecure)
 
 	auth := adw.NewExpanderRow()
 	general.Add(auth)
@@ -127,6 +133,8 @@ func (p *ClusterPrefPage) createSaveButton() *gtk.Button {
 		cluster.Name = p.name.Text()
 		cluster.Host = p.host.Text()
 		cluster.ReadOnly = p.readonly.Active()
+		cluster.SkipTlsVerification = p.insecure.Active()
+		cluster.TLS.Insecure = p.insecure.Active()
 		cluster.TLS.CertData = []byte(p.cert.Text())
 		cluster.TLS.KeyData = []byte(p.key.Text())
 		cluster.TLS.CAData = []byte(p.ca.Text())
@@ -280,6 +288,7 @@ func (p *ClusterPrefPage) updateValues(prefs api.ClusterPreferences) {
 	p.name.SetText(prefs.Name)
 	p.host.SetText(prefs.Host)
 	p.readonly.SetActive(prefs.ReadOnly)
+	p.insecure.SetActive(prefs.SkipTlsVerification)
 	p.cert.SetText(string(prefs.TLS.CertData))
 	p.key.SetText(string(prefs.TLS.KeyData))
 	p.ca.SetText(string(prefs.TLS.CAData))
