@@ -45,14 +45,15 @@ func prefsPath() string {
 }
 
 type ClusterPreferences struct {
-	Kubeconfig  *Kubeconfig
-	Name        string
-	Host        string
-	BearerToken string
-	TLS         rest.TLSClientConfig
-	Exec        *api.ExecConfig
-	ReadOnly    bool
-	Navigation  struct {
+	Kubeconfig          *Kubeconfig
+	Name                string
+	Host                string
+	BearerToken         string
+	TLS                 rest.TLSClientConfig
+	Exec                *api.ExecConfig
+	ReadOnly            bool
+	SkipTlsVerification bool
+	Navigation          struct {
 		Favourites []schema.GroupVersionResource
 		Pins       []corev1.ObjectReference
 	}
@@ -231,6 +232,7 @@ func UpdateClusterPreferences(prefs *ClusterPreferences, path, context string) e
 	prefs.Host = config.Host
 	prefs.Exec = config.ExecProvider
 	prefs.TLS = config.TLSClientConfig
+	prefs.SkipTlsVerification = config.TLSClientConfig.Insecure
 
 	if prefs.Name == "" {
 		prefs.Name = context
