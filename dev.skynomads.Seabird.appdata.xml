@@ -2,7 +2,7 @@
 <component type="desktop-application">
   <id>dev.skynomads.Seabird</id>
   <name>Seabird</name>
-  <summary>A simple Kubernetes IDE for GNOME</summary>
+  <summary>Work with Kubernetes</summary>
   <metadata_license>CC0-1.0</metadata_license>
   <project_license>MPL-2.0</project_license>
   <description>
