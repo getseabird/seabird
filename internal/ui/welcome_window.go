@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math/rand/v2"
 	"net/http"
 	"os"
 	"strings"
@@ -20,7 +19,6 @@ import (
 	"github.com/getseabird/seabird/api"
 	"github.com/getseabird/seabird/internal/ctxt"
 	"github.com/getseabird/seabird/internal/pubsub"
-	"github.com/getseabird/seabird/internal/style"
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/widget"
 	"k8s.io/klog/v2"
@@ -88,9 +86,9 @@ func (w *WelcomeWindow) createContent(first bool) *adw.NavigationView {
 	box.Append(page)
 
 	if clusters := w.Preferences.Value().Clusters; len(clusters) > 0 {
-		if first && !style.Eq(style.Windows) && w.Preferences.Value().License == nil && rand.IntN(10) == 0 {
-			w.nav.Push(w.createPurchasePage())
-		}
+		// if first && !style.Eq(style.Windows) && w.Preferences.Value().License == nil && rand.IntN(10) == 0 {
+		// 	w.nav.Push(w.createPurchasePage())
+		// }
 
 		group := adw.NewPreferencesGroup()
 		group.SetTitle("Connect to Cluster")
