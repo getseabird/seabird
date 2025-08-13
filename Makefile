@@ -1,4 +1,4 @@
-SEMVER = go run github.com/maykonlf/semver-cli/cmd/semver@latest
+SEMVER = go run github.com/maykonlsf/semver-cli/cmd/semver@latest
 
 .PHONY: patch
 patch:
@@ -9,7 +9,7 @@ patch:
 .PHONY: minor
 minor:
 	@if [ "$$(git rev-parse --abbrev-ref HEAD)" != "main" ]; then exit 1; fi
-	#git pull -r
+	git pull -r
 	$(SEMVER) up minor
 
 .PHONY: release
