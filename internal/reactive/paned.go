@@ -9,9 +9,12 @@ import (
 
 type Paned struct {
 	Widget
-	Orientation gtk.Orientation
-	StartChild  Model `gtk:"start-child"`
-	EndChild    Model `gtk:"end-child"`
+	Orientation      gtk.Orientation
+	StartChild       Model `gtk:"start-child"`
+	EndChild         Model `gtk:"end-child"`
+	Position         int   `gtk:"position"`
+	ShrinkStartChild *bool `gtk:"shrink-start-child,deref"`
+	ShrinkEndChild   *bool `gtk:"shrink-end-child,deref"`
 }
 
 func (m *Paned) Type() reflect.Type {

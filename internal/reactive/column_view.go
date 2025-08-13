@@ -2,6 +2,7 @@ package reactive
 
 import (
 	"context"
+	"log"
 	"reflect"
 
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
@@ -38,6 +39,7 @@ func (m *ColumnView) Update(ctx context.Context, wi gtk.Widgetter) {
 func (m *ColumnView) mergeColumns(w *gtk.ColumnView) {
 	current := w.Columns()
 	for i, c := range m.Columns {
+		log.Print(c.ID())
 		if int(current.NItems()) > i && current.Item(uint(i)).Cast().(*gtk.ColumnViewColumn).ID() == c.ID() {
 			continue
 		}

@@ -11,18 +11,32 @@ type ListBoxRow struct {
 	Widget
 	Activatable bool  `gtk:"activatable"`
 	Child       Model `gtk:"child"`
+	Selected    bool
 }
 
 func (m *ListBoxRow) Type() reflect.Type {
 	return reflect.TypeFor[*gtk.ListBoxRow]()
 }
 
-func (model *ListBoxRow) Create(ctx context.Context) gtk.Widgetter {
+func (m *ListBoxRow) Create(ctx context.Context) gtk.Widgetter {
 	w := gtk.NewListBoxRow()
-	model.Update(ctx, w)
+	m.Update(ctx, w)
 	return w
 }
 
-func (model *ListBoxRow) Update(ctx context.Context, w gtk.Widgetter) {
-	model.update(ctx, model, w, &model.Widget, gtk.BaseWidget(w))
+func (m *ListBoxRow) Update(ctx context.Context, wi gtk.Widgetter) {
+	w := wi.(*gtk.ListBoxRow)
+	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
+}
+
+func (m *ListBoxRow) PostUpdate(node Node) {
+	w := node.Widget.(*gtk.ListBoxRow)
+	p := node.Parent.Widget.(*gtk.ListBox)
+	if m.Selected != w.IsSelected() {
+		if m.Selected {
+			p.SelectRow(w)
+		} else {
+			p.UnselectRow(w)
+		}
+	}
 }

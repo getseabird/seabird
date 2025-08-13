@@ -35,6 +35,6 @@ func (m *AdwAlertDialog) Update(ctx context.Context, wi gtk.Widgetter) {
 	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
 
 	if m.Visible {
-		w.Present(ctxt.MustFrom[*Node](ctx).parent.widget)
+		w.Present(ctxt.MustFrom[*Node](ctx).Parent.Widget)
 	}
 }

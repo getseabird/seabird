@@ -2,7 +2,11 @@ package cluster
 
 import (
 	"context"
+	"strings"
 
+	"github.com/adrg/strutil"
+	"github.com/adrg/strutil/metrics"
+	"github.com/diamondburned/gotk4/pkg/gio/v2"
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	"github.com/diamondburned/gotk4/pkg/pango"
 	"github.com/getseabird/seabird/internal/icon"
@@ -10,11 +14,13 @@ import (
 	"github.com/getseabird/seabird/internal/ui/common"
 	"github.com/getseabird/seabird/internal/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 )
 
 type Navigation struct {
 	r.BaseComponent[*Navigation]
 	resources []metav1.APIResource
+	filter    string
 	*common.ClusterState
 }
 
@@ -26,28 +32,74 @@ func (c *Navigation) Update(ctx context.Context, message any) bool {
 }
 
 func (c *Navigation) View(ctx context.Context) r.Model {
+	win := gio.NewMenu()
+	win.Append("New Window", "win.newWindow")
+	win.Append("Disconnect", "win.disconnect")
+
+	pref := gio.NewMenu()
+	pref.Append("Preferences", "win.prefs")
+	// prefSection.Append("Keyboard Shortcuts", "win.shortcuts")
+	pref.Append("About", "win.about")
+
+	menu := gio.NewMenu()
+	menu.AppendSection("", win)
+	menu.AppendSection("", pref)
+
+	var resources []metav1.APIResource
+	for _, resource := range c.resources {
+		if len(c.filter) > 0 {
+			if !strings.Contains(resource.Name, c.filter) &&
+				strutil.Similarity(resource.Name, c.filter, metrics.NewLevenshtein()) < 0.7 &&
+				!strings.Contains(resource.Group, c.filter) &&
+				strutil.Similarity(resource.Group, c.filter, metrics.NewLevenshtein()) < 0.7 {
+				continue
+			}
+		}
+		resources = append(resources, resource)
+	}
+
 	return &r.AdwToolbarView{
 		Widget: r.Widget{
-			CSSClasses: []string{"flat", "view"},
+			CSSClasses: []string{"sidebar-pane"},
 		},
 		TopBars: []r.Model{
 			&r.AdwHeaderBar{
-				ShowEndTitleButtons: false,
+				ShowEndTitleButtons: ptr.To(false),
+				End: []r.Model{
+					&r.MenuButton{
+						IconName: "open-menu-symbolic",
+						Popover: &r.PopoverMenu{
+							Model: menu,
+						},
+					},
+				},
 			},
 		},
 		Content: &r.Box{
 			Orientation: gtk.OrientationVertical,
 			Children: []r.Model{
 				&r.Box{
+					Widget: r.Widget{
+						HExpand: true,
+						Margin:  [4]int{0, 8, 0, 8},
+					},
 					Orientation: gtk.OrientationHorizontal,
 					Children: []r.Model{
 						&r.ToggleButton{
 							Button: r.Button{
+								Widget: r.Widget{
+									HExpand:    true,
+									CSSClasses: []string{"flat"},
+								},
 								IconName: "view-list-symbolic",
 							},
 						},
 						&r.ToggleButton{
 							Button: r.Button{
+								Widget: r.Widget{
+									HExpand:    true,
+									CSSClasses: []string{"flat"},
+								},
 								IconName: "pin-symbolic",
 							},
 						},
@@ -60,19 +112,25 @@ func (c *Navigation) View(ctx context.Context) r.Model {
 					},
 					Child: &r.ListBox{
 						RowSelected: func(listBox *gtk.ListBox, listBoxRow *gtk.ListBoxRow) {
-							res := c.resources[listBoxRow.Index()]
+							res := resources[listBoxRow.Index()]
 							c.SelectedResource.Pub(&res)
 						},
 						Widget: r.Widget{
-							CSSClasses: []string{"navigation-sidebar"},
+							CSSClasses: []string{"navigation-sidebar", "background"},
 						},
-						Children: r.Map(c.resources, func(res metav1.APIResource) r.Model {
+						Children: r.Map(resources, func(res metav1.APIResource) *r.ListBoxRow {
+							var selected bool
+							if r := c.SelectedResource.Value(); r != nil && util.ResourceEquals(r, &res) {
+								selected = true
+							}
+
 							return &r.ListBoxRow{
+								Selected: selected,
 								Child: &r.Box{
-									Spacing: 8,
 									Widget: r.Widget{
 										Margin: [4]int{4, 4, 4, 4},
 									},
+									Spacing: 8,
 									Children: []r.Model{
 										r.Static(icon.Kind(util.GVKForResource(&res))),
 										&r.Box{
@@ -117,6 +175,18 @@ func (c *Navigation) View(ctx context.Context) r.Model {
 								},
 							}
 						}),
+					},
+				},
+				&r.SearchEntry{
+					PlaceholderText: "Filter",
+					Widget: r.Widget{
+						Signals: map[string]any{
+							"search-changed": func(entry *gtk.SearchEntry) {
+								c.SetState(ctx, func(component *Navigation) {
+									component.filter = entry.Text()
+								})
+							},
+						},
 					},
 				},
 			},

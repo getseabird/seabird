@@ -7,6 +7,7 @@ import (
 	"github.com/diamondburned/gotk4/pkg/gtk/v4"
 	r "github.com/getseabird/seabird/internal/reactive"
 	"github.com/getseabird/seabird/internal/ui/common"
+	"k8s.io/utils/ptr"
 )
 
 type Window struct {
@@ -44,8 +45,11 @@ func (c *Window) View(ctx context.Context) r.Model {
 								&r.Box{
 									Children: []r.Model{
 										&r.Paned{
-											StartChild: r.CreateComponent(&Navigation{resources: c.Resources, ClusterState: c.ClusterState}),
-											EndChild:   r.CreateComponent(&Resources{ClusterState: c.ClusterState}),
+											StartChild:       r.CreateComponent(&Navigation{resources: c.Resources, ClusterState: c.ClusterState}),
+											EndChild:         r.CreateComponent(&Resources{ClusterState: c.ClusterState}),
+											Position:         225,
+											ShrinkStartChild: ptr.To(false),
+											ShrinkEndChild:   ptr.To(false),
 										},
 									},
 								},

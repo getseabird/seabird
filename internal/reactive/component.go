@@ -47,7 +47,7 @@ func (c *BaseComponent[T]) On(hook Hook, widget gtk.Widgetter) {}
 func (c *BaseComponent[T]) SetState(ctx context.Context, updater func(component T)) {
 	node := ctxt.MustFrom[*Node](ctx)
 	updater(node.component.(T))
-	node.component.View(ctx).Update(ctx, node.widget)
+	node.component.View(ctx).Update(ctx, node.Widget)
 }
 
 func (m *BaseComponent[T]) Broadcast(ctx context.Context, message any) {

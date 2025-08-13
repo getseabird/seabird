@@ -10,7 +10,7 @@ import (
 type ListBox struct {
 	Widget
 	RowSelected func(listBox *gtk.ListBox, listBoxRow *gtk.ListBoxRow) `gtk:"row-selected,signal"`
-	Children    []Model
+	Children    []*ListBoxRow
 }
 
 func (m *ListBox) Type() reflect.Type {
@@ -22,16 +22,15 @@ func (m *ListBox) Create(ctx context.Context) gtk.Widgetter {
 	m.Update(ctx, w)
 	return w
 }
-
-func (m *ListBox) Update(ctx context.Context, w gtk.Widgetter) {
+func (m *ListBox) Update(ctx context.Context, wi gtk.Widgetter) {
+	w := wi.(*gtk.ListBox)
 	m.update(ctx, m, w, &m.Widget, gtk.BaseWidget(w))
-	box := w.(*gtk.ListBox)
 
-	next := box.FirstChild()
+	next := w.FirstChild()
 	for _, child := range m.Children {
 		if next == nil {
 			new := createChild(ctx, child)
-			box.Append(new)
+			w.Append(new)
 			continue
 		}
 
@@ -40,9 +39,9 @@ func (m *ListBox) Update(ctx context.Context, w gtk.Widgetter) {
 			next = gtk.BaseWidget(next).NextSibling()
 		} else {
 			new := createChild(ctx, child)
-			gtk.BaseWidget(new).InsertBefore(box, next)
+			gtk.BaseWidget(new).InsertBefore(w, next)
 			removeChild(next)
-			box.Remove(next)
+			w.Remove(next)
 			next = gtk.BaseWidget(new).NextSibling()
 		}
 	}
@@ -52,7 +51,7 @@ func (m *ListBox) Update(ctx context.Context, w gtk.Widgetter) {
 			break
 		}
 		sibling := gtk.BaseWidget(next).NextSibling()
-		box.Remove(next)
+		w.Remove(next)
 		next = sibling
 	}
 }

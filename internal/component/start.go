@@ -54,7 +54,6 @@ func (c *Start) Init(ctx context.Context) {
 func (c *Start) Update(ctx context.Context, message any) bool {
 	switch message := message.(type) {
 	case clusterConnected:
-		log.Printf("connected")
 		c.ClusterState = message
 		return true
 	default:

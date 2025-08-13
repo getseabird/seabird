@@ -15,6 +15,7 @@ import (
 	"github.com/getseabird/seabird/internal/util"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/klog/v2"
+	"k8s.io/utils/ptr"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
 
@@ -48,6 +49,7 @@ func (c *Resources) Init(ctx context.Context) {
 			// }
 			c.model.Append(o)
 		}
+		// c.SetState(ctx, func(component *Resources) {})
 	})
 
 }
@@ -116,13 +118,13 @@ func (c *Resources) View(ctx context.Context) r.Model {
 				Widget: r.Widget{
 					CSSClasses: []string{"flat"},
 				},
-				ShowStartTitleButtons: false,
+				ShowStartTitleButtons: ptr.To(false),
 				Start: []r.Model{
 					&r.Button{
 						Widget: r.Widget{
 							TooltipText: "New Resource",
 						},
-						IconName: "text-editor-symbolic",
+						IconName: "document-new-symbolic",
 					},
 				},
 				TitleWidget: &r.Box{

@@ -11,8 +11,8 @@ import (
 type AdwHeaderBar struct {
 	Widget
 	TitleWidget           Model `gtk:"title-widget"`
-	ShowStartTitleButtons bool  `gtk:"show-start-title-buttons"`
-	ShowEndTitleButtons   bool  `gtk:"show-end-title-buttons"`
+	ShowStartTitleButtons *bool `gtk:"show-start-title-buttons,deref"`
+	ShowEndTitleButtons   *bool `gtk:"show-end-title-buttons,deref"`
 	Start                 []Model
 	End                   []Model
 }
@@ -27,6 +27,10 @@ func (m *AdwHeaderBar) Create(ctx context.Context) gtk.Widgetter {
 	for _, s := range m.Start {
 		child := createChild(ctx, s)
 		w.PackStart(child)
+	}
+	for _, s := range m.End {
+		child := createChild(ctx, s)
+		w.PackEnd(child)
 	}
 
 	return w

@@ -36,3 +36,7 @@ func (m *AdwApplicationWindow) Update(ctx context.Context, wi gtk.Widgetter) {
 		}
 	}
 }
+
+func (m *AdwApplicationWindow) PostUpdate(node *Node) {
+	node.CreateChild()
+}

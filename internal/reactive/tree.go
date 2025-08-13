@@ -16,12 +16,12 @@ func NewTree(ctx context.Context, model Model) gtk.Widgetter {
 	}
 	root.ctx = ctxt.With[*Node](ctx, root)
 
-	root.widget = model.Create(root.ctx)
+	root.Widget = model.Create(root.ctx)
 	if c := model.Component(); c != nil {
 		root.component = c
 	}
 
-	glib.Bind[*Node](root.widget, root)
+	glib.Bind[*Node](root.Widget, root)
 
 	go func() {
 		for {
@@ -36,16 +36,17 @@ func NewTree(ctx context.Context, model Model) gtk.Widgetter {
 		}
 	}()
 
-	return root.widget
+	return root.Widget
 }
 
 type Node struct {
+	Parent *Node
+	Widget gtk.Widgetter
+
 	ch     chan any
-	parent *Node
 	ctx    context.Context
 	cancel context.CancelFunc
 	// model     Model
-	widget         gtk.Widgetter
 	component      Component
 	children       []*Node
 	signalHandlers map[string]glib.SignalHandle
@@ -53,26 +54,26 @@ type Node struct {
 }
 
 func (n *Node) CreateChild(ctx context.Context, model Model) gtk.Widgetter {
-	child := &Node{parent: n, ch: n.ch}
+	child := &Node{Parent: n, ch: n.ch}
 	child.ctx, child.cancel = context.WithCancel(ctxt.With[*Node](ctx, child))
 
-	child.widget = model.Create(child.ctx)
-	glib.Bind[*Node](child.widget, child)
+	child.Widget = model.Create(child.ctx)
+	glib.Bind[*Node](child.Widget, child)
 	n.children = append(n.children, child)
 
 	if c := model.Component(); c != nil {
 		child.component = c
 	}
 
-	return child.widget
+	return child.Widget
 }
 
 func (n *Node) RemoveChild(widget gtk.Widgetter) {
 	node := *glib.Bounded[*Node](widget)
 	node.cancel()
-	if p := node.parent; p != nil {
+	if p := node.Parent; p != nil {
 		for i, n := range node.children {
-			if n.widget == p.widget {
+			if n.Widget == p.Widget {
 				node.children = slices.Delete(node.children, i, i+1)
 				break
 			}
@@ -84,7 +85,7 @@ func (n *Node) message(msg any, rerender bool) {
 	if n.component != nil {
 		if n.component.Update(n.ctx, msg) && rerender {
 			rerender = false
-			n.component.View(n.ctx).Update(n.ctx, n.widget)
+			n.component.View(n.ctx).Update(n.ctx, n.Widget)
 		}
 	}
 	for _, c := range n.children {
